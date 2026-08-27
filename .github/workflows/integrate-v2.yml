@@ -1,0 +1,55 @@
+name: Integrate VG enhanced modules
+on:
+  push:
+    paths:
+      - '.github/workflows/integrate-v2.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch-launcher:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Route Utility and Schedule to enhanced modules
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          old="""function openSystem(key,title){
+  sessionStorage.setItem('VG_APP_SUPPORT_LOGIN','YES');
+  document.getElementById('toolTitle').textContent='VG APP SUPPORT — '+title;
+  document.body.classList.add('toolMode');
+  const frame=document.getElementById('toolFrame');
+  frame.srcdoc=decodeHtml(key);
+  window.scrollTo(0,0);
+}"""
+          new="""function openSystem(key,title){
+  sessionStorage.setItem('VG_APP_SUPPORT_LOGIN','YES');
+  document.getElementById('toolTitle').textContent='VG APP SUPPORT — '+title;
+  document.body.classList.add('toolMode');
+  const frame=document.getElementById('toolFrame');
+  frame.removeAttribute('src');
+  frame.removeAttribute('srcdoc');
+  if(key==='utility') frame.src='utility-v2.html?v=2';
+  else if(key==='schedule') frame.src='schedule-v2.html?v=2';
+  else frame.srcdoc=decodeHtml(key);
+  window.scrollTo(0,0);
+}"""
+          if old not in s:
+              if "frame.src='utility-v2.html?v=2'" in s:
+                  print('Launcher already integrated')
+              else:
+                  raise SystemExit('Expected openSystem block not found; refusing unsafe patch')
+          else:
+              p.write_text(s.replace(old,new,1),encoding='utf-8')
+          PY
+      - name: Commit launcher integration
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Route Utility and Schedule to enhanced modules'
+          git push
