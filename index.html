@@ -175,7 +175,11 @@ function openSystem(key,title){
   document.getElementById('toolTitle').textContent='VG APP SUPPORT — '+title;
   document.body.classList.add('toolMode');
   const frame=document.getElementById('toolFrame');
-  frame.srcdoc=decodeHtml(key);
+  frame.removeAttribute('src');
+  frame.removeAttribute('srcdoc');
+  if(key==='utility') frame.src='utility-v2.html?v=2';
+  else if(key==='schedule') frame.src='schedule-v2.html?v=2';
+  else frame.srcdoc=decodeHtml(key);
   window.scrollTo(0,0);
 }
 function backHome(){
