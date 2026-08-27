@@ -1,0 +1,44 @@
+name: Integrate Catering Form Maker
+on:
+  push:
+    paths:
+      - '.github/workflows/integrate-catering.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch-launcher:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add Catering Form Maker card and route
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          card='''    <div class="card"><div class="icon">🍽️</div><h2>Catering Form Maker</h2><p>Create catering service requests, automatic costing and analysis, editable previews, school themes, signatures, and print/PDF-ready forms.</p><button onclick="openSystem('catering','Catering Form Maker')">Open Catering Form Maker</button></div>\n'''
+          if "openSystem('catering','Catering Form Maker')" not in s:
+              marker='''    <div class="card"><div class="icon">🏢</div><h2>Organizational Chart Maker</h2><p>Flexible Varda branch organization chart with direct preview editing, photos, department lines, column control, and Left/Right/Down placement tools.</p><button onclick="openSystem('orgchart','Organizational Chart Maker')">Open Org Chart</button></div>\n'''
+              if marker not in s: raise SystemExit('Org chart card marker not found')
+              s=s.replace(marker,marker+'\n'+card,1)
+          old="""  if(key==='utility') frame.src='utility-v2.html?v=2';
+  else if(key==='schedule') frame.src='schedule-v2.html?v=2';
+  else frame.srcdoc=decodeHtml(key);"""
+          new="""  if(key==='utility') frame.src='utility-v2.html?v=2';
+  else if(key==='schedule') frame.src='schedule-v2.html?v=2';
+  else if(key==='catering') frame.src='catering-v1.html?v=1';
+  else frame.srcdoc=decodeHtml(key);"""
+          if "key==='catering'" not in s:
+              if old not in s: raise SystemExit('openSystem route marker not found')
+              s=s.replace(old,new,1)
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Commit launcher update
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Add Catering Form Maker to VG Support'
+          git push
