@@ -129,6 +129,8 @@ button{
     <div class="card"><div class="icon">💼</div><h2>Card Maker</h2><p>Front-only Varda business/contact card maker with branch themes, social media details, adjustable scaling, cutting space, logo, and PNG e-signature.</p><button onclick="openSystem('cardmaker','Card Maker')">Open Card Maker</button></div>
 
     <div class="card"><div class="icon">🏢</div><h2>Organizational Chart Maker</h2><p>Flexible Varda branch organization chart with direct preview editing, photos, department lines, column control, and Left/Right/Down placement tools.</p><button onclick="openSystem('orgchart','Organizational Chart Maker')">Open Org Chart</button></div>
+
+    <div class="card"><div class="icon">🍽️</div><h2>Catering Form Maker</h2><p>Create catering service requests, automatic costing and analysis, editable previews, school themes, signatures, and print/PDF-ready forms.</p><button onclick="openSystem('catering','Catering Form Maker')">Open Catering Form Maker</button></div>
 </div>
 </div>
 
@@ -179,6 +181,7 @@ function openSystem(key,title){
   frame.removeAttribute('srcdoc');
   if(key==='utility') frame.src='utility-v2.html?v=2';
   else if(key==='schedule') frame.src='schedule-v2.html?v=2';
+  else if(key==='catering') frame.src='catering-v1.html?v=1';
   else frame.srcdoc=decodeHtml(key);
   window.scrollTo(0,0);
 }
