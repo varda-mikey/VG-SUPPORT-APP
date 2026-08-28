@@ -1,0 +1,1395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>VG Support — Voucher Creator</title>
+<style id="dynamicPageStyle">@page{size:A4 portrait;margin:0}</style>
+<style>
+  :root{
+    --bg:#f4f1ea;
+    --panel:#ffffff;
+    --ink:#1f1d1a;
+    --muted:#6f6a61;
+    --line:#d9d2c7;
+    --accent:#7a1723;
+    --accent2:#c8a24a;
+    --deep:#0f2f4b;
+    --soft:#f7f2e7;
+    --paper-w:210mm;
+    --paper-h:297mm;
+    --voucher-w:190mm;
+    --voucher-h:50mm;
+    --gap-x:3mm;
+    --gap-y:3mm;
+    --print-margin:10mm;
+    --page-cols:1;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+  button,input,select,textarea{font:inherit}
+  .app{min-height:100vh}
+  .topbar{
+    position:sticky;top:0;z-index:20;
+    display:flex;align-items:center;justify-content:space-between;gap:16px;
+    padding:14px 18px;background:#171411;color:#fff;border-bottom:1px solid #352f29
+  }
+  .brand{display:flex;align-items:center;gap:12px}
+  .brand-mark{
+    width:38px;height:38px;border:2px solid #d5b861;border-radius:10px;
+    display:grid;place-items:center;font-weight:900;color:#d5b861;background:#241f19
+  }
+  .brand h1{font-size:17px;margin:0;letter-spacing:.2px}
+  .brand small{display:block;color:#bdb7ae;margin-top:2px;font-size:11px}
+  .top-actions{display:flex;gap:8px;flex-wrap:wrap}
+  .btn{
+    border:1px solid #ccc4b8;background:#fff;color:#211f1b;border-radius:9px;
+    padding:9px 12px;cursor:pointer;font-weight:700
+  }
+  .btn:hover{filter:brightness(.97)}
+  .btn.primary{background:#c8a24a;border-color:#c8a24a;color:#16110b}
+  .btn.dark{background:#2a2621;border-color:#4d463d;color:#fff}
+  .btn.danger{background:#fff5f5;border-color:#e3bcbc;color:#8b2020}
+  .btn.small{padding:7px 9px;font-size:12px}
+  .workspace{
+    display:grid;grid-template-columns:minmax(340px,470px) 1fr;gap:16px;
+    padding:16px;max-width:1900px;margin:0 auto
+  }
+  .panel{
+    background:var(--panel);border:1px solid #dfd8cd;border-radius:14px;box-shadow:0 4px 18px rgba(43,34,20,.05)
+  }
+  .controls{padding:16px;align-self:start;position:sticky;top:82px;max-height:calc(100vh - 98px);overflow:auto}
+  .preview-panel{padding:16px;min-width:0}
+  .section{padding:14px 0;border-bottom:1px solid #eee9e1}
+  .section:last-child{border-bottom:0}
+  .section h2{font-size:13px;margin:0 0 10px;text-transform:uppercase;letter-spacing:.8px;color:#4b453e}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  label{font-size:12px;font-weight:800;color:#49443d;display:block}
+  input[type="text"],input[type="number"],input[type="date"],input[type="color"],select,textarea,input[type="file"]{
+    width:100%;margin-top:5px;border:1px solid #d6cfc5;border-radius:8px;background:#fff;
+    padding:9px 10px;color:#26231f;outline:none
+  }
+  input:focus,select:focus,textarea:focus{border-color:#a5843b;box-shadow:0 0 0 3px rgba(200,162,74,.14)}
+  textarea{resize:vertical;min-height:120px;line-height:1.35}
+
+  /* Friendly card-style controls */
+  .control-card{
+    background:#faf8f3;border:1px solid #e4ddd1;border-radius:12px;padding:11px;margin-top:9px
+  }
+  .control-card + .control-card{margin-top:10px}
+  .control-card-title{
+    display:flex;align-items:center;justify-content:space-between;gap:8px;
+    font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.6px;color:#5d554b;margin-bottom:8px
+  }
+  .slider-row{
+    display:grid;grid-template-columns:112px minmax(90px,1fr) 58px;gap:9px;align-items:center;
+    padding:7px 0;border-bottom:1px solid #eee8de
+  }
+  .slider-row:last-child{border-bottom:0}
+  .slider-name{font-size:11px;font-weight:800;color:#4c463f}
+  .slider-value{
+    text-align:center;background:#fff;border:1px solid #ddd3c5;border-radius:999px;
+    padding:4px 6px;font-size:10px;font-weight:900;color:#544b40;white-space:nowrap
+  }
+  input[type="range"]{
+    width:100%;margin:0;padding:0;border:0;background:transparent;box-shadow:none;
+    accent-color:#b38a34;cursor:pointer
+  }
+  input[type="range"]::-webkit-slider-runnable-track{
+    height:6px;border-radius:999px;background:#e1d9cc
+  }
+  input[type="range"]::-webkit-slider-thumb{
+    -webkit-appearance:none;appearance:none;width:18px;height:18px;border-radius:50%;
+    background:#c8a24a;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.25);margin-top:-6px
+  }
+  input[type="range"]::-moz-range-track{height:6px;border-radius:999px;background:#e1d9cc}
+  input[type="range"]::-moz-range-thumb{
+    width:18px;height:18px;border-radius:50%;background:#c8a24a;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.25)
+  }
+  .quick-presets{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+  .quick-presets button{
+    flex:1;min-width:72px;border:1px solid #d9d0c2;background:#fff;border-radius:8px;
+    padding:7px 8px;font-size:10px;font-weight:900;cursor:pointer;color:#554c40
+  }
+  .quick-presets button:hover{background:#f3ede3;border-color:#c8a24a}
+  details.advanced{
+    margin-top:10px;border:1px solid #e4ddd1;border-radius:10px;background:#fff;overflow:hidden
+  }
+  details.advanced summary{
+    cursor:pointer;list-style:none;padding:10px 11px;font-size:11px;font-weight:900;color:#554d44;background:#faf8f3
+  }
+  details.advanced summary::-webkit-details-marker{display:none}
+  details.advanced summary::after{content:"▾";float:right;color:#9b7a33}
+  details.advanced:not([open]) summary::after{content:"▸"}
+  .advanced-body{padding:10px}
+  .pieces-chip{
+    display:inline-flex;align-items:center;justify-content:center;min-height:38px;width:100%;
+    margin-top:5px;border:1px solid #d6cfc5;border-radius:8px;background:#fff8e5;color:#6a5421;font-weight:900
+  }
+  .layout-help{
+    margin-top:8px;padding:8px 9px;border-radius:8px;background:#eef5fb;border:1px solid #d8e7f2;
+    font-size:10px;color:#42586a;line-height:1.35
+  }
+
+  .checkrow{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:#49443d;margin-top:7px}
+  .checkrow input{width:16px;height:16px}
+  .inline-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .hint{font-size:11px;color:var(--muted);line-height:1.4;margin-top:6px}
+  .preview-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+  .preview-head h2{margin:0;font-size:16px}
+  .badge{display:inline-flex;align-items:center;gap:5px;padding:6px 9px;border-radius:999px;background:#eee8dc;color:#5d5345;font-size:11px;font-weight:800}
+  .canvas-wrap{overflow:auto;background:#d8d2c8;border-radius:12px;padding:18px;border:1px solid #c9c2b6}
+  .paper{
+    width:var(--paper-w);min-height:var(--paper-h);margin:0 auto;background:#fff;
+    padding:var(--print-margin);box-shadow:0 4px 22px rgba(0,0,0,.15);
+    display:grid;grid-template-columns:repeat(var(--page-cols), minmax(0,1fr));
+    gap:var(--gap-y) var(--gap-x);justify-items:center;align-content:start
+  }
+  .voucher{
+    --v-accent:#7a1723;
+    --v-accent2:#c8a24a;
+    --v-deep:#0f2f4b;
+    --v-paper:#fbf6ea;
+    --value-size:34px;
+    --title-size:15px;
+    --body-size:6px;
+    --serial-size:7px;
+    --left-fr:29fr;
+    --mid-fr:39fr;
+    --right-fr:32fr;
+    --inner-pad-y:7px;
+    --inner-pad-x:9px;
+    position:relative;overflow:hidden;flex:0 0 auto;
+    width:var(--voucher-w);height:var(--voucher-h);background:
+      radial-gradient(circle at 20% 20%,rgba(255,255,255,.9),rgba(255,255,255,0) 24%),
+      repeating-linear-gradient(135deg,rgba(70,55,32,.025),rgba(70,55,32,.025) 2px,transparent 2px,transparent 6px),
+      var(--v-paper);
+    border:2px solid #6f5d3a;outline:1px solid #b39b69;outline-offset:-5px;
+    color:#211a14;border-radius:3px;
+    display:grid;
+    grid-template-columns:minmax(0,var(--left-fr)) minmax(0,var(--mid-fr)) minmax(0,var(--right-fr));
+  }
+
+  /* Adaptive stacked design for square / portrait vouchers */
+  .voucher.layout-stacked{
+    grid-template-columns:minmax(0,1fr);
+    grid-template-rows:minmax(0,var(--left-fr)) minmax(0,var(--mid-fr)) minmax(0,var(--right-fr));
+    grid-template-areas:"left" "mid" "right";
+  }
+  .voucher.layout-stacked .v-left{grid-area:left;border-right:0;border-bottom:1px solid rgba(82,65,40,.35)}
+  .voucher.layout-stacked .v-mid{grid-area:mid;border-right:0;border-bottom:1px solid rgba(82,65,40,.35)}
+  .voucher.layout-stacked .v-right{grid-area:right}
+  .voucher.layout-stacked .v-left{
+    flex-direction:row;justify-content:center;gap:8px;flex-wrap:wrap
+  }
+  .voucher.layout-stacked .voucher-title{margin-top:0}
+  .voucher.layout-stacked .branch-chip{margin-top:0}
+  .voucher.layout-stacked .v-mid{justify-content:flex-start}
+  .voucher.layout-stacked .logo-row{justify-content:center}
+  .voucher.layout-stacked .meta{grid-template-columns:1fr 1fr}
+  .voucher.layout-stacked .right-top{align-items:center}
+  .voucher.layout-stacked .uses{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .voucher.layout-stacked .auth{margin-top:3px}
+  .voucher.fit-warning{box-shadow:inset 0 0 0 3px rgba(221,126,30,.78)}
+  .voucher::before,.voucher::after{
+    content:"";position:absolute;width:23px;height:23px;border:3px double var(--v-accent2);z-index:3
+  }
+  .voucher::before{left:7px;top:7px;border-right:0;border-bottom:0}
+  .voucher::after{right:7px;bottom:7px;border-left:0;border-top:0}
+  .v-left,.v-mid,.v-right{position:relative;padding:var(--inner-pad-y) var(--inner-pad-x);min-width:0;min-height:0;overflow:hidden;overflow-wrap:anywhere;word-break:normal}
+  .v-left{border-right:1px solid rgba(82,65,40,.35);display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center}
+  .v-mid{border-right:1px solid rgba(82,65,40,.35);display:flex;flex-direction:column}
+  .v-right{display:flex;flex-direction:column;justify-content:space-between}
+  .watermark{
+    position:absolute;inset:0;display:grid;place-items:center;font-size:55px;opacity:.035;font-weight:1000;transform:rotate(-12deg);pointer-events:none
+  }
+  .money{font-family:Georgia,"Times New Roman",serif;font-size:var(--value-size);line-height:.9;font-weight:900;color:var(--v-accent);text-shadow:0 1px 0 #fff}
+  .voucher-title{font-family:Georgia,"Times New Roman",serif;font-weight:900;font-size:var(--title-size);letter-spacing:.4px;margin-top:4px}
+  .branch-chip{
+    margin-top:5px;background:var(--v-deep);color:white;border-radius:999px;padding:3px 8px;
+    font-size:calc(var(--body-size) + 1px);font-weight:900;text-transform:uppercase;letter-spacing:.6px;max-width:100%;white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere
+  }
+  .brandline{font-weight:1000;font-size:calc(var(--body-size) + 3px);color:var(--v-accent);margin-bottom:4px;letter-spacing:.5px}
+  .meta{display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:calc(var(--body-size) + 1px);margin-top:4px}
+  .meta div{background:rgba(255,255,255,.55);border:1px solid rgba(109,87,50,.22);padding:3px 4px;border-radius:3px;min-width:0}
+  .meta b{display:block;font-size:calc(var(--body-size) + 0px);text-transform:uppercase;color:#6b5b42;letter-spacing:.35px}
+  .mechanics-mini{font-size:calc(var(--body-size) + 0px);line-height:1.18;overflow:visible;flex:1;min-height:0;margin-top:3px;overflow-wrap:anywhere}
+  .mechanics-mini strong{font-size:calc(var(--body-size) + 1px)}
+  .serial{
+    background:#fff;border:1px solid #cabd9c;border-radius:4px;padding:3px 5px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:var(--serial-size);font-weight:900;white-space:normal;overflow-wrap:anywhere;line-height:1.05
+  }
+  .right-top{display:flex;justify-content:space-between;align-items:flex-start;gap:4px;flex-wrap:wrap}
+  .status-pill{font-size:calc(var(--body-size) + 0px);background:var(--v-accent);color:#fff;padding:3px 5px;border-radius:999px;font-weight:900;white-space:nowrap}
+  .uses{display:grid;grid-template-columns:repeat(2,1fr);gap:4px;margin-top:4px;flex:1;align-content:center}
+  .usebox{
+    border:1px solid #8b7650;background:rgba(255,255,255,.6);padding:3px;border-radius:3px;min-height:23px
+  }
+  .usebox .uhead{font-size:calc(var(--body-size) + 0px);font-weight:1000;color:var(--v-deep);text-transform:uppercase}
+  .usebox .line{border-bottom:1px solid #8f836f;height:7px;margin-top:2px}
+  .usebox small{font-size:calc(var(--body-size) - 1px);color:#5f564b}
+  .oneuse{
+    border:2px dashed #8f7951;background:rgba(255,255,255,.55);padding:7px;text-align:center;
+    margin-top:6px;flex:1;display:flex;flex-direction:column;justify-content:center;border-radius:4px
+  }
+  .oneuse b{font-family:Georgia,serif;font-size:15px;color:var(--v-accent)}
+  .oneuse .redeem-line{height:18px;border-bottom:1px solid #8f836f;margin:8px 12px 3px}
+  .oneuse span{font-size:calc(var(--body-size) + 0px);margin-top:3px;letter-spacing:.3px}
+  .auth{font-size:calc(var(--body-size) + 0px);display:grid;grid-template-columns:1fr 1fr;gap:5px;align-items:end}
+  .auth .sig{border-top:1px solid #74684f;padding-top:2px;text-align:center;min-width:0}
+  .auth .sig b{display:block;white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere}
+  .recipient{font-size:calc(var(--body-size) + 0px);margin-top:4px;padding:3px;border:1px dashed rgba(108,88,52,.45);border-radius:3px}
+  .receipt-validity{
+    margin-top:4px;padding:4px 5px;border:1px dashed rgba(108,88,52,.55);border-radius:3px;
+    background:rgba(255,255,255,.48);font-size:calc(var(--body-size) + 0px);line-height:1.15
+  }
+  .receipt-validity b{display:block;font-size:calc(var(--body-size) + .5px);color:var(--v-deep);margin-bottom:2px}
+  .receipt-validity .receive-line{display:inline-block;min-width:48%;border-bottom:1px solid #7d715f;height:8px;vertical-align:bottom;margin:0 4px}
+  .receipt-validity small{display:block;margin-top:3px;color:#5f564b}
+  .qrbox{width:23px;height:23px;border:1px solid #6f6047;background:
+    linear-gradient(90deg,#222 33%,transparent 33% 66%,#222 66%),
+    linear-gradient(#222 33%,transparent 33% 66%,#222 66%);
+    background-size:7px 7px;opacity:.8;display:none
+  }
+  .qrbox.on{display:block}
+  .logo-row{display:flex;align-items:center;gap:6px}
+  .logo-slot{
+    width:38px;height:26px;border:1px solid rgba(0,0,0,.15);background:#fff;border-radius:4px;
+    display:flex;align-items:center;justify-content:center;overflow:hidden;flex:0 0 auto
+  }
+  .logo-slot img{max-width:100%;max-height:100%;display:block}
+  .logo-empty{font-size:8px;color:#8a7d6b;font-weight:900}
+  .logo-preview{
+    margin-top:8px;border:1px dashed #d1c8bb;border-radius:8px;padding:10px;background:#faf8f3;
+    display:flex;align-items:center;justify-content:center;min-height:64px
+  }
+  .logo-preview img{max-height:46px;max-width:100%}
+  .generated-note{
+    margin-top:12px;padding:10px 12px;background:#fff8e4;border:1px solid #ecd9a4;border-radius:9px;
+    font-size:12px;color:#5c4b23
+  }
+  .history{margin-top:12px}
+  .history h3{font-size:13px;margin:0 0 8px}
+  .history-list{max-height:180px;overflow:auto;border:1px solid #e4ddd3;border-radius:8px}
+  .history-item{
+    display:grid;grid-template-columns:1.7fr .9fr .9fr;gap:8px;padding:8px 10px;border-bottom:1px solid #eee8df;font-size:11px
+  }
+  .history-item:last-child{border-bottom:0}
+  .history-item b{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  .empty{padding:14px;text-align:center;color:#8b8377;font-size:11px}
+  @media (max-width:1180px){
+    .workspace{grid-template-columns:1fr}
+    .controls{position:static;max-height:none}
+    .grid4{grid-template-columns:1fr 1fr}
+  }
+  @media print{
+    body{background:#fff}
+    .topbar,.controls,.preview-head,.generated-note,.history{display:none !important}
+    .workspace,.preview-panel,.canvas-wrap{display:block;padding:0;margin:0;border:0;background:#fff;box-shadow:none}
+    .panel{border:0;box-shadow:none}
+    .paper{box-shadow:none;margin:0;page-break-after:always}
+    .paper:last-child{page-break-after:auto}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">VG</div>
+      <div>
+        <h1>VG SUPPORT — VOUCHER CREATOR</h1>
+        <small>Standalone V7 • Fixed receipt-validity + one-click A4 full-fit presets</small>
+      </div>
+    </div>
+    <div class="top-actions">
+      <button class="btn dark" id="previewBtn">Refresh Preview</button>
+      <button class="btn primary" id="generateBtn">Generate Vouchers</button>
+      <button class="btn" id="printBtn">Print / Save PDF</button>
+    </div>
+  </header>
+
+  <main class="workspace">
+    <aside class="panel controls">
+      <section class="section">
+        <h2>1. Voucher Identity</h2>
+        <div class="grid2">
+          <label>School / Branch
+            <select id="branch">
+              <option value="LPUB">LPU Batangas — Pirates' Cafeteria</option>
+              <option value="LPUL">LPU Lima — Pirates' Cafeteria</option>
+              <option value="ADMU">ADMU — 2GONZ / Blue Cafe</option>
+              <option value="DLSL">DLSL — Food Park</option>
+              <option value="PUP">PUP Manila — Varda Main</option>
+              <option value="MAPUA">Mapúa Davao — Food Hall</option>
+              <option value="STJUDE">St. Jude — Varda Fresh</option>
+              <option value="VARDA">Varda Group — Generic</option>
+            </select>
+          </label>
+          <label>Voucher Type
+            <select id="voucherType">
+              <option>Gift Voucher</option>
+              <option>Meal Voucher</option>
+              <option>Drink Voucher</option>
+              <option>Snack Voucher</option>
+              <option>Food Voucher</option>
+              <option>Special Voucher</option>
+            </select>
+          </label>
+        </div>
+        <label style="margin-top:10px">Custom Voucher Title
+          <input id="voucherTitle" type="text" value="Gift Voucher" />
+        </label>
+      </section>
+
+      <section class="section">
+        <h2>2. Value & Coverage</h2>
+        <div class="grid2">
+          <label>Voucher Worth (₱)
+            <input id="value" type="number" min="0" step="1" value="300" />
+          </label>
+          <label>Applicable To
+            <select id="coverage">
+              <option value="All Varda Products">All Varda Products</option>
+              <option value="Food & Drinks">Food & Drinks</option>
+              <option value="Food Only">Food Only</option>
+              <option value="Drinks Only">Drinks Only</option>
+              <option value="Snacks Only">Snacks Only</option>
+              <option value="Specific Category">Specific Category</option>
+            </select>
+          </label>
+        </div>
+        <label class="checkrow"><input id="showValue" type="checkbox" checked /> Show peso value on voucher</label>
+      </section>
+
+      <section class="section">
+        <h2>3. Redemption & Validity</h2>
+        <div class="grid2">
+          <label>Redemption Type
+            <select id="redemption">
+              <option value="accumulated">Accumulated / Stored Balance</option>
+              <option value="one">One-Time Use</option>
+            </select>
+          </label>
+          <label>Maximum Uses
+            <select id="maxUses">
+              <option>2</option>
+              <option>3</option>
+              <option selected>4</option>
+              <option>5</option>
+              <option>6</option>
+            </select>
+          </label>
+        </div>
+        <div class="grid2" style="margin-top:8px">
+          <label>Validity Mode
+            <select id="validityMode">
+              <option value="fixed" selected>Fixed expiration date</option>
+              <option value="receipt">Valid for X days from customer receipt</option>
+              <option value="none">No expiration</option>
+            </select>
+          </label>
+          <label>Issued / Valid From
+            <input id="validFrom" type="date" />
+          </label>
+        </div>
+        <div class="grid2" style="margin-top:8px">
+          <label id="expiryWrap">Expiration
+            <input id="expiry" type="date" value="2027-05-31" />
+          </label>
+          <label id="receiptDaysWrap" style="display:none">Valid for (days)
+            <input id="validityDays" type="number" min="1" max="365" value="30" />
+          </label>
+        </div>
+        <div class="hint">For X-days validity, the voucher will automatically print a blank DATE RECEIVED / RELEASED line for the cashier.</div>
+      </section>
+
+      <section class="section">
+        <h2>4. Authorized Person</h2>
+        <div class="grid2">
+          <label>Authorized Role
+            <select id="authRole">
+              <option>Regional Head</option>
+              <option>Branch Admin</option>
+              <option>National Admin</option>
+              <option>Authorized Person</option>
+            </select>
+          </label>
+          <label>Printed Name (optional)
+            <input id="authName" type="text" placeholder="Leave blank for handwriting" />
+          </label>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>5. Recipient Details</h2>
+        <label class="checkrow"><input id="recipientOn" type="checkbox" /> Add recipient / event line</label>
+        <div id="recipientFields" style="display:none;margin-top:8px">
+          <div class="grid2">
+            <label>Recipient
+              <input id="recipientName" type="text" placeholder="Name / Organization" />
+            </label>
+            <label>Event / Purpose
+              <input id="eventName" type="text" placeholder="Optional" />
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>6. Quick Design Controls</h2>
+        <div class="hint">Drag the bars with your mouse — same easy feel as the Card Maker controls.</div>
+
+        <div class="control-card">
+          <div class="control-card-title"><span>Quick Scale</span><span>LIVE PREVIEW</span></div>
+          <div class="slider-row"><div class="slider-name">Voucher Size</div><input id="voucherScale" type="range" min="70" max="130" step="1" value="100" /><output id="voucherScaleOut" class="slider-value">100%</output></div>
+          <div class="slider-row"><div class="slider-name">Width</div><input id="widthScale" type="range" min="50" max="160" step="1" value="100" /><output id="widthScaleOut" class="slider-value">100%</output></div>
+          <div class="slider-row"><div class="slider-name">Height</div><input id="heightScale" type="range" min="50" max="160" step="1" value="100" /><output id="heightScaleOut" class="slider-value">100%</output></div>
+          <div class="slider-row"><div class="slider-name">All Text</div><input id="textScale" type="range" min="70" max="160" step="1" value="100" /><output id="textScaleOut" class="slider-value">100%</output></div>
+          <div class="slider-row"><div class="slider-name">Logo Size</div><input id="logoScale" type="range" min="50" max="180" step="1" value="100" /><output id="logoScaleOut" class="slider-value">100%</output></div>
+          <div class="quick-presets"><button type="button" data-vscale="85">Compact</button><button type="button" data-vscale="100">Normal</button><button type="button" data-vscale="115">Large</button></div>
+        </div>
+
+        <div class="control-card">
+          <div class="control-card-title"><span>Adaptive Fit</span><span id="fitStatus">AUTO ON</span></div>
+          <label class="checkrow"><input id="autoFitText" type="checkbox" checked /> Auto-shrink text only when needed</label>
+          <div class="slider-row"><div class="slider-name">Minimum Text</div><input id="minAutoText" type="range" min="40" max="100" step="5" value="50" /><output id="minAutoTextOut" class="slider-value">50%</output></div>
+          <div class="slider-row"><div class="slider-name">Inner Padding</div><input id="innerPadding" type="range" min="2" max="14" step="1" value="7" /><output id="innerPaddingOut" class="slider-value">7px</output></div>
+          <div class="layout-help">Text now wraps downward instead of being cut. If a voucher becomes small, the app automatically reduces text and padding to avoid overlap.</div>
+        </div>
+
+        <div class="control-card">
+          <div class="control-card-title"><span>Section Balance</span><span>DRAG EACH AREA</span></div>
+          <div class="slider-row"><div class="slider-name">Value / Title</div><input id="leftArea" type="range" min="10" max="70" step="1" value="29" /><output id="leftAreaOut" class="slider-value">29%</output></div>
+          <div class="slider-row"><div class="slider-name">Details / Mechanics</div><input id="midArea" type="range" min="10" max="70" step="1" value="39" /><output id="midAreaOut" class="slider-value">39%</output></div>
+          <div class="slider-row"><div class="slider-name">Balance / Sign</div><input id="rightArea" type="range" min="10" max="70" step="1" value="32" /><output id="rightAreaOut" class="slider-value">32%</output></div>
+          <div class="layout-help">On rectangle vouchers these control section widths. On square vouchers they control the three section heights.</div>
+        </div>
+
+        <div class="grid2" style="margin-top:10px">
+          <label>Theme Preset<select id="themePreset"><option value="branch" selected>Use Branch Theme</option><option value="lpu">LPU / Lyceans</option><option value="ateneo">Ateneo</option><option value="mapua">Mapúa</option><option value="pup">PUP</option><option value="stjude">St. Jude</option><option value="warm">Warm Gold</option><option value="cool">Cool Blue</option><option value="emerald">Emerald</option><option value="mono">Monochrome</option><option value="custom">Custom Colors</option></select></label>
+          <label>Design Layout<select id="designLayout"><option value="auto" selected>Adaptive / Auto</option><option value="wide">Wide 3-Section</option><option value="stacked">Square / Stacked</option></select></label>
+        </div>
+
+        <details class="advanced">
+          <summary>Advanced text & color controls</summary>
+          <div class="advanced-body">
+            <div class="grid2" style="margin-bottom:10px">
+              <label>Theme Style<select id="themeDensity"><option value="classic" selected>Classic</option><option value="clean">Clean / Light</option><option value="bold">Bold</option></select></label>
+              <div></div>
+            </div>
+            <div class="grid4">
+              <label>Accent<input id="accentColor" type="color" value="#7a1723" /></label>
+              <label>Accent 2<input id="accent2Color" type="color" value="#c8a24a" /></label>
+              <label>Deep<input id="deepColor" type="color" value="#0f2f4b" /></label>
+              <label>Paper<input id="paperColor" type="color" value="#fbf6ea" /></label>
+            </div>
+            <div class="control-card" style="margin-top:10px">
+              <div class="slider-row"><div class="slider-name">₱ Value</div><input id="valueSize" type="range" min="18" max="60" step="1" value="34" /><output id="valueSizeOut" class="slider-value">34px</output></div>
+              <div class="slider-row"><div class="slider-name">Title</div><input id="titleSize" type="range" min="10" max="30" step="1" value="15" /><output id="titleSizeOut" class="slider-value">15px</output></div>
+              <div class="slider-row"><div class="slider-name">Body</div><input id="bodySize" type="range" min="5" max="12" step="0.5" value="6" /><output id="bodySizeOut" class="slider-value">6px</output></div>
+              <div class="slider-row"><div class="slider-name">Voucher No.</div><input id="serialSize" type="range" min="6" max="14" step="1" value="7" /><output id="serialSizeOut" class="slider-value">7px</output></div>
+            </div>
+          </div>
+        </details>
+      </section>
+
+      <section class="section">
+        <h2>7. Logo</h2>
+        <label>Upload / Change Logo
+          <input id="logoUpload" type="file" accept="image/*" />
+        </label>
+        <div class="inline-actions">
+          <button class="btn small" id="clearLogoBtn" type="button">Clear Logo</button>
+        </div>
+        <label class="checkrow"><input id="showLogo" type="checkbox" checked /> Show uploaded logo on voucher</label>
+        <div class="logo-preview" id="logoPreview">No logo uploaded yet.</div>
+      </section>
+
+      <section class="section">
+        <h2>8. Mechanics</h2>
+        <textarea id="mechanics"></textarea>
+        <div class="inline-actions">
+          <button class="btn small" id="autoMechanicsBtn">Auto-Generate Mechanics</button>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>9. Voucher Number & Batch</h2>
+        <div class="grid3">
+          <label>Quantity
+            <input id="quantity" type="number" min="1" max="500" value="5" />
+          </label>
+          <label>Start Serial
+            <input id="serialStart" type="number" min="1" value="1" />
+          </label>
+          <label>Year
+            <input id="serialYear" type="number" min="2020" max="2100" value="2026" />
+          </label>
+        </div>
+        <label style="margin-top:10px">Serial Prefix
+          <input id="serialPrefix" type="text" value="LPUB-GV" />
+        </label>
+        <div class="hint">Example: <b>LPUB-GV-2026-000001</b>. Standalone V2 stores serial history in this browser only.</div>
+      </section>
+
+      <section class="section">
+        <h2>10. Print Layout — Easy Sliders</h2>
+        <div class="grid2">
+          <label>Paper<select id="paperSize"><option value="A4" selected>A4</option><option value="LETTER">Letter</option><option value="LEGAL">Legal</option></select></label>
+          <label>Size Format Preset<select id="layoutPreset">
+            <option value="classic5" selected>Wide Classic — 5/A4</option>
+            <option value="wide4">Wide Large — 4/A4</option>
+            <option value="eightA4">A4 FULL FIT 8 — 2 × 4</option>
+            <option value="tenA4">A4 FULL FIT 10 — 2 × 5</option>
+            <option value="square4">Square Large — 4/A4</option>
+            <option value="square6">Square Medium — 6/A4</option>
+            <option value="square9">Square Mini — 9/A4</option>
+            <option value="portrait4">Portrait — 4/A4</option>
+            <option value="auto">Auto Fit Current Size</option>
+            <option value="custom">Custom Layout</option>
+          </select></label>
+        </div>
+        <div class="layout-help"><b>ONE-CLICK FULL A4:</b> A4 FIT 8 = 2 columns × 4 rows. A4 FIT 10 = 2 columns × 5 rows. Each button adjusts voucher size, text, gaps, margins, logo scale and layout automatically.</div>
+        <div class="quick-presets" id="layoutQuickPresets">
+          <button type="button" data-layoutpreset="classic5">Wide 5</button>
+          <button type="button" data-layoutpreset="eightA4">A4 FIT 8</button><button type="button" data-layoutpreset="tenA4">A4 FIT 10</button>
+          <button type="button" data-layoutpreset="square4">Square 4</button>
+          <button type="button" data-layoutpreset="square6">Square 6</button>
+          <button type="button" data-layoutpreset="square9">Square 9</button>
+          <button type="button" data-layoutpreset="portrait4">Portrait 4</button><button type="button" id="readyCutBtn">Ready Cut</button>
+        </div>
+        <div class="control-card">
+          <div class="control-card-title"><span>Arrange on Page</span><span id="piecesPerPageLabel">5 PCS / PAGE</span></div>
+          <input id="piecesPerPage" type="hidden" value="5" />
+          <div class="slider-row"><div class="slider-name">Columns</div><input id="columns" type="range" min="1" max="4" step="1" value="1" /><output id="columnsOut" class="slider-value">1</output></div>
+          <div class="slider-row"><div class="slider-name">Rows</div><input id="rows" type="range" min="1" max="12" step="1" value="5" /><output id="rowsOut" class="slider-value">5</output></div>
+          <div class="slider-row"><div class="slider-name">Cut Gap ↔</div><input id="gapX" type="range" min="0" max="15" step="0.5" value="3" /><output id="gapXOut" class="slider-value">3mm</output></div>
+          <div class="slider-row"><div class="slider-name">Cut Gap ↕</div><input id="gapY" type="range" min="0" max="15" step="0.5" value="3" /><output id="gapYOut" class="slider-value">3mm</output></div>
+          <div class="slider-row"><div class="slider-name">Page Margin</div><input id="pageMargin" type="range" min="0" max="25" step="0.5" value="10" /><output id="pageMarginOut" class="slider-value">10mm</output></div>
+        </div>
+        <div class="grid2" style="margin-top:10px">
+          <label>Voucher Base Size<select id="voucherSize">
+            <option value="wide5" selected>Classic Wide — 190 × 50 mm</option>
+            <option value="wide4">Large Wide — 190 × 62 mm</option>
+            <option value="square90">Square Large — 90 × 90 mm</option>
+            <option value="square84">Square Medium — 84 × 84 mm</option>
+            <option value="square58">Square Mini — 58 × 58 mm</option>
+            <option value="portrait">Portrait — 85 × 125 mm</option>
+            <option value="half">Half A4 — 190 × 130 mm</option>
+            <option value="custom">Custom Size</option>
+          </select></label>
+          <div><label>Calculated Layout</label><div class="pieces-chip" id="layoutReadout">1 column × 5 rows</div></div>
+        </div>
+        <div id="customSizeFields" class="control-card" style="display:none">
+          <div class="control-card-title">Custom Voucher Dimensions</div>
+          <div class="slider-row"><div class="slider-name">Width</div><input id="customW" type="range" min="50" max="200" step="1" value="190" /><output id="customWOut" class="slider-value">190mm</output></div>
+          <div class="slider-row"><div class="slider-name">Height</div><input id="customH" type="range" min="30" max="260" step="1" value="50" /><output id="customHOut" class="slider-value">50mm</output></div>
+        </div>
+        <div class="quick-presets"><button class="btn small" type="button" id="autoFitBtn">Auto Fit Layout</button><button class="btn small" type="button" id="resetLayoutBtn">Reset Layout</button></div>
+        <label class="checkrow"><input id="cutGuides" type="checkbox" checked /> Cutting guides / spacing</label>
+        <label class="checkrow"><input id="qrToggle" type="checkbox" /> QR placeholder / verification area</label>
+        <div class="layout-help">Tip: start with a ready preset such as <b>Square 4</b> or <b>Square 6</b>. After that, you can still drag Width, Height, section balance, text size, gaps and margins.</div>
+      </section>
+
+      <section class="section">
+        <h2>11. History</h2>
+        <div class="inline-actions">
+          <button class="btn small" id="loadLastBtn">Load Last Batch</button>
+          <button class="btn small danger" id="clearHistoryBtn">Clear Local History</button>
+        </div>
+      </section>
+    </aside>
+
+    <section class="panel preview-panel">
+      <div class="preview-head">
+        <div>
+          <h2>Print Preview</h2>
+          <div class="hint">Use the ready presets or drag any slider. Text wraps and auto-fits, and square designs automatically stack sections so content does not overlap.</div>
+        </div>
+        <span class="badge" id="pageCountBadge">1 page</span>
+      </div>
+
+      <div class="canvas-wrap">
+        <div id="pages"></div>
+      </div>
+
+      <div class="generated-note" id="generatedNote">
+        Preview mode. Click <b>Generate Vouchers</b> to commit a numbered batch to local history.
+      </div>
+
+      <div class="history">
+        <h3>Recent Generated Batches</h3>
+        <div class="history-list" id="historyList"></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  let logoData = "";
+
+  const branchData = {
+    LPUB:{name:"LPU Batangas — Pirates' Cafeteria", code:"LPUB", palette:["#7a1723","#c8a24a","#0f2f4b","#fbf6ea"]},
+    LPUL:{name:"LPU Lima — Pirates' Cafeteria", code:"LPUL", palette:["#8b1f2d","#d3a93f","#24374f","#fff8ea"]},
+    ADMU:{name:"ADMU — 2GONZ / Blue Cafe", code:"ADMU", palette:["#0b4f8a","#d7b46a","#15324a","#f5fbff"]},
+    DLSL:{name:"DLSL — Food Park", code:"DLSL", palette:["#146a3b","#d1b65d","#1e4a39","#f5fff8"]},
+    PUP:{name:"PUP Manila — Varda Main", code:"PUP", palette:["#7b1e26","#d0a545","#4c2227","#fff7ed"]},
+    MAPUA:{name:"Mapúa Davao — Food Hall", code:"MAPUA", palette:["#a3262d","#d6ad4f","#56323a","#fff7ef"]},
+    STJUDE:{name:"St. Jude — Varda Fresh", code:"STJ", palette:["#2b6a52","#c7a24d","#2e4c45","#f7fff8"]},
+    VARDA:{name:"Varda Group — Generic", code:"VG", palette:["#8e1726","#d1a84b","#4a3225","#fff9ee"]}
+  };
+
+  const typeCode = {
+    "Gift Voucher":"GV","Meal Voucher":"MV","Drink Voucher":"DV","Snack Voucher":"SV","Food Voucher":"FV","Special Voucher":"SPV"
+  };
+
+  const themePresets = {
+    lpu:["#7a1723","#c8a24a","#1d3557","#fbf6ea"],
+    ateneo:["#174a87","#d7b35a","#13314e","#f4f9ff"],
+    mapua:["#a3262d","#d5aa50","#5a2d38","#fff7ef"],
+    pup:["#7b1e26","#d0a545","#4c2227","#fff7ed"],
+    stjude:["#2b6a52","#c7a24d","#2e4c45","#f7fff8"],
+    warm:["#7a1723","#c8a24a","#0f2f4b","#fbf6ea"],
+    cool:["#1f4f82","#6fb0d8","#173049","#f2f8fd"],
+    emerald:["#1f6f5b","#c7b45d","#23443f","#f3fbf8"],
+    mono:["#303030","#9b9b9b","#4b4b4b","#fbfbfb"]
+  };
+
+  function todayISO(){
+    const d=new Date(); const off=d.getTimezoneOffset(); const local=new Date(d.getTime()-off*60000);
+    return local.toISOString().slice(0,10);
+  }
+
+  function prettyDate(iso){
+    if(!iso) return "—";
+    const d=new Date(iso+"T00:00:00");
+    return d.toLocaleDateString("en-PH",{year:"numeric",month:"short",day:"2-digit"}).toUpperCase();
+  }
+
+  function getValidityInfo(){
+    const mode = $("validityMode") ? $("validityMode").value : ($("noExpiry")?.checked ? "none" : "fixed");
+    const days = Number($("validityDays")?.value || 30);
+    if(mode === "none"){
+      return {mode,label:"VALIDITY",short:"NO EXPIRY",sentence:"No expiration."};
+    }
+    if(mode === "receipt"){
+      return {mode,label:"VALID FOR",short:`${days} DAYS FROM DATE RECEIVED`,sentence:`Valid for ${days} days from the date received/released to the customer. Cashier must write the release date on the voucher.`};
+    }
+    return {mode,label:"VALID UNTIL",short:prettyDate($("expiry").value),sentence:`Valid until ${prettyDate($("expiry").value)}.`};
+  }
+
+  function updateValidityUI(){
+    const mode = $("validityMode").value;
+    if($("expiryWrap")) $("expiryWrap").style.display = mode === "fixed" ? "block" : "none";
+    if($("receiptDaysWrap")) $("receiptDaysWrap").style.display = mode === "receipt" ? "block" : "none";
+  }
+
+  function money(n){
+    const x=Number(n||0);
+    return "₱"+x.toLocaleString("en-PH",{maximumFractionDigits:2});
+  }
+
+  function escapeHTML(s){
+    return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[m]));
+  }
+
+  function serialAt(n){
+    const prefix=($("serialPrefix").value || "VG-GV").trim().toUpperCase().replace(/\s+/g,"-");
+    const year=Number($("serialYear").value || new Date().getFullYear());
+    return `${prefix}-${year}-${String(n).padStart(6,"0")}`;
+  }
+
+  function updatePrefix(){
+    const branch=branchData[$("branch").value];
+    const code=typeCode[$("voucherType").value] || "GV";
+    $("serialPrefix").value = `${branch.code}-${code}`;
+  }
+
+  function applyThemePreset(){
+    const preset=$("themePreset").value;
+    let pal;
+    if(preset==="branch") pal = branchData[$("branch").value].palette;
+    else if(preset==="custom") return;
+    else pal = themePresets[preset];
+    if(pal){
+      $("accentColor").value = pal[0];
+      $("accent2Color").value = pal[1];
+      $("deepColor").value = pal[2];
+      $("paperColor").value = pal[3];
+    }
+  }
+
+  function autoMechanics(){
+    const coverage=$("coverage").value;
+    const value=money($("value").value);
+    const branch=branchData[$("branch").value].name;
+    const validity=getValidityInfo();
+    const red=$("redemption").value;
+    let lines=[];
+    lines.push("Present this voucher before payment.");
+    lines.push(`Valid for ${coverage.toLowerCase()} at ${branch}.`);
+    if(red==="one"){
+      lines.push("This voucher is for one-time use only and must be surrendered after redemption.");
+      lines.push(`Voucher value is ${value}. Any unused amount is forfeited unless otherwise approved.`);
+    }else{
+      lines.push(`Voucher value is ${value} and may be used across multiple purchases until the balance is fully consumed.`);
+      lines.push("After each purchase, the cashier must write the remaining balance and sign the voucher.");
+      lines.push("If the purchase exceeds the remaining balance, the difference must be paid separately.");
+    }
+    lines.push("Non-refundable and not convertible to cash.");
+    lines.push("Lost, altered, duplicated, or damaged vouchers may be refused.");
+    lines.push(validity.sentence);
+    $("mechanics").value=lines.map((x,i)=>`${i+1}. ${x}`).join("\n");
+  }
+
+  function useBoxes(){
+    if($("redemption").value==="one"){
+      return `<div class="oneuse"><b>REDEEMED</b><div class="redeem-line"></div><span>CASHIER / DATE / SIGNATURE</span></div>`;
+    }
+    const n=Number($("maxUses").value||4);
+    let html='<div class="uses">';
+    for(let i=1;i<=n;i++){
+      const label=i===n ? "LAST / REMAINING" : `${ordinal(i)} USE`;
+      html+=`<div class="usebox"><div class="uhead">${label}</div><div class="line"></div><small>Remaining / Date / Cashier</small></div>`;
+    }
+    return html+"</div>";
+  }
+
+  function ordinal(n){
+    if(n%100>=11 && n%100<=13) return n+"TH";
+    return n+(n%10===1?"ST":n%10===2?"ND":n%10===3?"RD":"TH");
+  }
+
+  function mechanicMini(){
+    const lines=$("mechanics").value.split(/\n+/).filter(Boolean).slice(0,6);
+    return lines.map(x=>`<div>• ${escapeHTML(x.replace(/^\d+\.\s*/,""))}</div>`).join("");
+  }
+
+  function updateLogoPreview(){
+    const el=$("logoPreview");
+    if(logoData){
+      el.innerHTML = `<img src="${logoData}" alt="Custom logo preview" />`;
+    }else{
+      el.textContent = "No logo uploaded yet.";
+    }
+  }
+
+  function applyPrintSetup(){
+    const p=$("paperSize").value;
+    let w=210,h=297;
+    if(p==="LETTER"){w=215.9;h=279.4}
+    if(p==="LEGAL"){w=215.9;h=355.6}
+    document.documentElement.style.setProperty("--paper-w",w+"mm");
+    document.documentElement.style.setProperty("--paper-h",h+"mm");
+    const pageCss = p==="A4" ? "A4 portrait" : (p==="LETTER" ? "Letter portrait" : "Legal portrait");
+    document.getElementById("dynamicPageStyle").textContent = `@page{size:${pageCss};margin:0}`;
+
+    const margin=Number($("pageMargin").value||10);
+    document.documentElement.style.setProperty("--print-margin",margin+"mm");
+
+    let vw=190,vh=50;
+    const s=$("voucherSize").value;
+    if(s==="wide4"){vw=190;vh=62}
+    if(s==="square90"){vw=90;vh=90}
+    if(s==="square84"){vw=84;vh=84}
+    if(s==="square58"){vw=58;vh=58}
+    if(s==="portrait"){vw=85;vh=125}
+    if(s==="half"){vw=190;vh=130}
+    if(s==="custom"){vw=Number($("customW").value||190);vh=Number($("customH").value||50)}
+    const vScale=Number($("voucherScale").value||100)/100;
+    const wScale=Number($("widthScale").value||100)/100;
+    const hScale=Number($("heightScale").value||100)/100;
+    vw*=vScale*wScale; vh*=vScale*hScale;
+    document.documentElement.style.setProperty("--voucher-w",vw+"mm");
+    document.documentElement.style.setProperty("--voucher-h",vh+"mm");
+    $("customSizeFields").style.display = s==="custom" ? "block":"none";
+
+    document.documentElement.style.setProperty("--gap-x",(Number($("gapX").value||3))+"mm");
+    document.documentElement.style.setProperty("--gap-y",(Number($("gapY").value||3))+"mm");
+    document.documentElement.style.setProperty("--page-cols",Math.max(1,Number($("columns").value||1)));
+  }
+
+  function syncPiecesPerPage(){
+    const cols=Math.max(1,Number($("columns").value||1));
+    const rows=Math.max(1,Number($("rows").value||1));
+    const pieces=cols*rows;
+    $("piecesPerPage").value = pieces;
+    if($("piecesPerPageLabel")) $("piecesPerPageLabel").textContent = `${pieces} PCS / PAGE`;
+    if($("layoutReadout")) $("layoutReadout").textContent = `${cols} column${cols===1?"":"s"} × ${rows} row${rows===1?"":"s"}`;
+  }
+
+  function getVoucherDims(){
+    let vw=190,vh=50;
+    const s=$("voucherSize").value;
+    if(s==="wide4"){vw=190;vh=62}
+    if(s==="square90"){vw=90;vh=90}
+    if(s==="square84"){vw=84;vh=84}
+    if(s==="square58"){vw=58;vh=58}
+    if(s==="portrait"){vw=85;vh=125}
+    if(s==="half"){vw=190;vh=130}
+    if(s==="custom"){vw=Number($("customW").value||190);vh=Number($("customH").value||50)}
+    const sc=Number($("voucherScale").value||100)/100;
+    const wsc=Number($("widthScale").value||100)/100;
+    const hsc=Number($("heightScale").value||100)/100;
+    return {vw:vw*sc*wsc,vh:vh*sc*hsc};
+  }
+
+  function autoFit(){
+    const p=$("paperSize").value;
+    let pw=210,ph=297;
+    if(p==="LETTER"){pw=215.9;ph=279.4}
+    if(p==="LEGAL"){pw=215.9;ph=355.6}
+    const {vw,vh} = getVoucherDims();
+    const margin=Number($("pageMargin").value||10);
+    const gapX=Number($("gapX").value||3);
+    const gapY=Number($("gapY").value||3);
+    const usableW = pw - (margin*2);
+    const usableH = ph - (margin*2);
+    const cols = Math.max(1, Math.floor((usableW + gapX) / (vw + gapX)));
+    const rows = Math.max(1, Math.floor((usableH + gapY) / (vh + gapY)));
+    $("columns").value = cols;
+    $("rows").value = rows;
+    syncPiecesPerPage();
+  }
+
+  function applyReadyCutSpacing(){
+    $("cutGuides").checked = true;
+    if(Number($("gapX").value) < 4) $("gapX").value = 4;
+    if(Number($("gapY").value) < 4) $("gapY").value = 4;
+    if(Number($("pageMargin").value) < 8) $("pageMargin").value = 8;
+    updateSliderLabels();
+  }
+
+  function applyLayoutPreset(){
+    const preset=$("layoutPreset").value;
+    if(preset!=="custom"){
+      $("voucherScale").value=100;
+      $("widthScale").value=100;
+      $("heightScale").value=100;
+    }
+
+    if(preset==="classic5"){
+      $("paperSize").value="A4"; $("voucherSize").value="wide5";
+      $("columns").value=1; $("rows").value=5; $("gapX").value=3; $("gapY").value=3; $("pageMargin").value=10;
+      $("designLayout").value="wide"; $("leftArea").value=29; $("midArea").value=39; $("rightArea").value=32;
+    }else if(preset==="wide4"){
+      $("paperSize").value="A4"; $("voucherSize").value="wide4";
+      $("columns").value=1; $("rows").value=4; $("gapX").value=3; $("gapY").value=4; $("pageMargin").value=10;
+      $("designLayout").value="wide"; $("leftArea").value=28; $("midArea").value=40; $("rightArea").value=32;
+    }else if(preset==="eightA4"){
+      // One-click full A4: 2 columns × 4 rows = 8 vouchers.
+      $("paperSize").value="A4"; $("voucherSize").value="custom";
+      $("customW").value=94.5; $("customH").value=66.5;
+      $("columns").value=2; $("rows").value=4; $("gapX").value=4; $("gapY").value=4; $("pageMargin").value=8;
+      $("designLayout").value="stacked"; $("leftArea").value=22; $("midArea").value=43; $("rightArea").value=35;
+      $("textScale").value=78; $("logoScale").value=78; $("innerPadding").value=5; $("minAutoText").value=40; $("autoFitText").checked=true;
+    }else if(preset==="tenA4"){
+      // One-click full A4: 2 columns × 5 rows = 10 vouchers.
+      $("paperSize").value="A4"; $("voucherSize").value="custom";
+      $("customW").value=94.5; $("customH").value=52.5;
+      $("columns").value=2; $("rows").value=5; $("gapX").value=4; $("gapY").value=4; $("pageMargin").value=8;
+      $("designLayout").value="stacked"; $("leftArea").value=21; $("midArea").value=44; $("rightArea").value=35;
+      $("textScale").value=68; $("logoScale").value=68; $("innerPadding").value=4; $("minAutoText").value=40; $("autoFitText").checked=true;
+    }else if(preset==="square4"){
+      $("paperSize").value="A4"; $("voucherSize").value="square90";
+      $("columns").value=2; $("rows").value=2; $("gapX").value=5; $("gapY").value=5; $("pageMargin").value=10;
+      $("designLayout").value="stacked"; $("leftArea").value=25; $("midArea").value=40; $("rightArea").value=35;
+      $("textScale").value=95;
+    }else if(preset==="square6"){
+      $("paperSize").value="A4"; $("voucherSize").value="square84";
+      $("columns").value=2; $("rows").value=3; $("gapX").value=5; $("gapY").value=5; $("pageMargin").value=10;
+      $("designLayout").value="stacked"; $("leftArea").value=24; $("midArea").value=41; $("rightArea").value=35;
+      $("textScale").value=85;
+    }else if(preset==="square9"){
+      $("paperSize").value="A4"; $("voucherSize").value="square58";
+      $("columns").value=3; $("rows").value=3; $("gapX").value=4; $("gapY").value=5; $("pageMargin").value=10;
+      $("designLayout").value="stacked"; $("leftArea").value=23; $("midArea").value=42; $("rightArea").value=35;
+      $("textScale").value=72;
+      $("minAutoText").value=40;
+    }else if(preset==="portrait4"){
+      $("paperSize").value="A4"; $("voucherSize").value="portrait";
+      $("columns").value=2; $("rows").value=2; $("gapX").value=6; $("gapY").value=7; $("pageMargin").value=10;
+      $("designLayout").value="stacked"; $("leftArea").value=24; $("midArea").value=40; $("rightArea").value=36;
+      $("textScale").value=92;
+    }else if(preset==="auto"){
+      autoFit();
+    }
+
+    applyReadyCutSpacing();
+    syncPiecesPerPage();
+    updateSliderLabels();
+    applyPrintSetup();
+  }
+
+  function voucherHTML(serial){
+    const title=escapeHTML($("voucherTitle").value || $("voucherType").value);
+    const showValue=$("showValue").checked;
+    const val=money($("value").value);
+    const coverage=escapeHTML($("coverage").value);
+    const validity=getValidityInfo();
+    const validityLabel=escapeHTML(validity.label);
+    const validityText=escapeHTML(validity.short);
+    const authRole=escapeHTML($("authRole").value);
+    const authName=escapeHTML($("authName").value || "________________");
+    const recipientOn=$("recipientOn").checked;
+    const rec=escapeHTML($("recipientName").value || "________________");
+    const ev=escapeHTML($("eventName").value || "");
+    const qr=$("qrToggle").checked ? "on":"";
+    const mode=$("redemption").value==="one" ? "ONE-TIME" : "MULTI-USE";
+    const branchName = escapeHTML(branchData[$("branch").value].name);
+    const showLogo = $("showLogo").checked && !!logoData;
+    const logoScale = Number($("logoScale").value||100)/100;
+    const logoW = Math.round(38*logoScale);
+    const logoH = Math.round(26*logoScale);
+    const logoHtml = showLogo
+      ? `<div class="logo-slot" style="width:${logoW}px;height:${logoH}px"><img src="${logoData}" alt="Voucher Logo" /></div>`
+      : `<div class="logo-slot" style="width:${logoW}px;height:${logoH}px"><div class="logo-empty">VG</div></div>`;
+
+    const textScale = Number($("textScale").value||100)/100;
+    const density = $("themeDensity").value || "classic";
+    const paperAdjust = density==="clean" ? "#fffdf8" : $("paperColor").value;
+    const accentAdjust = $("accentColor").value;
+
+    const dims=getVoucherDims();
+    const ratio=dims.vw/Math.max(1,dims.vh);
+    const design=$("designLayout").value || "auto";
+    const layoutClass = design==="stacked" || (design==="auto" && ratio < 1.55) ? "layout-stacked" : "layout-wide";
+    const innerPad = Number($("innerPadding").value||7);
+
+    return `
+      <article class="voucher ${layoutClass}" 
+        data-value-base="${(Number($("valueSize").value||34)*textScale).toFixed(2)}"
+        data-title-base="${(Number($("titleSize").value||15)*textScale).toFixed(2)}"
+        data-body-base="${(Number($("bodySize").value||6)*textScale).toFixed(2)}"
+        data-serial-base="${(Number($("serialSize").value||7)*textScale).toFixed(2)}"
+        data-pad-base="${innerPad}"
+        style="
+        --v-accent:${accentAdjust};
+        --v-accent2:${$("accent2Color").value};
+        --v-deep:${$("deepColor").value};
+        --v-paper:${paperAdjust};
+        --value-size:${(Number($("valueSize").value||34)*textScale).toFixed(2)}px;
+        --title-size:${(Number($("titleSize").value||15)*textScale).toFixed(2)}px;
+        --body-size:${(Number($("bodySize").value||6)*textScale).toFixed(2)}px;
+        --serial-size:${(Number($("serialSize").value||7)*textScale).toFixed(2)}px;
+        --left-fr:${Number($("leftArea").value||29)}fr;
+        --mid-fr:${Number($("midArea").value||39)}fr;
+        --right-fr:${Number($("rightArea").value||32)}fr;
+        --inner-pad-y:${innerPad}px;
+        --inner-pad-x:${Math.max(2,Math.round(innerPad*1.25))}px;
+        ${density==="bold" ? "border-width:3px;" : ""}
+      ">
+        <div class="watermark">VG</div>
+        <section class="v-left">
+          <div class="money">${showValue?escapeHTML(val):"VOUCHER"}</div>
+          <div class="voucher-title">${title}</div>
+          <div class="branch-chip">${branchName}</div>
+        </section>
+        <section class="v-mid">
+          <div class="logo-row">
+            ${logoHtml}
+            <div class="brandline">VARDA GROUP • OFFICIAL VOUCHER</div>
+          </div>
+          <div class="meta">
+            <div><b>Applicable To</b>${coverage}</div>
+            <div><b>${validityLabel}</b>${validityText}</div>
+          </div>
+          ${validity.mode==="receipt"?`<div class="receipt-validity"><b>DATE RECEIVED / RELEASED</b><span class="receive-line"></span><small>CASHIER / DATE / SIGNATURE</small></div>`:""}
+          ${recipientOn?`<div class="recipient"><b>FOR:</b> ${rec}${ev?` &nbsp; • &nbsp; <b>${ev}</b>`:""}</div>`:""}
+          <div class="mechanics-mini"><strong>HOW TO USE / MECHANICS</strong>${mechanicMini()}</div>
+        </section>
+        <section class="v-right">
+          <div class="right-top">
+            <div>
+              <div class="serial">${escapeHTML(serial)}</div>
+              <div style="font-size:calc(var(--body-size) - 1px);margin-top:2px">Voucher No.</div>
+            </div>
+            <div class="status-pill">${mode}</div>
+            <div class="qrbox ${qr}" title="QR placeholder"></div>
+          </div>
+          ${useBoxes()}
+          <div class="auth">
+            <div class="sig"><b>${authName}</b>${authRole}</div>
+            <div class="sig"><b>________________</b>Varda Cashier / Date</div>
+          </div>
+        </section>
+      </article>`;
+  }
+
+  function elementOverflows(el){
+    if(!el) return false;
+    return el.scrollHeight > el.clientHeight + 1 || el.scrollWidth > el.clientWidth + 1;
+  }
+
+  function voucherOverflows(v){
+    if(!v) return false;
+    const checks=[v.querySelector(".v-left"),v.querySelector(".v-mid"),v.querySelector(".v-right"),v.querySelector(".mechanics-mini"),v.querySelector(".right-top"),v.querySelector(".uses"),v.querySelector(".auth")];
+    return checks.some(elementOverflows);
+  }
+
+  function fitOneVoucher(v){
+    const auto=$("autoFitText").checked;
+    v.classList.remove("fit-warning");
+
+    const baseValue=Number(v.dataset.valueBase||34);
+    const baseTitle=Number(v.dataset.titleBase||15);
+    const baseBody=Number(v.dataset.bodyBase||6);
+    const baseSerial=Number(v.dataset.serialBase||7);
+    const basePad=Number(v.dataset.padBase||7);
+
+    // Always reset before checking.
+    v.style.setProperty("--value-size",baseValue+"px");
+    v.style.setProperty("--title-size",baseTitle+"px");
+    v.style.setProperty("--body-size",baseBody+"px");
+    v.style.setProperty("--serial-size",baseSerial+"px");
+    v.style.setProperty("--inner-pad-y",basePad+"px");
+    v.style.setProperty("--inner-pad-x",Math.max(2,Math.round(basePad*1.25))+"px");
+
+    if(!auto) return true;
+
+    const minScale=Math.max(.4,Math.min(1,Number($("minAutoText").value||50)/100));
+    let scale=1;
+    let loops=0;
+
+    while(voucherOverflows(v) && scale > minScale && loops < 30){
+      scale=Math.max(minScale,scale-.04);
+      v.style.setProperty("--value-size",(baseValue*scale).toFixed(2)+"px");
+      v.style.setProperty("--title-size",(baseTitle*scale).toFixed(2)+"px");
+      v.style.setProperty("--body-size",(baseBody*scale).toFixed(2)+"px");
+      v.style.setProperty("--serial-size",(baseSerial*scale).toFixed(2)+"px");
+      loops++;
+    }
+
+    // If text still needs room, reduce only the internal padding.
+    let pad=basePad;
+    while(voucherOverflows(v) && pad>2){
+      pad-=1;
+      v.style.setProperty("--inner-pad-y",pad+"px");
+      v.style.setProperty("--inner-pad-x",Math.max(2,Math.round(pad*1.15))+"px");
+    }
+
+    const ok=!voucherOverflows(v);
+    if(!ok) v.classList.add("fit-warning");
+    return ok;
+  }
+
+  function fitAllVouchers(){
+    const vouchers=[...document.querySelectorAll(".voucher")];
+    let allGood=true;
+    vouchers.forEach(v=>{ if(!fitOneVoucher(v)) allGood=false; });
+    if($("fitStatus")){
+      $("fitStatus").textContent = !$("autoFitText").checked ? "MANUAL" : (allGood ? "FITS ✓" : "MORE SPACE");
+      $("fitStatus").style.color = allGood ? "#3f6d49" : "#9a5d18";
+    }
+    return allGood;
+  }
+
+  function render(commit=false){
+    applyPrintSetup();
+    syncPiecesPerPage();
+    const qty=Math.max(1,Math.min(500,Number($("quantity").value||1)));
+    const start=Math.max(1,Number($("serialStart").value||1));
+    const per=Math.max(1,Number($("piecesPerPage").value||1));
+    const pages=Math.ceil(qty/per);
+    const host=$("pages");
+    host.innerHTML="";
+    let idx=0;
+
+    for(let p=0;p<pages;p++){
+      const paper=document.createElement("div");
+      paper.className="paper";
+      for(let j=0;j<per && idx<qty;j++,idx++){
+        paper.insertAdjacentHTML("beforeend",voucherHTML(serialAt(start+idx)));
+      }
+      host.appendChild(paper);
+    }
+    fitAllVouchers();
+    $("pageCountBadge").textContent=`${pages} page${pages===1?"":"s"} • ${per}/page`;
+    if(commit) commitBatch(qty,start,pages,per);
+  }
+
+  function commitBatch(qty,start,pages,per){
+    const last=start+qty-1;
+    const item={
+      created:new Date().toISOString(),
+      branch:$("branch").value,
+      type:$("voucherType").value,
+      title:$("voucherTitle").value,
+      value:Number($("value").value||0),
+      coverage:$("coverage").value,
+      redemption:$("redemption").value,
+      maxUses:Number($("maxUses").value||4),
+      validityMode:$("validityMode").value,
+      validityDays:Number($("validityDays").value||30),
+      expiry:$("expiry").value,
+      validFrom:$("validFrom").value,
+      authRole:$("authRole").value,
+      authName:$("authName").value,
+      recipientOn:$("recipientOn").checked,
+      recipientName:$("recipientName").value,
+      eventName:$("eventName").value,
+      mechanics:$("mechanics").value,
+      quantity:qty,
+      serialStart:start,
+      serialEnd:last,
+      serialYear:Number($("serialYear").value),
+      serialPrefix:$("serialPrefix").value,
+      paperSize:$("paperSize").value,
+      voucherSize:$("voucherSize").value,
+      customW:Number($("customW").value),
+      customH:Number($("customH").value),
+      cutGuides:$("cutGuides").checked,
+      qrToggle:$("qrToggle").checked,
+      pages:pages,
+      piecesPerPage:per,
+      columns:Number($("columns").value||1),
+      rows:Number($("rows").value||1),
+      gapX:Number($("gapX").value||3),
+      gapY:Number($("gapY").value||3),
+      pageMargin:Number($("pageMargin").value||10),
+      themePreset:$("themePreset").value,
+      accentColor:$("accentColor").value,
+      accent2Color:$("accent2Color").value,
+      deepColor:$("deepColor").value,
+      paperColor:$("paperColor").value,
+      valueSize:Number($("valueSize").value||34),
+      titleSize:Number($("titleSize").value||15),
+      bodySize:Number($("bodySize").value||6),
+      serialSize:Number($("serialSize").value||7),
+      voucherScale:Number($("voucherScale").value||100),
+      widthScale:Number($("widthScale").value||100),
+      heightScale:Number($("heightScale").value||100),
+      textScale:Number($("textScale").value||100),
+      logoScale:Number($("logoScale").value||100),
+      themeDensity:$("themeDensity").value,
+      designLayout:$("designLayout").value,
+      autoFitText:$("autoFitText").checked,
+      minAutoText:Number($("minAutoText").value||50),
+      innerPadding:Number($("innerPadding").value||7),
+      leftArea:Number($("leftArea").value||29),
+      midArea:Number($("midArea").value||39),
+      rightArea:Number($("rightArea").value||32),
+      showLogo:$("showLogo").checked,
+      logoData:logoData
+    };
+    let h=getHistory();
+    h.unshift(item);
+    h=h.slice(0,30);
+    localStorage.setItem("vgVoucherHistory",JSON.stringify(h));
+    localStorage.setItem("vgVoucherLastBatch",JSON.stringify(item));
+    localStorage.setItem("vgVoucherLogo", logoData || "");
+    $("serialStart").value=last+1;
+    $("generatedNote").innerHTML=`Generated <b>${qty}</b> voucher${qty===1?"":"s"}: <b>${serialAt(start)}</b> to <b>${serialAt(last)}</b>. Layout: <b>${per} per page</b> (${Number($("columns").value)} column${Number($("columns").value)===1?"":"s"} × ${Number($("rows").value)} row${Number($("rows").value)===1?"":"s"}).`;
+    renderHistory();
+  }
+
+  function getHistory(){
+    try{return JSON.parse(localStorage.getItem("vgVoucherHistory")||"[]")}catch(e){return[]}
+  }
+
+  function renderHistory(){
+    const h=getHistory();
+    const el=$("historyList");
+    if(!h.length){el.innerHTML='<div class="empty">No generated batches yet.</div>';return}
+    el.innerHTML=h.map(x=>{
+      const dt=new Date(x.created).toLocaleString("en-PH",{dateStyle:"medium",timeStyle:"short"});
+      return `<div class="history-item"><div><b>${escapeHTML(x.serialPrefix)}-${x.serialYear}-${String(x.serialStart).padStart(6,"0")}</b><br>${escapeHTML(branchData[x.branch]?.name||x.branch)}<br>${x.columns||1} col • ${x.rows||1} row • ${x.piecesPerPage||x.quantity} / page</div><div>${x.quantity} pcs<br>${money(x.value)}</div><div>${dt}</div></div>`;
+    }).join("");
+  }
+
+  function loadItem(x){
+    if(!x)return;
+    $("branch").value=x.branch;
+    $("voucherType").value=x.type;
+    $("voucherTitle").value=x.title;
+    $("value").value=x.value;
+    $("coverage").value=x.coverage;
+    $("redemption").value=x.redemption;
+    $("maxUses").value=String(x.maxUses||4);
+    $("validityMode").value=x.validityMode||((x.noExpiry)?"none":"fixed");
+    $("validityDays").value=x.validityDays||30;
+    $("expiry").value=x.expiry||"";
+    $("validFrom").value=x.validFrom||todayISO();
+    $("authRole").value=x.authRole||"Regional Head";
+    $("authName").value=x.authName||"";
+    $("recipientOn").checked=!!x.recipientOn;
+    $("recipientName").value=x.recipientName||"";
+    $("eventName").value=x.eventName||"";
+    $("mechanics").value=x.mechanics||"";
+    $("quantity").value=x.quantity||5;
+    $("serialStart").value=x.serialStart||1;
+    $("serialYear").value=x.serialYear||new Date().getFullYear();
+    $("serialPrefix").value=x.serialPrefix||"VG-GV";
+    $("paperSize").value=x.paperSize||"A4";
+    $("voucherSize").value=x.voucherSize||"wide5";
+    $("customW").value=x.customW||190;
+    $("customH").value=x.customH||50;
+    $("cutGuides").checked=x.cutGuides!==false;
+    $("qrToggle").checked=!!x.qrToggle;
+    $("columns").value=x.columns||1;
+    $("rows").value=x.rows||5;
+    $("gapX").value=x.gapX||3;
+    $("gapY").value=x.gapY||3;
+    $("pageMargin").value=x.pageMargin||10;
+    $("themePreset").value=x.themePreset||"branch";
+    $("accentColor").value=x.accentColor||"#7a1723";
+    $("accent2Color").value=x.accent2Color||"#c8a24a";
+    $("deepColor").value=x.deepColor||"#0f2f4b";
+    $("paperColor").value=x.paperColor||"#fbf6ea";
+    $("valueSize").value=x.valueSize||34;
+    $("titleSize").value=x.titleSize||15;
+    $("bodySize").value=x.bodySize||6;
+    $("serialSize").value=x.serialSize||7;
+    $("voucherScale").value=x.voucherScale||100;
+    $("widthScale").value=x.widthScale||100;
+    $("heightScale").value=x.heightScale||100;
+    $("textScale").value=x.textScale||100;
+    $("logoScale").value=x.logoScale||100;
+    $("themeDensity").value=x.themeDensity||"classic";
+    $("designLayout").value=x.designLayout||"auto";
+    $("autoFitText").checked=x.autoFitText!==false;
+    $("minAutoText").value=x.minAutoText||50;
+    $("innerPadding").value=x.innerPadding||7;
+    $("leftArea").value=x.leftArea||29;
+    $("midArea").value=x.midArea||39;
+    $("rightArea").value=x.rightArea||32;
+    $("showLogo").checked=x.showLogo!==false;
+    logoData = x.logoData || localStorage.getItem("vgVoucherLogo") || "";
+    $("recipientFields").style.display=$("recipientOn").checked?"block":"none";
+    $("maxUses").disabled=$("redemption").value==="one";
+    updateValidityUI();
+    updateLogoPreview();
+    updateSliderLabels();
+    syncPiecesPerPage();
+    render(false);
+  }
+
+  function handleLogoUpload(file){
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      logoData = e.target.result || "";
+      localStorage.setItem("vgVoucherLogo", logoData);
+      updateLogoPreview();
+      render(false);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function updateSliderLabels(){
+    const pairs = {
+      voucherScale:["voucherScaleOut","%"], widthScale:["widthScaleOut","%"], heightScale:["heightScaleOut","%"], textScale:["textScaleOut","%"], logoScale:["logoScaleOut","%"],
+      valueSize:["valueSizeOut","px"], titleSize:["titleSizeOut","px"], bodySize:["bodySizeOut","px"], serialSize:["serialSizeOut","px"],
+      columns:["columnsOut",""], rows:["rowsOut",""], gapX:["gapXOut","mm"], gapY:["gapYOut","mm"], pageMargin:["pageMarginOut","mm"],
+      customW:["customWOut","mm"], customH:["customHOut","mm"],
+      minAutoText:["minAutoTextOut","%"], innerPadding:["innerPaddingOut","px"]
+    };
+    Object.entries(pairs).forEach(([id,[out,suffix]])=>{ if($(id) && $(out)) $(out).textContent = `${$(id).value}${suffix}`; });
+
+    const a=Number($("leftArea").value||29), b=Number($("midArea").value||39), c=Number($("rightArea").value||32);
+    const total=Math.max(1,a+b+c);
+    if($("leftAreaOut")) $("leftAreaOut").textContent=Math.round(a/total*100)+"%";
+    if($("midAreaOut")) $("midAreaOut").textContent=Math.round(b/total*100)+"%";
+    if($("rightAreaOut")) $("rightAreaOut").textContent=Math.round(c/total*100)+"%";
+
+    syncPiecesPerPage();
+  }
+
+  function resetLayoutFriendly(){
+    $("layoutPreset").value="classic5"; $("voucherScale").value=100; $("widthScale").value=100; $("heightScale").value=100; $("columns").value=1; $("rows").value=5;
+    $("gapX").value=3; $("gapY").value=3; $("pageMargin").value=10; $("paperSize").value="A4"; $("voucherSize").value="wide5";
+    $("designLayout").value="wide"; $("leftArea").value=29; $("midArea").value=39; $("rightArea").value=32; $("textScale").value=100;
+    updateSliderLabels(); applyPrintSetup(); render(false);
+  }
+
+  function wire(){
+    $("validFrom").value=todayISO();
+    $("serialYear").value=new Date().getFullYear();
+    updateValidityUI();
+    logoData = localStorage.getItem("vgVoucherLogo") || "";
+    updateLogoPreview();
+
+    $("branch").addEventListener("change",()=>{updatePrefix();if($("themePreset").value==="branch") applyThemePreset();autoMechanics();render(false)});
+    $("voucherType").addEventListener("change",()=>{$("voucherTitle").value=$("voucherType").value;updatePrefix();render(false)});
+    $("coverage").addEventListener("change",()=>{autoMechanics();render(false)});
+    $("value").addEventListener("input",()=>{autoMechanics();render(false)});
+    $("redemption").addEventListener("change",()=>{$("maxUses").disabled=$("redemption").value==="one";autoMechanics();render(false)});
+    $("validityMode").addEventListener("change",()=>{updateValidityUI();autoMechanics();render(false)});
+    $("expiry").addEventListener("change",()=>{autoMechanics();render(false)});
+    $("validityDays").addEventListener("input",()=>{autoMechanics();render(false)});
+    $("recipientOn").addEventListener("change",()=>{$("recipientFields").style.display=$("recipientOn").checked?"block":"none";render(false)});
+    $("themePreset").addEventListener("change",()=>{applyThemePreset();render(false)});
+    $("voucherSize").addEventListener("change",()=>{applyPrintSetup();render(false)});
+    $("paperSize").addEventListener("change",()=>render(false));
+    $("layoutPreset").addEventListener("change",()=>{applyLayoutPreset();render(false)});
+
+    ["voucherTitle","showValue","maxUses","validFrom","validityDays","authRole","authName","recipientName","eventName","mechanics","quantity","serialStart","serialYear","serialPrefix","accentColor","accent2Color","deepColor","paperColor","valueSize","titleSize","bodySize","serialSize","voucherScale","widthScale","heightScale","textScale","logoScale","themeDensity","designLayout","autoFitText","minAutoText","innerPadding","leftArea","midArea","rightArea","pageMargin","columns","rows","gapX","gapY","customW","customH","cutGuides","qrToggle","showLogo"].forEach(id=>{
+      $(id).addEventListener("input",()=>{
+        updateSliderLabels();
+        if(id==="columns" || id==="rows") syncPiecesPerPage();
+        if(id==="pageMargin" || id==="gapX" || id==="gapY" || id==="customW" || id==="customH" || id==="voucherScale" || id==="widthScale" || id==="heightScale") applyPrintSetup();
+        render(false);
+      });
+      $(id).addEventListener("change",()=>{
+        updateSliderLabels();
+        if(id==="columns" || id==="rows") syncPiecesPerPage();
+        if(id==="pageMargin" || id==="gapX" || id==="gapY" || id==="customW" || id==="customH" || id==="voucherScale" || id==="widthScale" || id==="heightScale") applyPrintSetup();
+        render(false);
+      });
+    });
+
+    document.querySelectorAll("[data-vscale]").forEach(btn=>{ btn.addEventListener("click",()=>{ $("voucherScale").value=btn.dataset.vscale; updateSliderLabels(); applyPrintSetup(); render(false); }); });
+
+    document.querySelectorAll("[data-layoutpreset]").forEach(btn=>{
+      btn.addEventListener("click",()=>{
+        $("layoutPreset").value=btn.dataset.layoutpreset;
+        applyLayoutPreset();
+        render(false);
+      });
+    });
+    $("autoFitBtn").addEventListener("click",()=>{ $("layoutPreset").value="auto"; autoFit(); applyReadyCutSpacing(); updateSliderLabels(); applyPrintSetup(); render(false); });
+    $("resetLayoutBtn").addEventListener("click",resetLayoutFriendly);
+    $("readyCutBtn").addEventListener("click",()=>{applyReadyCutSpacing(); applyPrintSetup(); render(false);});
+
+    $("logoUpload").addEventListener("change",e=>handleLogoUpload(e.target.files[0]));
+    $("clearLogoBtn").addEventListener("click",()=>{
+      logoData="";
+      localStorage.removeItem("vgVoucherLogo");
+      $("logoUpload").value="";
+      updateLogoPreview();
+      render(false);
+    });
+
+    $("autoMechanicsBtn").addEventListener("click",()=>{autoMechanics();render(false)});
+    $("previewBtn").addEventListener("click",()=>render(false));
+    $("generateBtn").addEventListener("click",()=>render(true));
+    $("printBtn").addEventListener("click",()=>window.print());
+    $("loadLastBtn").addEventListener("click",()=>{
+      try{loadItem(JSON.parse(localStorage.getItem("vgVoucherLastBatch")||"null"))}catch(e){}
+    });
+    $("clearHistoryBtn").addEventListener("click",()=>{
+      if(confirm("Clear generated voucher history from this browser?")){
+        localStorage.removeItem("vgVoucherHistory");
+        localStorage.removeItem("vgVoucherLastBatch");
+        renderHistory();
+      }
+    });
+  }
+
+  wire();
+  updatePrefix();
+  applyThemePreset();
+  autoMechanics();
+  applyLayoutPreset();
+  updateSliderLabels();
+  render(false);
+  renderHistory();
+})();
+</script>
+</body>
+</html>
