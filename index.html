@@ -130,7 +130,7 @@ button{
 
     <div class="card"><div class="icon">🏢</div><h2>Organizational Chart Maker</h2><p>Flexible Varda branch organization chart with direct preview editing, photos, department lines, column control, and Left/Right/Down placement tools.</p><button onclick="openSystem('orgchart','Organizational Chart Maker')">Open Org Chart</button></div>
 
-    <div class="card"><div class="icon">🍽️</div><h2>Varda Group Catering Form</h2><p>Create itemized catering requests with nested breakdowns, automatic costing and analysis, editable previews, school themes, signatures, and print/PDF-ready forms.</p><button onclick="openSystem('catering','Varda Group Catering Form')">Open Varda Group Catering Form</button></div>
+    <div class="card"><div class="icon">🍽️</div><h2>Varda Group Catering Form</h2><p>Create the Catering Form alone, with an automatic SOA, or with both SOA and Acknowledgement of Payment—all from one encoding.</p><button onclick="openSystem('catering','Varda Group Catering Form')">Open Varda Group Catering Form</button></div>
 </div>
 </div>
 
@@ -181,7 +181,7 @@ function openSystem(key,title){
   frame.removeAttribute('srcdoc');
   if(key==='utility') frame.src='utility-v2.html?v=2';
   else if(key==='schedule') frame.src='schedule-v2.html?v=2';
-  else if(key==='catering') frame.src='catering-v1.html?v=2';
+  else if(key==='catering') frame.src='catering-v1.html?v=3';
   else frame.srcdoc=decodeHtml(key);
   window.scrollTo(0,0);
 }
