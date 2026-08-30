@@ -1,0 +1,36 @@
+name: Fix Utility Billing Manual Inputs
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  fix:
+    if: github.event.head_commit.message != 'Remove manual utility billing override options'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Remove manual utility billing options
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('utility-v2.html')
+          s = p.read_text()
+          s = s.replace('<div class="row2"><div><label>Rate / kWh</label><input id="eRate" type="number" step=".01"></div><div><label>Manual kWh Override</label><input id="eManual" type="number" step=".01" placeholder="Optional"></div></div>', '<div><label>Rate / kWh</label><input id="eRate" type="number" step=".01"></div>')
+          s = s.replace('<div class="row2"><div><label>Rate / m³</label><input id="wRate" type="number" step=".01"></div><div><label>Manual m³ Override</label><input id="wManual" type="number" step=".01" placeholder="Optional"></div></div>', '<div><label>Rate / m³</label><input id="wRate" type="number" step=".01"></div>')
+          s = s.replace("function usage(prev,curr,manual){return manual>0?manual:Math.max(0,curr-prev)}", "function usage(prev,curr){return Math.max(0,curr-prev)}")
+          s = s.replace("usage(num('ePrev'),num('eCurr'),num('eManual')),wU=usage(num('wPrev'),num('wCurr'),num('wManual'))", "usage(num('ePrev'),num('eCurr')),wU=usage(num('wPrev'),num('wCurr'))")
+          s = s.replace("$('pEBasis').textContent=num('eManual')>0?'Manual computation':`${num('ePrev')} → ${num('eCurr')}`", "$('pEBasis').textContent=`${num('ePrev')} → ${num('eCurr')}`")
+          s = s.replace("$('pWBasis').textContent=num('wManual')>0?'Manual computation':`${num('wPrev')} → ${num('wCurr')}`", "$('pWBasis').textContent=`${num('wPrev')} → ${num('wCurr')}`")
+          s = s.replace(",'eRate','eManual','wPrev'", ",'eRate','wPrev'")
+          s = s.replace(",'wRate','wManual','otherCharges'", ",'wRate','otherCharges'")
+          p.write_text(s)
+          PY
+      - name: Commit fix
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add utility-v2.html
+          git diff --cached --quiet && exit 0
+          git commit -m "Remove manual utility billing override options"
+          git push
