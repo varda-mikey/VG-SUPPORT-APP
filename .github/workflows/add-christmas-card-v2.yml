@@ -1,0 +1,41 @@
+name: Add Christmas Price Tag Maker card
+on:
+  push:
+    paths:
+      - '.github/workflows/add-christmas-card-v2.yml'
+permissions:
+  contents: write
+jobs:
+  add-card:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add Christmas card and isolated launcher
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          marker = 'VG_CPM_CARD_V2'
+          if marker in s:
+              print('Already patched')
+              raise SystemExit(0)
+          anchor = '    <div class="card"><div class="icon">🏅</div><h2>Athlete Price Tag</h2>'
+          if anchor not in s:
+              raise SystemExit('Price Tag/Athlete card anchor not found; aborting without changes')
+          card = '''    <!-- VG_CPM_CARD_V2: independent Christmas Price Tag Maker -->\n    <div class="card"><div class="icon">🎄</div><h2>Christmas Price Tag Maker</h2><p>Create festive Christmas-themed food and product price tags.</p><button onclick="openChristmasPriceTag()">Open Christmas Price Tag Maker</button></div>\n'''
+          s = s.replace(anchor, card + anchor, 1)
+          bridge = '''<script id="vg-cpm-launch-v2">\nfunction openChristmasPriceTag(){\n  var shell=document.getElementById('toolShell');\n  var frame=document.getElementById('toolFrame');\n  var title=document.getElementById('toolTitle');\n  if(!shell || !frame){ window.location.href='christmas-price-v1.html'; return; }\n  document.body.classList.add('toolMode');\n  if(title) title.textContent='Christmas Price Tag Maker';\n  frame.removeAttribute('srcdoc');\n  frame.src='christmas-price-v1.html';\n}\n</script>\n'''
+          end = s.lower().rfind('</body>')
+          if end < 0:
+              raise SystemExit('No </body> marker; aborting without changes')
+          s = s[:end] + bridge + s[end:]
+          p.write_text(s, encoding='utf-8')
+      - name: Commit index change and remove one-time workflow
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git rm .github/workflows/add-christmas-card-v2.yml
+          git commit -m 'Add Christmas Price Tag Maker card'
+          git push
