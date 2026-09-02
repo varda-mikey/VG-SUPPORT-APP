@@ -1,0 +1,38 @@
+name: Share Menu Maker catalog
+on:
+  push:
+    branches: [main]
+    paths: [index.html]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  catalog:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract public food data
+        run: |
+          python - <<'PY'
+          import base64,json,re
+          from pathlib import Path
+          source=Path('index.html').read_text()
+          encoded=re.search(r'menu:"([A-Za-z0-9+/=]+)"',source)
+          if not encoded: raise SystemExit('Menu Maker not found')
+          menu=base64.b64decode(encoded[1]).decode()
+          match=re.search(r'let MENU_DB = (\[.*?\]);',menu,re.S)
+          if not match: raise SystemExit('Master menu not found')
+          data=json.loads(match[1])
+          fields=['menu','category','serving','calories','allergens']
+          if not data or not all(all(isinstance(row.get(k),str) for k in fields) for row in data):
+              raise SystemExit('Invalid menu data')
+          Path('menu-catalog.json').write_text(json.dumps([{k:row[k] for k in fields} for row in data],ensure_ascii=False))
+          PY
+      - name: Save shared catalog
+        run: |
+          git add menu-catalog.json
+          if git diff --cached --quiet; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Refresh public catering menu from Menu Maker"
+          git push
