@@ -116,7 +116,7 @@ button{
   <div class="menuGrid">
     <div class="card"><div class="icon">🏷️</div><h2>Price Tag Maker</h2><p>Automatic name + grams calories that work offline, Weekly Menu master + local food rules, automatic allergens, optional USDA enhance, and Student Meal eligibility/inverted promo tags.</p><button onclick="openSystem('price','Price Tag Maker')">Open Price Tag Maker</button></div>
     <!-- VG_CPM_CARD_V2: independent Christmas Price Tag Maker -->
-    <div class="card"><div class="icon">🎄</div><h2>Christmas Price Tag Maker</h2><p>Create festive Christmas-themed food and product price tags.</p><button onclick="openChristmasPriceTag()">Open Christmas Price Tag Maker</button></div>
+    <div class="card"><div class="icon">🎄</div><h2>Christmas Price Tag Maker</h2><p>All Price Tag Maker tools with Christmas colors, decorations, and a greeting. Bulk entry, auto nutrition, Student Meal controls, and print-ready sheets.</p><button onclick="openChristmasPriceTag()">Open Christmas Price Tag Maker</button></div>
     <div class="card"><div class="icon">🏅</div><h2>Athlete Price Tag</h2><p>Blue athlete meal price tag format with editable text, replaceable logo/image, calories, allergen, and price.</p><button onclick="openSystem('athlete','Athlete Price Tag Maker')">Open Athlete Price Tag</button></div>
     <div class="card"><div class="icon">🗓️</div><h2>FSQA Tag Maker</h2><p>Consume Before and Produced/Delivery Date tags for FSQA labeling.</p><button onclick="openSystem('fsqa','FSQA Tag Maker')">Open FSQA Tag Maker</button></div>
     <div class="card"><div class="icon">🪪</div><h2>Varda ID Maker</h2><p>Employee, Tenant Partner, and Partner ID maker with front/back print.</p><button onclick="openSystem('id','Varda ID Maker')">Open Varda ID Maker</button></div>
@@ -211,17 +211,16 @@ document.getElementById('loginForm').addEventListener('submit',e=>{
 });
 if(sessionStorage.getItem('VG_APP_SUPPORT_LOGIN')==='YES')unlock();
 </script>
-<script id="vg-cpm-menu-entry-v1">(function(){'use strict';var URL="christmas-price-v1.html";function launch(){var f=document.getElementById("toolFrame")||document.querySelector("iframe.toolFrame")||document.querySelector("iframe[id*=tool]")||document.querySelector("iframe[srcdoc]");if(f){try{f.removeAttribute("srcdoc")}catch(e){}var b=document.body;b.classList.add("toolMode");var t=document.getElementById("toolTitle");if(t)t.textContent="Christmas Price Tag Maker";f.src=URL;f.style.display="block"}else location.href=URL}function add(){if(document.querySelector("[data-vg-cpm-entry=1]"))return true;var a=document.querySelectorAll("button,a,[role=button],div"),s=null;for(var i=0;i<a.length;i++){var t=(a[i].textContent||"").replace(/\s+/g," ").trim();if(/Price Tag Maker/i.test(t)&&!/Christmas/i.test(t)){s=a[i];break}}if(!s)return false;var c=s.cloneNode(true);c.setAttribute("data-vg-cpm-entry","1");c.removeAttribute("id");c.removeAttribute("href");c.removeAttribute("onclick");c.removeAttribute("data-system");c.removeAttribute("data-tool");c.removeAttribute("data-key");c.innerHTML="<div style="font:inherit">🎄 Christmas Price Tag Maker</div><small style="display:block;margin-top:4px;opacity:.75">Create festive Christmas-themed food and product price tags.</small>";c.addEventListener("click",function(e){e.preventDefault();e.stopPropagation();launch()},true);s.parentNode.insertBefore(c,s.nextSibling);return true}function boot(){if(add())return;var n=0,t=setInterval(function(){if(add()||++n>30)clearInterval(t)},300);try{new MutationObserver(add).observe(document.body,{childList:true,subtree:true})}catch(e){}}if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot);else boot()})();</script>
 <script id="vg-cpm-launch-v2">
 function openChristmasPriceTag(){
   var shell=document.getElementById('toolShell');
   var frame=document.getElementById('toolFrame');
   var title=document.getElementById('toolTitle');
-  if(!shell || !frame){ window.location.href='christmas-price-v1.html'; return; }
+  if(!shell || !frame){ window.location.href='christmas-price-v1.html?v=2'; return; }
   document.body.classList.add('toolMode');
   if(title) title.textContent='Christmas Price Tag Maker';
   frame.removeAttribute('srcdoc');
-  frame.src='christmas-price-v1.html';
+  frame.src='christmas-price-v1.html?v=2';
 }
 </script>
 </body>
