@@ -7,13 +7,18 @@ const scripts = [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/g)].map(m
 scripts.forEach((script, i) => new vm.Script(script, { filename: `appraisal-script-${i}` }));
 const ctx = {};
 vm.createContext(ctx);
-vm.runInContext(scripts[0] + '\nthis.model = {CRITERIA,POSITION_TEMPLATES,BANDS,calculate,bandFor,balanceWeights,moneyResult,routeFor,sixMonths,assessDecision};', ctx);
-const { CRITERIA, POSITION_TEMPLATES, calculate, bandFor, balanceWeights, moneyResult, sixMonths, assessDecision, routeFor } = ctx.model;
+vm.runInContext(scripts[0] + '\nthis.model = {CRITERIA,POSITION_TEMPLATES,JOB_SUMMARIES,BANDS,calculate,bandFor,balanceWeights,moneyResult,routeFor,sixMonths,assessDecision};', ctx);
+const { CRITERIA, POSITION_TEMPLATES, JOB_SUMMARIES, calculate, bandFor, balanceWeights, moneyResult, sixMonths, assessDecision, routeFor } = ctx.model;
 assert.equal(CRITERIA.reduce((s, [, w]) => s + w, 0), 100);
 assert.equal(Object.keys(POSITION_TEMPLATES).length,19);
 for (const [position, weights] of Object.entries(POSITION_TEMPLATES)) {
   assert.equal(weights.length,10,position);
   assert.equal(weights.reduce((sum, weight) => sum + weight,0),100,position);
+}
+assert.deepEqual(Object.keys(JOB_SUMMARIES),Object.keys(POSITION_TEMPLATES));
+for (const [position, summary] of Object.entries(JOB_SUMMARIES)) {
+  assert.equal(summary.length,3,position);
+  assert.ok(summary.every(item=>typeof item==='string'&&item.length>20),position);
 }
 assert.equal(POSITION_TEMPLATES['NATIONAL RETAIL HEAD'][0],5);
 assert.equal(POSITION_TEMPLATES['FRONT LEADER'][0],10);
@@ -70,18 +75,26 @@ assert.equal(assessDecision({...data,merit:8,reason:'Documented authorized adjus
 assert.equal(routeFor(6),'Business Unit Head + COO');
 assert.equal(routeFor(8),'COO + President');
 assert.equal(routeFor(10),'President & Founder');
-// Static integration checks: two print pages, no left-side editor, no remote data persistence.
-assert.equal((html.match(/<section class="sheet"/g)||[]).length,2);
+// Static integration checks: three print pages, evidence fields, no remote data persistence.
+assert.equal((html.match(/<section class="sheet"/g)||[]).length,3);
 assert.match(html,/@page\{size:A4 portrait;margin:0\}/);
 assert.match(html,/break-after:page/);
 assert.match(html,/function onEdit[\s\S]*clearApproval\(\)/);
 assert.doesNotMatch(html,/fetch\(|XMLHttpRequest|sendBeacon/);
 assert.match(html,/VG_APPRAISAL_POSITION_TEMPLATES_V1/);
 assert.match(html,/Executive final grade/);
-assert.match(html,/Save edited weights as default/);
+assert.match(html,/Save weights on this device/);
+assert.match(html,/SHARED DEFAULT — SET/);
+assert.match(html,/EDITED — NOT YET SAVED/);
+assert.match(html,/SAVED ON THIS DEVICE/);
+assert.match(html,/id="positiveImpact"/);
+assert.match(html,/id="negativeImpact"/);
+assert.match(html,/criteriaRowsA/);
+assert.match(html,/criteriaRowsB/);
+assert.match(html,/Array\.from\(\{length:10\}/);
 const index=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
 assert.equal((index.match(/<h2>Employee Appraisal<\/h2>/g)||[]).length,1);
-assert.match(index,/else if\(key==='appraisal'\) frame.src='appraisal-v1.html\?v=2'/);
+assert.match(index,/else if\(key==='appraisal'\) frame.src='appraisal-v1.html\?v=3'/);
 const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);
 assert.equal(new Set(ids).size,ids.length);
-console.log('PASS: syntax, position templates, 100% auto-balance, weighted scoring, new matrix boundaries, salary, approval safeguards, print column, and two-page integration.');
+console.log('PASS: syntax, position templates, job summaries, 100% auto-balance, weighted scoring, matrix boundaries, evidence remarks, salary, approval safeguards, print column, and three-page integration.');
