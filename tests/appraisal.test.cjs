@@ -7,17 +7,24 @@ const scripts = [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/g)].map(m
 scripts.forEach((script, i) => new vm.Script(script, { filename: `appraisal-script-${i}` }));
 const ctx = {};
 vm.createContext(ctx);
-vm.runInContext(scripts[0] + '\nthis.model = {CRITERIA,BANDS,calculate,bandFor,moneyResult,routeFor,sixMonths,assessDecision};', ctx);
-const { CRITERIA, calculate, bandFor, moneyResult, sixMonths, assessDecision, routeFor } = ctx.model;
+vm.runInContext(scripts[0] + '\nthis.model = {CRITERIA,POSITION_TEMPLATES,BANDS,calculate,bandFor,balanceWeights,moneyResult,routeFor,sixMonths,assessDecision};', ctx);
+const { CRITERIA, POSITION_TEMPLATES, calculate, bandFor, balanceWeights, moneyResult, sixMonths, assessDecision, routeFor } = ctx.model;
 assert.equal(CRITERIA.reduce((s, [, w]) => s + w, 0), 100);
+assert.equal(Object.keys(POSITION_TEMPLATES).length,19);
+for (const [position, weights] of Object.entries(POSITION_TEMPLATES)) {
+  assert.equal(weights.length,10,position);
+  assert.equal(weights.reduce((sum, weight) => sum + weight,0),100,position);
+}
+assert.equal(POSITION_TEMPLATES['NATIONAL RETAIL HEAD'][0],5);
+assert.equal(POSITION_TEMPLATES['FRONT LEADER'][0],10);
 const sample = calculate([5,4,4,5,5,4,4,4,5,4]);
 assert.equal(sample.total, 87.2);
 assert.equal(sample.band.rate, 6);
-assert.equal(sample.band.rating, 'Outstanding');
+assert.equal(sample.band.rating, 'Very Good');
 assert.equal(sample.rows[9], 4.8);
 assert.equal(sample.rows[1], 12.8);
 assert.equal(sample.total / 2, 43.6);
-for (const [rating, score, name, rate] of [[1,20,'Unsatisfactory',0],[2,40,'Needs Improvement',0],[3,60,'Meets Expectations',0],[4,80,'Exceeds Expectations',2],[5,100,'Outstanding',10]]) {
+for (const [rating, score, name, rate] of [[1,20,'Unsatisfactory',0],[2,40,'Unsatisfactory',0],[3,60,'Unsatisfactory',0],[4,80,'Satisfactory',2],[5,100,'Outstanding',10]]) {
   const result = calculate(Array(10).fill(rating));
   assert.equal(result.total, score);
   assert.equal(result.band.rating, name);
@@ -27,8 +34,19 @@ for (const ratings of [[], Array(10).fill(null), [5,4,4,5,5,4,4,4,5,null], Array
   assert.equal(calculate(ratings).total, null);
   assert.equal(calculate(ratings).band, null);
 }
-for (const [score, rate] of [[20,0],[40,0],[40.2,0],[60,0],[60.2,2],[80,2],[80.2,4],[85,4],[85.2,6],[90,6],[90.2,8],[95,8],[95.2,10],[100,10]]) assert.equal(bandFor(score).rate, rate);
-for (const n of [-1,0,19.9,100.1,Infinity,NaN]) assert.equal(bandFor(n), null);
+for (const [score, name, rate] of [[0,'Unsatisfactory',0],[69.9,'Unsatisfactory',0],[70,'Needs Improvement',0],[74.9,'Needs Improvement',0],[75,'Satisfactory',2],[80.9,'Satisfactory',2],[81,'Good',4],[85.9,'Good',4],[86,'Very Good',6],[90.9,'Very Good',6],[91,'Excellent',8],[95.9,'Excellent',8],[96,'Outstanding',10],[100,'Outstanding',10]]) {
+  assert.equal(bandFor(score).rating,name);
+  assert.equal(bandFor(score).rate,rate);
+}
+for (const n of [-1,100.1,Infinity,NaN]) assert.equal(bandFor(n), null);
+for (let fixedIndex=0;fixedIndex<10;fixedIndex++) {
+  for (const value of [0,5,37,100]) {
+    const balanced=balanceWeights(CRITERIA.map(([,weight])=>weight),fixedIndex,value);
+    assert.equal(balanced.reduce((sum,weight)=>sum+weight,0),100);
+    assert.equal(balanced[fixedIndex],value);
+    assert.ok(balanced.every(Number.isInteger));
+  }
+}
 for (let i=0;i<10;i++) {
   const ratings=Array(10).fill(3); ratings[i]=4;
   assert.ok(Math.abs(calculate(ratings).total-60-CRITERIA[i][1]/5)<1e-9);
@@ -57,10 +75,13 @@ assert.equal((html.match(/<section class="sheet"/g)||[]).length,2);
 assert.match(html,/@page\{size:A4 portrait;margin:0\}/);
 assert.match(html,/break-after:page/);
 assert.match(html,/function onEdit[\s\S]*clearApproval\(\)/);
-assert.doesNotMatch(html,/localStorage|fetch\(|XMLHttpRequest|sendBeacon/);
+assert.doesNotMatch(html,/fetch\(|XMLHttpRequest|sendBeacon/);
+assert.match(html,/VG_APPRAISAL_POSITION_TEMPLATES_V1/);
+assert.match(html,/Executive final grade/);
+assert.match(html,/Save edited weights as default/);
 const index=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
 assert.equal((index.match(/<h2>Employee Appraisal<\/h2>/g)||[]).length,1);
-assert.match(index,/else if\(key==='appraisal'\) frame.src='appraisal-v1.html\?v=1'/);
+assert.match(index,/else if\(key==='appraisal'\) frame.src='appraisal-v1.html\?v=2'/);
 const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);
 assert.equal(new Set(ids).size,ids.length);
-console.log('PASS: syntax, weighted scoring, all rating boundaries, incomplete/invalid ratings, salary, eligibility, approval safeguards, and two-page integration.');
+console.log('PASS: syntax, position templates, 100% auto-balance, weighted scoring, new matrix boundaries, salary, approval safeguards, print column, and two-page integration.');
