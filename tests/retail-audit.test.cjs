@@ -1,0 +1,36 @@
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
+const vm=require('node:vm');
+const html=fs.readFileSync(path.join(__dirname,'..','retail-audit-v1.html'),'utf8');
+const scripts=[...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/g)].map(m=>m[1]);
+assert.equal(scripts.length,1);
+new vm.Script(scripts[0],{filename:'retail-audit-v1.html'});
+const modelScript=scripts[0].replace(/try\{if\(sessionStorage[\s\S]*$/,'')+';this.model={AUDITS,ratingFor};';
+const context={Intl};vm.createContext(context);vm.runInContext(modelScript,context);
+const {AUDITS,ratingFor}=context.model;
+assert.deepEqual(Object.keys(AUDITS),['main','kiosk']);
+assert.equal(AUDITS.main.sections.length,6);
+assert.equal(AUDITS.kiosk.sections.length,5);
+assert.equal(AUDITS.main.sections.reduce((n,s)=>n+s.items.length,0),45);
+assert.equal(AUDITS.kiosk.sections.reduce((n,s)=>n+s.items.length,0),30);
+for(const audit of Object.values(AUDITS))for(const section of audit.sections){
+  assert.ok(section.name.length>5);
+  assert.ok(section.items.every(item=>typeof item[0]==='string'&&item[0].length>15&&[0,1].includes(item[1])));
+}
+assert.equal(ratingFor(95),'Outstanding controls');
+assert.equal(ratingFor(90),'Excellent');
+assert.equal(ratingFor(85),'Very good');
+assert.equal(ratingFor(80),'Good');
+assert.equal(ratingFor(75),'Satisfactory');
+assert.equal(ratingFor(70),'Needs improvement');
+assert.match(ratingFor(69),/Unsatisfactory/);
+for(const required of ['monthSales','operatingDays','dailyAverage','dailyTarget','productionValue','leftoverValue','leftoverPercent','foodCostPercent','inventoryVariance','overallScore','saveJpeg','priorityActions','executiveSummary'])assert.match(html,new RegExp('id="'+required+'"'));
+assert.match(html,/toBlob[\s\S]*image\/jpeg/);
+assert.match(html,/VARDA_RETAIL_AUDIT_V2_/);
+assert.match(html,/sessionStorage\.getItem\('VG_APP_SUPPORT_LOGIN'\)/);
+const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);
+assert.equal(new Set(ids).size,ids.length);
+const index=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
+assert.match(index,/retail-audit-v1\.html\?v=2/);
+console.log('PASS: two retail audit types, 75 checkpoints, scoring bands, business metrics, draft persistence, JPEG export, and index integration.');
