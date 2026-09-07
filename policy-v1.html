@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Varda Policy & V-Points Finder</title>
+<style>
+:root{--maroon:#7a1025;--maroon2:#a61b37;--gold:#d9a62e;--ink:#17212b;--muted:#66727e;--paper:#fff;--bg:#eef2f6;--line:#dce3ea;--minor:#2563eb;--major:#d97706;--critical:#b91c1c}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.45}
+button,input,textarea,select{font:inherit}button{cursor:pointer;border:0;font-weight:900}.top{background:linear-gradient(120deg,#4f0b19,var(--maroon) 55%,#2c0710);color:#fff;padding:18px 22px;border-bottom:5px solid var(--gold)}
+.topInner{max-width:1200px;margin:auto;display:flex;justify-content:space-between;gap:16px;align-items:center}.brand{display:flex;gap:13px;align-items:center}.mark{width:52px;height:52px;border-radius:15px;display:grid;place-items:center;background:linear-gradient(135deg,var(--gold),#f7d778);color:#4f0b19;font-size:18px;font-weight:1000;box-shadow:0 8px 22px #0005}.top h1{font-size:21px;margin:0}.top p{margin:3px 0 0;color:#f4dfe4;font-size:13px;font-weight:700}
+main{max-width:1200px;margin:auto;padding:20px}.finder{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(330px,.92fr);gap:18px;align-items:start}.panel{background:var(--paper);border:1px solid var(--line);border-radius:20px;padding:20px;box-shadow:0 12px 34px rgba(17,24,39,.08)}
+.eyebrow{text-transform:uppercase;letter-spacing:.11em;color:var(--maroon);font-size:12px;font-weight:1000}.panel h2{font-size:23px;line-height:1.2;margin:6px 0 7px}.intro{color:var(--muted);font-size:14px;margin:0 0 17px}.fieldLabel{display:block;font-size:14px;font-weight:900;margin-bottom:7px}.incident{width:100%;min-height:145px;resize:vertical;border:2px solid #cfd8e2;border-radius:14px;padding:14px;outline:none;background:#fbfcfe}.incident:focus{border-color:var(--maroon);box-shadow:0 0 0 4px rgba(122,16,37,.10)}.examples{font-size:12px;color:var(--muted);margin:7px 0 15px}.actions{display:flex;gap:9px;flex-wrap:wrap}.primary{background:linear-gradient(135deg,var(--maroon),var(--maroon2));color:#fff;border-radius:12px;padding:13px 18px;box-shadow:0 7px 16px rgba(122,16,37,.22)}.secondary{background:#f3f5f8;color:#27313b;border:1px solid var(--line);border-radius:12px;padding:12px 15px}.primary:focus-visible,.secondary:focus-visible,.allBtn:focus-visible{outline:3px solid #f7c84b;outline-offset:2px}
+.pointGuide{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:18px}.guide{padding:11px;border-radius:13px;border:1px solid var(--line);background:#fbfcfe}.guide b,.guide span{display:block}.guide b{font-size:13px}.guide span{font-size:12px;color:var(--muted)}.guide.minor{border-top:4px solid var(--minor)}.guide.major{border-top:4px solid var(--major)}.guide.critical{border-top:4px solid var(--critical)}
+.guardrail{margin-top:13px;padding:12px 13px;border:1px solid #f2ce75;border-radius:13px;background:#fff8df;color:#5e4507;font-size:12px;font-weight:750}.resultsEmpty{min-height:350px;display:grid;place-items:center;text-align:center;color:var(--muted);padding:30px}.resultsEmpty .big{font-size:46px;display:block;margin-bottom:8px}.resultHeader{display:flex;gap:12px;align-items:flex-start;justify-content:space-between}.code{display:inline-flex;border-radius:999px;padding:6px 10px;background:#f3e7ea;color:var(--maroon);font-size:12px;font-weight:1000}.severity{display:inline-flex;border-radius:999px;padding:6px 10px;color:#fff;font-size:12px;font-weight:1000}.severity.Minor{background:var(--minor)}.severity.Major{background:var(--major)}.severity.Critical{background:var(--critical)}.matchLabel{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;font-weight:900}.resultTitle{font-size:20px;margin:9px 0 4px}.points{display:flex;align-items:center;gap:9px;margin:13px 0;padding:11px 13px;border-radius:13px;background:#f8fafc;border:1px solid var(--line)}.points strong{font-size:24px;color:var(--maroon)}.points span{font-size:12px;color:var(--muted);font-weight:800}.detailGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.detail{padding:11px;border-radius:12px;background:#f8fafc;border:1px solid #e7ecf1}.detail.wide{grid-column:1/-1}.detail b{display:block;color:#53606c;font-size:11px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}.detail div{font-size:13px}.otherMatches{border-top:1px solid var(--line);margin-top:14px;padding-top:13px}.otherMatches h3{font-size:13px;margin:0 0 8px}.matchChip{display:block;width:100%;text-align:left;border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 11px;margin-top:7px;color:var(--ink)}.matchChip b{color:var(--maroon)}
+.policySection{display:none;margin-top:20px}.policySection.open{display:block}.policyToolbar{display:grid;grid-template-columns:1fr 180px 180px;gap:9px;margin:14px 0}.policyToolbar input,.policyToolbar select{width:100%;border:1px solid #cfd8e2;border-radius:11px;padding:10px;background:#fff}.count{color:var(--muted);font-size:13px;font-weight:800}.tableWrap{overflow:auto;border:1px solid var(--line);border-radius:14px;max-height:65vh}.policyTable{width:100%;border-collapse:collapse;background:#fff;min-width:900px}.policyTable th{position:sticky;top:0;z-index:1;background:#f6f7f9;color:#4b5563;text-transform:uppercase;letter-spacing:.04em;font-size:11px;text-align:left;padding:10px;border-bottom:1px solid var(--line)}.policyTable td{padding:10px;border-bottom:1px solid #edf0f3;vertical-align:top;font-size:13px}.policyTable tr:hover td{background:#fffaf0}.policyTable button{background:none;color:var(--maroon);padding:0;text-align:left}.smallSeverity{font-size:11px;font-weight:1000}.smallSeverity.Minor{color:var(--minor)}.smallSeverity.Major{color:var(--major)}.smallSeverity.Critical{color:var(--critical)}
+.noMatch{padding:24px;text-align:center}.noMatch h3{margin:0 0 5px}.noMatch p{color:var(--muted);font-size:13px}.footerNote{text-align:center;color:#78838e;font-size:11px;padding:18px 10px 26px}
+.mainActions{max-width:1200px;margin:0 auto;padding:13px 20px 0;display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.mainAction{min-height:52px;border-radius:14px;border:2px solid rgba(122,16,37,.18);background:#fff;color:var(--maroon);box-shadow:0 7px 20px rgba(17,24,39,.08);letter-spacing:.02em}.mainAction.active{background:linear-gradient(135deg,var(--maroon),var(--maroon2));color:#fff;border-color:var(--maroon)}
+.workflowSection{display:none}.workflowSection.open{display:block}.formWorkspace{display:grid;grid-template-columns:minmax(330px,.78fr) minmax(520px,1.22fr);gap:18px;align-items:start}.formEditor{position:sticky;top:12px}.formGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.formGrid .full{grid-column:1/-1}.formGrid label{font-size:12px;font-weight:900;color:#4b5563}.formGrid input,.formGrid select,.formGrid textarea{width:100%;margin-top:4px;border:1px solid #cfd8e2;border-radius:9px;padding:9px;background:#fff}.formGrid textarea{min-height:82px;resize:vertical}.printBar{display:flex;gap:8px;align-items:center;justify-content:space-between;margin-bottom:10px}.printBar span{font-size:12px;color:var(--muted);font-weight:800}.printBtn{border-radius:10px;background:var(--maroon);color:#fff;padding:10px 14px}.docStage{background:#cfd5dc;border-radius:18px;padding:20px;overflow:auto}.docPaper{width:210mm;min-height:297mm;margin:auto;background:#fff;color:#111;padding:14mm 15mm;box-shadow:0 12px 36px #17212b33;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.35}.docHead{display:grid;grid-template-columns:22mm 1fr 30mm;align-items:center;border-bottom:3px solid var(--maroon);padding-bottom:5mm;margin-bottom:5mm}.docLogo{width:18mm;height:18mm;border-radius:4mm;background:var(--maroon);color:#fff;display:grid;place-items:center;font-weight:1000;font-size:16px}.docCompany{text-align:center}.docCompany b{display:block;font-size:16px;color:var(--maroon)}.docCompany span{font-size:9px;letter-spacing:.14em}.docRef{text-align:right;font-size:9px}.docTitle{text-align:center;font-size:18px;font-weight:1000;letter-spacing:.06em;margin:0 0 5mm}.docTable{width:100%;border-collapse:collapse;margin-bottom:4mm}.docTable td,.docTable th{border:1px solid #888;padding:2.4mm;vertical-align:top}.docTable th{background:#f2e8ea;color:var(--maroon);text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:.04em}.docSection{margin:4mm 0}.docSection h3{font-size:10px;margin:0 0 2mm;color:var(--maroon);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid #b8b8b8;padding-bottom:1mm}.docText{white-space:pre-wrap;min-height:12mm}.policyBox{border:1.5px solid var(--maroon);background:#fff9f0;padding:3mm;margin:3mm 0}.policyBox b{color:var(--maroon)}.signGrid{display:grid;grid-template-columns:1fr 1fr;gap:18mm;margin-top:13mm}.sign{text-align:center;border-top:1px solid #333;padding-top:2mm}.sign small{display:block;color:#555}.nteLetter{font-size:11.5px;line-height:1.55}.nteLetter p{margin:3mm 0}.explainBox{border:1px solid #888;min-height:45mm;padding:3mm;white-space:pre-wrap}.docFine{font-size:8.5px;color:#555;margin-top:4mm}
+@media(max-width:940px){.formWorkspace{grid-template-columns:1fr}.formEditor{position:static}.docStage{padding:10px}.docPaper{transform-origin:top left}}
+@media(max-width:840px){.finder{grid-template-columns:1fr}.topInner{align-items:flex-start}.policyToolbar{grid-template-columns:1fr}.pointGuide{grid-template-columns:1fr}.detailGrid{grid-template-columns:1fr}.detail.wide{grid-column:auto}main{padding:13px}.panel{padding:16px}.top{padding:14px}.mainActions{padding:10px 13px 0;grid-template-columns:1fr}.formGrid{grid-template-columns:1fr}.formGrid .full{grid-column:auto}.docStage{overflow:auto}.docPaper{margin:0}}
+@media print{body{background:#fff}.top,.mainActions,main>.finder,.policySection,.formEditor,.printBar,.footerNote{display:none!important}.workflowSection{display:none!important}.workflowSection.printing{display:block!important}.workflowSection.printing .formWorkspace{display:block}.workflowSection.printing .docStage{padding:0;background:#fff}.workflowSection.printing .docPaper{display:block!important;width:210mm;min-height:297mm;margin:0;box-shadow:none;padding:12mm 14mm}@page{size:A4;margin:0}}
+</style>
+</head>
+<body>
+<header class="top"><div class="topInner"><div class="brand"><div class="mark">VG</div><div><h1>VARDA POLICY & V-POINTS FINDER</h1><p>Leader reference for policy identification, incident reporting, and due process</p></div></div></div></header>
+<nav class="mainActions" aria-label="Policy actions"><button class="mainAction" id="showAllTop">SHOW ALL POLICY</button><button class="mainAction" id="fileIrBtn">FILE IR</button><button class="mainAction" id="submitNteBtn">SUBMIT NTE</button></nav>
+<main>
+  <section class="finder">
+    <div class="panel inputPanel">
+      <div class="eyebrow">Incident Search</div>
+      <h2>Describe what happened</h2>
+      <p class="intro">Use simple English or Tagalog. The finder will suggest the closest Varda policy based on the incident description.</p>
+      <label class="fieldLabel" for="incident">Incident description</label>
+      <textarea class="incident" id="incident" placeholder="Example: My staff was sleeping during duty and left the station unattended."></textarea>
+      <div class="examples">Try: “staff is sleeping,” “late again,” “no hairnet,” “wrong cash report,” or “food was thawed at room temperature.”</div>
+      <div class="actions"><button class="primary" id="findBtn">Find Matching Policy</button><button class="secondary" id="clearBtn">Clear</button></div>
+      <div class="pointGuide"><div class="guide minor"><b>Minor · 1–4 points</b><span>Low-risk or first-time process lapse</span></div><div class="guide major"><b>Major · 5–14 points</b><span>Operational, customer, or repeated issue</span></div><div class="guide critical"><b>Critical · 15–25 points</b><span>Safety, food, cash, fraud, or serious risk</span></div></div>
+      <div class="guardrail"><b>No Proof, No Point.</b> The result is a policy suggestion—not an automatic final penalty. Check evidence and give the employee a chance to explain, especially for repeated Minor, Major, and Critical cases.</div>
+    </div>
+    <div class="panel resultPanel" id="resultPanel"><div class="resultsEmpty"><div><span class="big">⚖️</span><b>Your suggested policy will appear here.</b><br><span style="font-size:13px">Enter the incident first, then select “Find Matching Policy.”</span></div></div></div>
+  </section>
+
+  <section class="panel policySection" id="policySection">
+    <div class="eyebrow">Complete Policy Reference</div>
+    <h2 style="margin-bottom:4px">All VARDA ACT Policies</h2>
+    <div class="count" id="policyCount">85 policies</div>
+    <div class="policyToolbar"><input id="listSearch" type="search" placeholder="Search ACT code, title, rule, or keyword"><select id="severityFilter"><option value="">All severity levels</option><option>Minor</option><option>Major</option><option>Critical</option></select><select id="departmentFilter"><option value="">All departments</option></select></div>
+    <div class="tableWrap"><table class="policyTable"><thead><tr><th>ACT Code</th><th>Policy</th><th>Department</th><th>Severity</th><th>Points</th><th>Covered Conduct</th></tr></thead><tbody id="policyRows"></tbody></table></div>
+  </section>
+
+  <section class="workflowSection" id="irSection">
+    <div class="formWorkspace">
+      <div class="panel formEditor"><div class="eyebrow">File IR</div><h2>Incident Report Form</h2><p class="intro">Complete the facts, choose the involved policy, then print or save as PDF.</p><div class="formGrid" id="irFields">
+        <label>IR Reference No.<input id="irRef"></label><label>Date Filed<input id="irFiled" type="date"></label>
+        <label class="full">Branch / Location<input id="irBranch" placeholder="Example: LPU Main – Batangas"></label>
+        <label>Employee Involved<input id="irEmployee"></label><label>Position<input id="irPosition"></label>
+        <label>Incident Date<input id="irDate" type="date"></label><label>Incident Time<input id="irTime" type="time"></label>
+        <label class="full">Exact Area / Station<input id="irLocation"></label>
+        <label class="full">VARDA ACT Policy<select id="irPolicy"></select></label>
+        <label class="full">Incident Description / Statement of Facts<textarea id="irDescription" placeholder="Write only the facts: who, what, when, where, and how."></textarea></label>
+        <label class="full">Witness/es<textarea id="irWitness" placeholder="Names and short statement, if any"></textarea></label>
+        <label class="full">Evidence Attached<textarea id="irEvidence" placeholder="Photo, CCTV, DTR, POS record, log, chat, or other proof"></textarea></label>
+        <label class="full">Immediate Action Taken<textarea id="irAction"></textarea></label>
+        <label>Reported By<input id="irReporter"></label><label>Position / Title<input id="irReporterTitle"></label>
+      </div></div>
+      <div><div class="printBar"><span>Live A4 preview</span><button class="printBtn" id="printIrBtn">Print / Save PDF</button></div><div class="docStage"><article class="docPaper" id="irPreview"></article></div></div>
+    </div>
+  </section>
+
+  <section class="workflowSection" id="nteSection">
+    <div class="formWorkspace">
+      <div class="panel formEditor"><div class="eyebrow">Submit NTE</div><h2>Notice to Explain</h2><p class="intro">Prepare the notice from the same incident and policy. Print it for issuance and employee acknowledgment.</p><div class="formGrid" id="nteFields">
+        <label>NTE Reference No.<input id="nteRef"></label><label>Date Issued<input id="nteIssued" type="date"></label>
+        <label>Employee Name<input id="nteEmployee"></label><label>Position<input id="ntePosition"></label>
+        <label class="full">Branch / Location<input id="nteBranch"></label>
+        <label>Incident Date<input id="nteDate" type="date"></label><label>Incident Time<input id="nteTime" type="time"></label>
+        <label class="full">VARDA ACT Policy<select id="ntePolicy"></select></label>
+        <label class="full">Specific Facts / Allegation<textarea id="nteFacts" placeholder="State the specific facts clearly and objectively."></textarea></label>
+        <label>Explanation Due Date<input id="nteDueDate" type="date"></label><label>Explanation Due Time<input id="nteDueTime" type="time"></label>
+        <label>Issued By<input id="nteIssuer"></label><label>Position / Title<input id="nteIssuerTitle"></label>
+      </div></div>
+      <div><div class="printBar"><span>Live A4 preview</span><button class="printBtn" id="printNteBtn">Print / Save PDF</button></div><div class="docStage"><article class="docPaper" id="ntePreview"></article></div></div>
+    </div>
+  </section>
+</main>
+<div class="footerNote">Internal management reference · Varda Group Policy Matrix 2026 · HR/legal review and proper due process remain required</div>
+<script src="policy-data.js?v=1"></script>
+<script>
+const policies=window.VARDA_POLICIES||[];
+const $=id=>document.getElementById(id);
+let selectedPolicyCode='';
+const STOP=new Set('a an ang ano at ay be been being by did do does for from had has have he her hers him his how i in is it its lang mga my ng ni no not of on or our sa she siya staff the their them there they this to was were what when where which who why with worker employee yung'.split(' '));
+const ALIASES={
+  tulog:'sleeping',natutulog:'sleeping',natulog:'sleeping',idl:'idle',tambay:'loafing',gumagala:'loafing',
+  huli:'late',nahuli:'late',tardy:'late',wala:'absence',absent:'absence',awol:'absence',
+  iniwan:'abandon',umalis:'abandon',poste:'station',pwesto:'station',
+  ayaw:'refusal',tumanggi:'refusal',utos:'instruction',sinunod:'follow',
+  bastos:'disrespect',sumigaw:'shouting',sigaw:'shouting',reklamo:'complaint',
+  uniporme:'uniform',hairnet:'hairnet',hugas:'cleaning',madumi:'unclean',dumi:'unclean',
+  panis:'spoiled',bulok:'spoiled',tunaw:'thawing',tinunaw:'thawing',kwarto:'room',
+  resibo:'receipt',pera:'cash',kulang:'missing',sobra:'variance',benta:'sales',
+  peke:'fake',sinungaling:'dishonesty',kasinungalingan:'dishonesty',
+  picture:'photo',larawan:'photo',ebidensya:'evidence',patunay:'proof',
+  sikreto:'confidential',kumalat:'disclosure',password:'credentials',account:'account'
+};
+function normalize(value){return String(value||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim()}
+function terms(value){return normalize(value).split(/\s+/).filter(x=>x.length>1&&!STOP.has(x)).map(x=>ALIASES[x]||x)}
+function haystack(p){return normalize([p.code,p.title,p.rule,p.keywords,p.department,p.evidence,p.action].join(' '))}
+function scorePolicy(p,query){
+  const raw=normalize(query), q=[...new Set(terms(query))], title=normalize(p.title), keys=normalize(p.keywords), rule=normalize(p.rule), all=haystack(p);
+  let score=0;
+  if(raw.length>3&&(title.includes(raw)||keys.includes(raw))) score+=35;
+  q.forEach(t=>{if(title.includes(t))score+=9;if(keys.includes(t))score+=8;if(rule.includes(t))score+=5;else if(all.includes(t))score+=2});
+  const pairs=q.slice(0,-1).map((t,i)=>t+' '+q[i+1]);pairs.forEach(pair=>{if(title.includes(pair)||keys.includes(pair))score+=10;else if(rule.includes(pair))score+=6});
+  return score;
+}
+function findMatches(query){return policies.map(p=>({p,score:scorePolicy(p,query)})).filter(x=>x.score>0).sort((a,b)=>b.score-a.score||a.p.code.localeCompare(b.p.code)).slice(0,4)}
+function detail(label,value,wide=false){return `<div class="detail ${wide?'wide':''}"><b>${label}</b><div>${escapeHtml(value||'—')}</div></div>`}
+function escapeHtml(value){return String(value??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
+function showPolicy(p,alternatives=[]){
+  selectedPolicyCode=p.code;syncPolicySelectors(p.code);
+  $('resultPanel').innerHTML=`<div class="matchLabel">Suggested policy match</div><div class="resultHeader"><div><span class="code">${escapeHtml(p.code)}</span><h2 class="resultTitle">${escapeHtml(p.title)}</h2></div><span class="severity ${p.severity}">${escapeHtml(p.severity)}</span></div><div class="points"><strong>−${escapeHtml(p.points)}</strong><span>SUGGESTED V-POINTS DEMERIT<br>Subject to validation and due process</span></div><div class="detailGrid">${detail('Covered Conduct',p.rule,true)}${detail('Department Owner',p.department)}${detail('Decision / Approval Owner',p.approval)}${detail('Required Evidence',p.evidence,true)}${detail('Due Process',p.dueProcess,true)}${detail('Recommended Corrective Action',p.action,true)}${detail('Manual Basis',p.basis,true)}</div>${alternatives.length?`<div class="otherMatches"><h3>Other possible matches</h3>${alternatives.map(x=>`<button class="matchChip" data-code="${x.p.code}"><b>${x.p.code}</b> · ${escapeHtml(x.p.title)} · ${x.p.severity}</button>`).join('')}</div>`:''}`;
+  $('resultPanel').querySelectorAll('[data-code]').forEach(btn=>btn.addEventListener('click',()=>showPolicy(policies.find(p=>p.code===btn.dataset.code),[])));
+  if(innerWidth<841)$('resultPanel').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function runFinder(){const query=$('incident').value.trim();if(!query){$('incident').focus();return}const matches=findMatches(query);if(!matches.length){$('resultPanel').innerHTML='<div class="noMatch"><h3>No clear policy match found</h3><p>Add more details about what happened, the station involved, and the specific action observed—or review the complete policy list.</p><button class="primary" onclick="toggleAll(true)">View All Policies</button></div>';return}showPolicy(matches[0].p,matches.slice(1))}
+function toggleAll(force){const section=$('policySection');section.classList.toggle('open',force===true?true:undefined);if(section.classList.contains('open')){renderList();section.scrollIntoView({behavior:'smooth',block:'start'})}}
+function renderList(){
+  const q=normalize($('listSearch').value),sev=$('severityFilter').value,dept=$('departmentFilter').value;
+  const rows=policies.filter(p=>(!q||haystack(p).includes(q))&&(!sev||p.severity===sev)&&(!dept||p.department===dept));
+  $('policyCount').textContent=`${rows.length} of ${policies.length} policies shown`;
+  $('policyRows').innerHTML=rows.map(p=>`<tr><td><button data-open="${p.code}">${p.code}</button></td><td><b>${escapeHtml(p.title)}</b></td><td>${escapeHtml(p.department)}</td><td><span class="smallSeverity ${p.severity}">${p.severity}</span></td><td><b>${p.points}</b></td><td>${escapeHtml(p.rule)}</td></tr>`).join('')||'<tr><td colspan="6" style="text-align:center;padding:24px">No policies match these filters.</td></tr>';
+  $('policyRows').querySelectorAll('[data-open]').forEach(btn=>btn.addEventListener('click',()=>{showPolicy(policies.find(p=>p.code===btn.dataset.open),[]);openWorkflow('policy');scrollTo({top:0,behavior:'smooth'})}));
+}
+function localDate(date=new Date()){const shifted=new Date(date.getTime()-date.getTimezoneOffset()*60000);return shifted.toISOString().slice(0,10)}
+function refNo(prefix){const d=new Date(),pad=n=>String(n).padStart(2,'0');return `${prefix}-${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}`}
+function value(id){return $(id)?.value?.trim()||''}
+function formatDate(raw){if(!raw)return '________________';const d=new Date(raw+'T00:00:00');return d.toLocaleDateString('en-PH',{year:'numeric',month:'long',day:'numeric'})}
+function formatTime(raw){if(!raw)return '____________';const [h,m]=raw.split(':').map(Number);return new Date(2000,0,1,h,m).toLocaleTimeString('en-PH',{hour:'numeric',minute:'2-digit'})}
+function policyByCode(code){return policies.find(p=>p.code===code)}
+function policyOptions(){return '<option value="">Choose the involved VARDA ACT policy</option>'+policies.map(p=>`<option value="${p.code}">${p.code} — ${escapeHtml(p.title)} (${p.severity}, ${p.points} pts)</option>`).join('')}
+function syncPolicySelectors(code){
+  if(!code)return;selectedPolicyCode=code;
+  ['irPolicy','ntePolicy'].forEach(id=>{if($(id))$(id).value=code});renderIR();renderNTE();
+}
+function policyPrintBox(code){const p=policyByCode(code);return p?`<div class="policyBox"><b>${escapeHtml(p.code)} — ${escapeHtml(p.title)}</b><br>${escapeHtml(p.rule)}<br><b>Classification:</b> ${p.severity} · Suggested ${p.points}-point demerit<br><b>Required evidence:</b> ${escapeHtml(p.evidence)}<br><b>Due process:</b> ${escapeHtml(p.dueProcess)}</div>`:'<div class="policyBox"><b>No policy selected.</b> Choose the policy involved before printing.</div>'}
+function docHeader(title,ref){return `<div class="docHead"><div class="docLogo">VG</div><div class="docCompany"><b>VARDA GROUP</b><span>PEOPLE MANAGEMENT & OPERATIONS</span></div><div class="docRef"><b>Reference No.</b><br>${escapeHtml(ref||'____________')}</div></div><div class="docTitle">${title}</div>`}
+function renderIR(){
+  if(!$('irPreview'))return;
+  $('irPreview').innerHTML=docHeader('INCIDENT REPORT',value('irRef'))+`<table class="docTable"><tr><th>Date Filed</th><td>${formatDate(value('irFiled'))}</td><th>Branch / Location</th><td>${escapeHtml(value('irBranch')||'________________')}</td></tr><tr><th>Employee Involved</th><td>${escapeHtml(value('irEmployee')||'________________')}</td><th>Position</th><td>${escapeHtml(value('irPosition')||'________________')}</td></tr><tr><th>Incident Date & Time</th><td>${formatDate(value('irDate'))} · ${formatTime(value('irTime'))}</td><th>Exact Area / Station</th><td>${escapeHtml(value('irLocation')||'________________')}</td></tr></table><div class="docSection"><h3>Incident Description / Statement of Facts</h3><div class="docText">${escapeHtml(value('irDescription')||'Write the complete factual account here.')}</div></div><div class="docSection"><h3>Policy Involved</h3>${policyPrintBox(value('irPolicy'))}</div><table class="docTable"><tr><th>Witness/es</th><td>${escapeHtml(value('irWitness')||'None stated')}</td></tr><tr><th>Evidence Attached</th><td>${escapeHtml(value('irEvidence')||'None listed')}</td></tr><tr><th>Immediate Action Taken</th><td>${escapeHtml(value('irAction')||'None stated')}</td></tr></table><div class="signGrid"><div class="sign"><b>${escapeHtml(value('irReporter')||'Reported By')}</b><small>${escapeHtml(value('irReporterTitle')||'Position / Signature / Date')}</small></div><div class="sign"><b>Received / Reviewed By</b><small>Leader / People Management / Date</small></div></div><div class="docFine">This report records an allegation or observed incident. It is not by itself a final finding. Evidence validation, employee statement, appropriate approval, and company due process are required.</div>`;
+}
+function renderNTE(){
+  if(!$('ntePreview'))return;const p=policyByCode(value('ntePolicy'));
+  $('ntePreview').innerHTML=docHeader('NOTICE TO EXPLAIN',value('nteRef'))+`<table class="docTable"><tr><th>To</th><td>${escapeHtml(value('nteEmployee')||'Employee Name')} · ${escapeHtml(value('ntePosition')||'Position')}</td></tr><tr><th>Branch</th><td>${escapeHtml(value('nteBranch')||'________________')}</td></tr><tr><th>Date Issued</th><td>${formatDate(value('nteIssued'))}</td></tr><tr><th>Subject</th><td>Notice to Explain — ${escapeHtml(p?p.code+' '+p.title:'Policy to be selected')}</td></tr></table><div class="nteLetter"><p>Dear <b>${escapeHtml(value('nteEmployee')||'Employee')}</b>,</p><p>You are directed to submit a written explanation regarding the incident described below:</p><div class="docSection"><h3>Specific Facts / Allegation</h3><div class="docText">${escapeHtml(value('nteFacts')||'State the specific facts and circumstances of the reported incident.')}</div></div>${policyPrintBox(value('ntePolicy'))}<p>Please submit your signed written explanation on or before <b>${formatDate(value('nteDueDate'))} at ${formatTime(value('nteDueTime'))}</b>. You may state all relevant facts and attach supporting evidence or identify witnesses for proper evaluation.</p><p>No final conclusion has been made through this notice. Your explanation will be considered together with the available evidence before management makes a decision.</p></div><div class="signGrid"><div class="sign"><b>${escapeHtml(value('nteIssuer')||'Issued By')}</b><small>${escapeHtml(value('nteIssuerTitle')||'Position / Signature / Date')}</small></div><div class="sign"><b>${escapeHtml(value('nteEmployee')||'Received By')}</b><small>Employee Signature / Date / Time</small></div></div><div class="docSection" style="margin-top:10mm"><h3>Employee’s Written Explanation</h3><div class="explainBox"></div></div><div class="signGrid" style="margin-top:9mm"><div class="sign"><b>Employee Signature</b><small>Date</small></div><div class="sign"><b>Receiving Officer</b><small>Date / Time Received</small></div></div>`;
+}
+function copyIncidentToForm(kind){
+  const incident=value('incident');
+  if(kind==='ir'&&incident&&!value('irDescription'))$('irDescription').value=incident;
+  if(kind==='nte'&&incident&&!value('nteFacts'))$('nteFacts').value=incident;
+  if(selectedPolicyCode)syncPolicySelectors(selectedPolicyCode);
+}
+function openWorkflow(kind){
+  document.querySelector('.finder').style.display=kind==='policy'?'grid':'none';
+  $('policySection').classList.toggle('open',kind==='policy');$('irSection').classList.toggle('open',kind==='ir');$('nteSection').classList.toggle('open',kind==='nte');
+  document.querySelectorAll('.mainAction').forEach(b=>b.classList.remove('active'));$(kind==='policy'?'showAllTop':kind==='ir'?'fileIrBtn':'submitNteBtn').classList.add('active');
+  if(kind==='ir'){copyIncidentToForm('ir');renderIR()}if(kind==='nte'){copyIncidentToForm('nte');renderNTE()}scrollTo({top:0,behavior:'smooth'});
+}
+function printDocument(kind){const section=$(kind==='ir'?'irSection':'nteSection');section.classList.add('printing');const cleanup=()=>section.classList.remove('printing');window.addEventListener('afterprint',cleanup,{once:true});window.print();setTimeout(cleanup,1200)}
+function init(){
+  const departments=[...new Set(policies.map(p=>p.department))].sort();$('departmentFilter').innerHTML+=[...departments].map(x=>`<option>${escapeHtml(x)}</option>`).join('');
+  $('irPolicy').innerHTML=policyOptions();$('ntePolicy').innerHTML=policyOptions();
+  $('irRef').value=refNo('IR');$('nteRef').value=refNo('NTE');$('irFiled').value=localDate();$('irDate').value=localDate();$('nteIssued').value=localDate();$('nteDate').value=localDate();
+  $('findBtn').addEventListener('click',runFinder);$('incident').addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter')runFinder()});
+  $('clearBtn').addEventListener('click',()=>{$('incident').value='';$('incident').focus();$('resultPanel').innerHTML='<div class="resultsEmpty"><div><span class="big">⚖️</span><b>Your suggested policy will appear here.</b><br><span style="font-size:13px">Enter the incident first, then select “Find Matching Policy.”</span></div></div>'});
+  $('showAllTop').addEventListener('click',()=>openWorkflow('policy'));$('fileIrBtn').addEventListener('click',()=>openWorkflow('ir'));$('submitNteBtn').addEventListener('click',()=>openWorkflow('nte'));
+  ['listSearch','severityFilter','departmentFilter'].forEach(id=>$(id).addEventListener('input',renderList));
+  $('irFields').addEventListener('input',e=>{if(e.target.id==='irPolicy'){selectedPolicyCode=e.target.value;$('ntePolicy').value=e.target.value}renderIR()});
+  $('nteFields').addEventListener('input',e=>{if(e.target.id==='ntePolicy'){selectedPolicyCode=e.target.value;$('irPolicy').value=e.target.value}renderNTE()});
+  $('printIrBtn').addEventListener('click',()=>printDocument('ir'));$('printNteBtn').addEventListener('click',()=>printDocument('nte'));
+  renderList();renderIR();renderNTE();
+}
+init();
+</script>
+</body>
+</html>
