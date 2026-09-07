@@ -34,6 +34,7 @@ for (const requiredText of ['SHOW ALL POLICY', 'FILE IR', 'SUBMIT NTE', 'INCIDEN
 for (const requiredId of ['irPolicy', 'ntePolicy', 'irPreview', 'ntePreview', 'printIrBtn', 'printNteBtn']) {
   assert.ok(html.includes(`id="${requiredId}"`), `policy tile must include ${requiredId}`);
 }
+assert.ok(html.includes('src="varda-logo.jpg"'), 'policy header and printable forms must use the Varda logo');
 const inlineScripts = [...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi)]
   .map((match) => match[1])
   .filter((script) => script.trim());
