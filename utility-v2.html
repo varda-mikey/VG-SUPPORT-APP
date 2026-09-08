@@ -1,30 +1,1035 @@
-<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>VG Utility Billing & SOA</title>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Varda Group Utility Billing & SOA</title>
 <style>
-:root{--p:#781226;--s:#d5a534;--bg:#eef2f5;--ink:#17212b;--muted:#66727d;--line:#d8dee4;--soft:#fff7e9}*{box-sizing:border-box}html,body{margin:0;background:var(--bg);font-family:Arial,Helvetica,sans-serif;color:var(--ink)}button,input,select,textarea{font:inherit}.app{display:grid;grid-template-columns:400px 1fr;min-height:100vh}.side{background:#fff;border-right:1px solid var(--line);padding:16px;overflow:auto;height:100vh;position:sticky;top:0}.brand{display:flex;gap:10px;align-items:center;margin-bottom:12px}.mark{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--p),var(--s));display:grid;place-items:center;color:#fff;font-weight:900}.brand h1{font-size:18px;margin:0;color:var(--p)}.brand p{margin:2px 0 0;color:var(--muted);font-size:10px}.card{border:1px solid var(--line);border-radius:12px;padding:11px;margin-bottom:10px;background:#fff}.card h3{font-size:10px;letter-spacing:.1em;text-transform:uppercase;margin:0 0 8px;color:#4d5963}label{display:block;font-size:9.5px;font-weight:800;margin:7px 0 4px}input,select,textarea{width:100%;padding:8px;border:1px solid #c9d2d9;border-radius:7px;background:#fff}textarea{min-height:55px}.row2{display:grid;grid-template-columns:1fr 1fr;gap:7px}.actions{display:grid;grid-template-columns:1fr 1fr;gap:7px}.btn{border:0;border-radius:8px;padding:9px;font-weight:900;cursor:pointer;background:var(--p);color:#fff}.btn.soft{background:#edf1f4;color:#27313a}.btn.gold{background:var(--s);color:#2d2514}.hint{font-size:8.5px;color:var(--muted);line-height:1.35;margin-top:5px}.partyList{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}.partyTag{font-size:8px;padding:4px 6px;border-radius:999px;background:#f2f4f6;border:1px solid #dce2e7}.hidden{display:none!important}.main{padding:18px;overflow:auto}.top{max-width:900px;margin:0 auto 8px;display:flex;justify-content:space-between;align-items:center}.chip{font-size:9px;font-weight:900;background:var(--soft);color:var(--p);padding:6px 9px;border-radius:999px}.paper{width:210mm;min-height:297mm;background:#fff;margin:0 auto;padding:11mm 12mm;box-shadow:0 16px 42px rgba(20,35,50,.14);position:relative}.paper:before{content:"";position:absolute;left:0;right:0;top:0;height:7px;background:linear-gradient(90deg,var(--p) 0 77%,var(--s) 77%)}.header{display:grid;grid-template-columns:95px 1fr 190px;gap:12px;align-items:center;border-bottom:2px solid var(--p);padding-bottom:8px}.logo{height:64px;display:grid;place-items:center;font-weight:900;color:var(--p);font-size:18px}.title{text-align:center}.title h1{font-size:23px;margin:0;color:var(--p)}.title p{font-size:9px;margin:3px 0;color:#5b6770}.meta{font-size:8.5px;line-height:1.5;border-left:1px solid #e0d4c5;padding-left:10px}.sectionTitle{background:linear-gradient(90deg,var(--p),#9d2036);color:#fff;padding:6px 9px;font-size:11px;font-weight:900;letter-spacing:.08em;margin-top:9px}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:7px}.box{border:1px solid #d8dee4;border-radius:7px;padding:7px;font-size:8.5px;line-height:1.45}.kv{display:grid;grid-template-columns:125px 1fr;gap:4px}.kv b{color:#3d4650}.billTable{width:100%;border-collapse:collapse;margin-top:7px;font-size:8.2px}.billTable th,.billTable td{border:1px solid #ccd4da;padding:5px}.billTable th{background:var(--p);color:#fff;font-size:7.7px}.billTable td:nth-child(n+3){text-align:right}.totals{width:310px;margin:8px 0 0 auto;border:1px solid #ccd4da}.totalRow{display:flex;justify-content:space-between;padding:6px 8px;font-size:9px;border-bottom:1px solid #e1e5e9}.totalRow:last-child{font-size:13px;font-weight:900;color:var(--p);background:var(--soft);border:0}.payment{margin-top:8px;border:1px solid #d7dee3;border-radius:8px;padding:8px;background:#fbfcfd;font-size:8.5px}.signs{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:28px}.sig{text-align:center;font-size:8px}.line{height:25px;border-bottom:1px solid #222;margin-bottom:3px}.appliance{border:1px solid #d8dee4;border-radius:8px;padding:7px;margin-top:7px}.applianceGrid{display:grid;grid-template-columns:1.3fr .7fr .7fr .7fr auto;gap:5px;align-items:end}.mini{font-size:8px}.remove{border:0;border-radius:6px;padding:7px;background:#f2d7dc;color:#781226;font-weight:900;cursor:pointer}@media(max-width:1000px){.app{grid-template-columns:1fr}.side{position:relative;height:auto}.main{padding:8px}.paper{width:100%;min-height:1120px}}@media print{@page{size:A4 portrait;margin:0}body{background:#fff}.side,.top{display:none!important}.app{display:block}.main{padding:0}.paper{width:210mm;height:297mm;min-height:297mm;box-shadow:none;margin:0;padding:10mm 11mm}}
-</style></head><body>
-<div class="app"><aside class="side"><div class="brand"><div class="mark">VG</div><div><h1>Utility Billing & SOA</h1><p>School • Tenant • Supplier • Partner billing</p></div></div>
-<div class="card"><h3>1. Billing Party</h3><div class="row2"><div><label>Party Type</label><select id="partyType"><option>School</option><option>Tenant</option><option>Supplier</option><option>Partner</option></select></div><div><label>Billing Party</label><select id="partySelect"></select></div></div><label>Add New Billing Party</label><input id="newParty" placeholder="Account / Operating Name"><div class="row2"><input id="newOwner" placeholder="Owner / Contact"><input id="newBrand" placeholder="Brand / Trade Name"></div><div class="row2"><input id="newRef" placeholder="Kiosk / Unit / Reference No."><input id="newContact" placeholder="Contact No. / Email"></div><textarea id="newAddress" placeholder="Service / Billing Address"></textarea><button class="btn gold" id="addParty">+ Add & Save Party</button><div class="hint">Saved parties stay on this device and can be selected for future SOAs.</div><div class="partyList" id="partyTags"></div></div>
-<div class="card"><h3>2. SOA Details</h3><label>SOA No.</label><input id="soaNo"><div class="row2"><div><label>Billing Period From</label><input id="periodFrom" type="date"></div><div><label>Billing Period To</label><input id="periodTo" type="date"></div></div><label>Billing Address / Location</label><textarea id="address"></textarea><label>Account / Unit / Stall</label><input id="accountRef" placeholder="Optional"></div>
-<div class="card"><h3>3. Electricity</h3><label>Computation Basis</label><select id="eBasis"><option value="meter">Through Meter</option><option value="appliance">Manual Appliances Consumption</option></select><div id="meterBox"><div class="row2"><div><label>Previous Reading</label><input id="ePrev" type="number" step=".01"></div><div><label>Current Reading</label><input id="eCurr" type="number" step=".01"></div></div></div><div class="row2"><div><label>Rate / kWh</label><input id="eRate" type="number" step=".01"></div><div><label>Fixed / Adjustment</label><input id="eAdjust" type="number" step=".01" value="0"></div></div><div id="applianceBox" class="hidden"><div class="hint">Add each appliance. kWh = (Watts × Quantity × Hours/Day × Days) ÷ 1000.</div><div id="appliances"></div><button class="btn gold" id="addAppliance" type="button">+ Add Appliance</button></div></div>
-<div class="card"><h3>4. Water</h3><label>Computation Basis</label><select id="wBasis"><option value="meter">Through Meter</option><option value="perLiter">PER LITER</option></select><div id="wMeterBox"><div class="row2"><div><label>Previous Reading</label><input id="wPrev" type="number" step=".01"></div><div><label>Current Reading</label><input id="wCurr" type="number" step=".01"></div></div><div><label>Rate / m³</label><input id="wRate" type="number" step=".01"></div></div><div id="wLiterBox" class="hidden"><div class="row2"><div><label>Water Consumption</label><input id="wManual" type="number" step=".01" placeholder="Enter liters"></div><div><label>Rate / LITER</label><input id="wLiterRate" type="number" step=".0001" placeholder="e.g. 0.05"></div></div><div class="hint">PER LITER computation: LITER × Rate / LITER = Water Charge.</div></div></div>
-<div class="card"><h3>5. Other Charges & Payment</h3><div class="row2"><div><label>Other Charges</label><input id="otherCharges" type="number" step=".01"></div><div><label>Previous Balance</label><input id="prevBalance" type="number" step=".01"></div></div><label>Other Charge Description</label><input id="otherDesc" value="Other Charges"><label>Payment Account / Instructions</label><textarea id="paymentInfo" placeholder="Bank / GCash / payment instructions"></textarea></div>
-<div class="card"><h3>6. Signatories</h3><label>Prepared By</label><input id="preparedBy"><label>Checked By</label><input id="checkedBy"><label>Approved By</label><input id="approvedBy"></div>
-<div class="actions"><button class="btn" onclick="window.print()">Print / Save PDF</button><button class="btn soft" id="saveBtn">Save Work</button><button class="btn soft" id="clearBtn">Clear Form</button><button class="btn gold" id="newSoaBtn">New SOA No.</button></div></aside>
-<main class="main"><div class="top"><b>Live Statement of Account Preview</b><span class="chip" id="partyChip">SCHOOL</span></div><section class="paper"><div class="header"><div class="logo">VARDA<br>GROUP</div><div class="title"><h1>STATEMENT OF ACCOUNT</h1><p>UTILITY BILLING — ELECTRICITY & WATER</p></div><div class="meta"><b>SOA NO.</b><br><span id="pSoaNo"></span><br><b>DATE PREPARED</b><br><span id="pDate"></span><br><b>BILLING PERIOD</b><br><span id="pPeriod"></span></div></div>
-<div class="sectionTitle">BILL TO</div><div class="grid2"><div class="box"><div class="kv"><b>Party Type:</b><span id="pPartyType"></span><b>Billing Party:</b><span id="pParty"></span><b>Account / Unit:</b><span id="pAccount"></span></div></div><div class="box"><b>Billing Address / Location</b><div id="pAddress" style="margin-top:4px;min-height:25px"></div></div></div>
-<div class="sectionTitle">UTILITY COMPUTATION</div><table class="billTable"><thead><tr><th>Utility</th><th>Basis</th><th>Usage</th><th>Rate</th><th>Amount</th></tr></thead><tbody><tr><td><b>Electricity</b></td><td id="pEBasis"></td><td id="pEUsage"></td><td id="pERate"></td><td id="pEAmount"></td></tr><tr><td><b>Water</b></td><td id="pWBasis"></td><td id="pWUsage"></td><td id="pWRate"></td><td id="pWAmount"></td></tr><tr><td><b id="pOtherDesc"></b></td><td colspan="3">Additional billing / adjustments</td><td id="pOtherAmount"></td></tr></tbody></table>
-<div class="totals"><div class="totalRow"><span>Current Utility Charges</span><b id="pCurrent"></b></div><div class="totalRow"><span>Previous Balance</span><b id="pPrev"></b></div><div class="totalRow"><span>TOTAL AMOUNT DUE</span><b id="pTotal"></b></div></div><div class="payment"><b>PAYMENT INSTRUCTIONS / ACCOUNT</b><div id="pPayment" style="margin-top:4px;min-height:25px"></div></div><div class="signs"><div class="sig"><div class="line"></div><b id="pPrepared"></b><br>Prepared By</div><div class="sig"><div class="line"></div><b id="pChecked"></b><br>Checked By</div><div class="sig"><div class="line"></div><b id="pApproved"></b><br>Approved By</div></div></section></main></div>
+:root{
+  --bg:#eef2f5;--paper:#fff;--ink:#17222c;--muted:#66727d;--line:#d8e0e6;
+  --accent:#98172f;--accent2:#701020;--soft:#fff4f6;--green:#08734d;--amber:#976313;
+  --shadow:0 18px 48px rgba(25,38,50,.11)
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Arial,Helvetica,sans-serif}
+button,input,select,textarea{font:inherit}
+.app{display:grid;grid-template-columns:420px minmax(0,1fr);min-height:100vh}
+.side{background:#fff;border-right:1px solid var(--line);padding:20px;max-height:100vh;overflow:auto;position:sticky;top:0}
+.topbrand{display:flex;gap:12px;align-items:center;margin-bottom:16px}
+.brandmark{width:58px;height:58px;border-radius:10px;background:#fff;border:1px solid #eadfe1;display:grid;place-items:center;overflow:hidden;padding:3px}
+.brandmark img{width:100%;height:100%;object-fit:contain}
+.topbrand h1{font-size:17px;margin:0}.topbrand p{margin:4px 0 0;font-size:11px;color:var(--muted)}
+.card{border:1px solid var(--line);border-radius:13px;padding:13px;margin:0 0 12px;background:#fff}
+.card h3{margin:0 0 10px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#4c5964}
+label{display:block;font-size:11px;font-weight:800;margin:9px 0 5px;color:#35414a}
+input,select,textarea{width:100%;padding:9px 10px;border:1px solid #cbd4db;border-radius:8px;background:#fff;color:var(--ink);outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(152,23,47,.08)}
+textarea{resize:vertical;min-height:62px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:9px}.row3{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.hint{font-size:10px;color:var(--muted);line-height:1.45;margin-top:5px}
+.notice{font-size:10px;line-height:1.45;padding:8px 9px;background:#fff8e9;border:1px solid #ecdcb8;border-radius:8px;color:#745416;margin-top:8px}
+.oknotice{background:#edf8f3;border-color:#cce9dc;color:#215d48}
+.typebtn{border:1px solid #cbd4db;background:#fff;border-radius:9px;padding:9px 5px;font-size:10px;font-weight:900;cursor:pointer}
+.typebtn.active{background:var(--soft);color:var(--accent);border-color:var(--accent)}
+.smallbtn{border:0;border-radius:8px;background:#edf1f4;color:#26323c;padding:8px 9px;font-size:10px;font-weight:800;cursor:pointer}
+.danger{background:#fff0f1;color:#971e2c}.primary{background:var(--accent);color:#fff}.dark{background:#26313a;color:#fff}.green{background:#e7f6ef;color:var(--green)}
+.uploadgrid{display:grid;grid-template-columns:64px 1fr;gap:10px;align-items:center}
+.thumb{width:64px;height:64px;border:1px dashed #cbd4db;border-radius:9px;background:#fafbfc;display:grid;place-items:center;text-align:center;font-size:9px;color:#929da6;overflow:hidden}
+.thumb img{max-width:100%;max-height:100%;object-fit:contain}
+.signthumb{height:38px;border:1px dashed #d3d9de;border-radius:7px;margin-top:5px;display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:9px;color:#8b969f}
+.signthumb img{max-width:100%;max-height:36px;object-fit:contain}
+.calc{background:#f7f9fa;border:1px dashed #cbd4db;border-radius:8px;padding:8px 9px;margin-top:8px;font-size:11px}.calc strong{font-size:15px}
+.warn{font-size:10px;color:#a33a23;margin-top:5px}.hidden{display:none!important}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.actions button,.issuebtn{border:0;border-radius:9px;padding:10px;font-weight:900;cursor:pointer}
+.tenant-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}
+.main{padding:24px;overflow:auto}
+.toolbar{max-width:1000px;margin:0 auto 12px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.toolbar h2{margin:0;font-size:14px}.toolbar p{margin:3px 0 0;color:var(--muted);font-size:10px}
+.chip{font-size:9px;font-weight:900;background:var(--soft);color:var(--accent);padding:6px 9px;border-radius:999px}
+.paper{width:100%;max-width:1000px;min-height:1240px;background:#fff;margin:auto;box-shadow:var(--shadow);padding:34px 40px 27px}
+.head{display:flex;justify-content:space-between;align-items:flex-start;gap:22px;padding-bottom:17px;border-bottom:3px solid var(--accent)}
+.org{display:flex;gap:13px;align-items:center}.paperlogo{width:66px;height:66px;border:1px solid #e1e5e8;border-radius:8px;display:grid;place-items:center;overflow:hidden}
+.paperlogo .fallback{width:100%;height:100%;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:900;font-size:20px}
+.paperlogo img{max-width:100%;max-height:100%;object-fit:contain}
+.org h2{margin:0;font-size:23px}.org p{margin:4px 0 0;color:var(--muted);font-size:11px}
+.doc{text-align:right}.doc h1{margin:0;font-size:22px;letter-spacing:.03em}.doc p{margin:5px 0 0;font-size:10px;color:var(--muted)}.doc .num{font-size:12px;color:var(--ink)}
+.forpayment{display:inline-block;margin-top:7px;background:#edf8f3;color:var(--green);padding:5px 8px;border-radius:999px;font-size:9px;font-weight:900;letter-spacing:.05em}
+.grid2{display:grid;grid-template-columns:1.35fr 1fr;gap:16px;margin:18px 0}
+.box{border:1px solid var(--line);border-radius:7px;padding:12px}.boxtitle{font-size:9px;letter-spacing:.12em;text-transform:uppercase;font-weight:900;color:var(--muted);margin-bottom:8px}
+.kv{display:grid;grid-template-columns:132px 1fr;gap:5px 8px;font-size:11px}.k{color:var(--muted)}.v{font-weight:700}
+.sectiontitle{font-size:12px;margin:15px 0 7px}
+table{width:100%;border-collapse:collapse;font-size:11px}th,td{border:1px solid #d7dde2;padding:7px;text-align:right}th{background:#f4f6f8;font-size:9px;text-transform:uppercase;letter-spacing:.04em}
+th:first-child,td:first-child{text-align:left}.totalrow td{font-weight:900;background:#fbfcfd}
+.summary{width:min(425px,100%);margin:17px 0 0 auto;border:1px solid var(--line);border-radius:7px;overflow:hidden}.sumrow{display:flex;justify-content:space-between;padding:9px 12px;border-bottom:1px solid var(--line);font-size:11px}
+.sumrow:last-child{border:0;background:var(--accent);color:#fff;font-size:16px;font-weight:900}
+.paymentgrid{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-top:18px}
+.terms{margin-top:18px;border:1px solid #d7dde2;border-radius:7px;padding:12px;background:#fbfcfd}.terms h4{font-size:9px;letter-spacing:.12em;text-transform:uppercase;margin:0 0 7px;color:#505d68}
+.terms ol{margin:0;padding-left:17px;font-size:9.5px;line-height:1.45;color:#4d5862}.terms li{margin:3px 0}
+.signatures{display:grid;grid-template-columns:repeat(3,1fr);gap:25px;margin-top:52px}.sigbox{text-align:center;font-size:10px}.sigimg{height:54px;display:flex;align-items:flex-end;justify-content:center;margin-bottom:-4px}
+.sigimg img{max-width:150px;max-height:52px;object-fit:contain}.sigline{border-top:1px solid #474f56;padding-top:5px;min-height:39px}.sigline b{display:block;font-size:10px}.sigline span{font-size:9px;color:var(--muted)}
+.footer{display:flex;justify-content:space-between;gap:15px;margin-top:27px;padding-top:10px;border-top:1px solid var(--line);font-size:8.5px;color:#78838c}.mono{font-family:monospace}
+
+
+.water-method-switch{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:9px}
+.watermethodbtn{border:1px solid #cbd4db;background:#fff;border-radius:9px;padding:9px 5px;font-size:9.5px;font-weight:900;cursor:pointer}
+.watermethodbtn.active{background:#eef8f7;border-color:#4f8e84;color:#28695f}
+.water-editor{overflow-x:auto;margin-top:9px}
+.water-editor table{min-width:720px;font-size:10px}
+.water-editor th,.water-editor td{padding:5px}
+.water-editor input{padding:6px 7px;border-radius:6px;font-size:10px}
+.water-editor .activity{min-width:165px}.water-editor .liters{width:90px}.water-editor .uses{width:82px}.water-editor .qty{width:58px}.water-editor .days{width:70px}
+.water-editor button{border:0;border-radius:6px;padding:6px 8px;font-size:9px;font-weight:900;cursor:pointer;background:#fff0f1;color:#971e2c}
+
+.method-switch{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:9px}
+.methodbtn{border:1px solid #cbd4db;background:#fff;border-radius:9px;padding:9px 7px;font-size:10px;font-weight:900;cursor:pointer}
+.methodbtn.active{background:#eef5ff;border-color:#557aa8;color:#2e5e94}
+.factor-guide{background:#f7f9fb;border:1px solid #d9e0e6;border-radius:8px;padding:9px;margin-top:9px}
+.factor-guide b{font-size:10px}.factor-guide div{font-size:9.5px;color:#596671;line-height:1.45;margin-top:3px}
+.load-editor{overflow-x:auto;margin-top:9px}
+.load-editor table{min-width:790px;font-size:10px}
+.load-editor th,.load-editor td{padding:5px}
+.load-editor input,.load-editor select{padding:6px 7px;border-radius:6px;font-size:10px}
+.load-editor .appliance{min-width:145px}.load-editor .watts{width:78px}.load-editor .qty{width:58px}.load-editor .hours{width:75px}.load-editor .factor{width:105px}.load-editor .days{width:70px}
+.load-editor button{border:0;border-radius:6px;padding:6px 8px;font-size:9px;font-weight:900;cursor:pointer;background:#fff0f1;color:#971e2c}
+.editorbar{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}
+.editorbar button{border:0;border-radius:8px;padding:8px 9px;font-size:10px;font-weight:800;cursor:pointer}
+.manual-summary{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}
+.manual-summary div{background:#f7f9fa;border:1px dashed #cbd4db;border-radius:8px;padding:8px;font-size:10px}
+.manual-summary strong{display:block;font-size:14px;margin-top:3px}
+.print-loads{margin-top:10px}
+.print-loads table{font-size:9.5px}
+.print-loads th,.print-loads td{padding:5px}
+.method-note{font-size:9px;color:#5f6c77;margin-top:5px;line-height:1.4}
+
+
+.payment-accounts{margin-top:18px;border:1px solid var(--line);border-radius:8px;padding:12px;background:#fff}
+.payment-accounts h4{margin:0 0 9px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#4f5b65}
+.pay-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.pay-card{border:1px solid #d9e0e5;border-radius:7px;overflow:hidden;background:#fff}
+.pay-card-head{background:#761127;color:#fff;text-align:center;padding:5px 7px;font-size:9px;font-weight:900;letter-spacing:.04em}
+.pay-card-body{padding:7px 8px;font-size:9px;line-height:1.35}
+.pay-card-body b{font-size:10px;display:block;margin-top:2px;word-break:break-word}
+.pay-card-body span{color:#6c7780;font-size:8px;text-transform:uppercase;letter-spacing:.04em}
+.proof-box{margin-top:9px;padding:8px 10px;background:#fff7e8;border:1px solid #ead8af;border-radius:7px;font-size:9.5px;line-height:1.45}
+.proof-box b{color:#6d1325}
+.ack-paper{margin-top:24px}
+.ack-hero{text-align:center;margin:52px 0 28px}
+.ack-hero h2{font-size:24px;color:var(--accent);margin:0}.ack-hero p{font-size:10px;color:var(--muted);margin:6px 0}
+.ack-amount{text-align:center;background:var(--soft);border:2px solid var(--accent);border-radius:10px;padding:28px;margin:24px 0}
+.ack-amount small{display:block;font-size:9px;color:var(--muted);letter-spacing:.08em}.ack-amount b{display:block;font-size:27px;color:var(--accent);margin:8px 0}.ack-words{font-size:9px;line-height:1.4}
+.ack-complete{border:1.5px solid var(--accent);border-radius:9px;padding:18px;margin-top:24px}.ack-complete h3{font-size:10px;color:var(--accent);text-align:center;margin:0 0 16px;letter-spacing:.08em}
+.ack-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;font-size:10px;line-height:2}.write-line{display:inline-block;min-width:150px;height:17px;border-bottom:1px solid #333}
+.ack-note{font-size:9.5px;color:#5e6972;line-height:1.55;margin-top:22px;padding:12px;background:#f6f7f8;border-radius:7px}
+@media(max-width:950px){.pay-grid{grid-template-columns:1fr 1fr}}
+@media print{.pay-grid{grid-template-columns:repeat(3,1fr)}.payment-accounts{break-inside:avoid}}
+
+@media(max-width:950px){.app{grid-template-columns:1fr}.side{position:relative;max-height:none;border-right:0;border-bottom:1px solid var(--line)}.main{padding:12px}.paper{padding:22px 17px;min-height:auto}.grid2,.paymentgrid{grid-template-columns:1fr}.signatures{grid-template-columns:1fr;gap:40px}}
+@media print{@page{size:A4 portrait;margin:9mm}body{background:#fff}.side,.toolbar{display:none!important}.app{display:block}.main{padding:0}.paper{box-shadow:none;max-width:none;width:100%;min-height:0;padding:0;break-after:page;page-break-after:always}.paper:last-child{break-after:auto;page-break-after:auto}.ack-paper{margin-top:0}.payment-accounts,.ack-complete,.ack-amount{break-inside:avoid}}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="side">
+  <div class="topbrand">
+    <div class="brandmark"><img id="brandLogo" alt="Varda Group logo"></div>
+    <div><h1>Utility Billing SOA</h1><p>Simple monthly billing for tenants</p></div>
+  </div>
+
+  <div class="notice oknotice" style="margin-bottom:12px">
+    <b>Quick Steps:</b> Choose tenant → choose Electricity/Water/Both → enter readings or manual charge → check total → add signatures → Print / Save PDF.
+  </div>
+
+  <div class="card">
+    <h3>Company Branding</h3>
+    <div class="uploadgrid">
+      <div class="thumb" id="logoThumb">VARDA GROUP<br>DEFAULT</div>
+      <div>
+        <input id="logoUpload" type="file" accept="image/png,image/jpeg,image/webp">
+        <div class="hint">The official Varda Group logo is used by default. Upload only if an approved replacement is needed.</div>
+        <button class="smallbtn" type="button" onclick="clearLogo()">Restore Default Logo</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>1. Tenant & Billing</h3>
+    <label>Branch</label>
+    <select id="branch"></select>
+    <label>Tenant / Brand</label>
+    <select id="tenant"></select>
+
+    <div class="tenant-actions">
+      <button class="smallbtn" type="button" onclick="loadTenantForEdit()">Edit Selected</button>
+      <button class="smallbtn danger" type="button" onclick="removeSelectedTenant()">Remove Custom</button>
+    </div>
+
+    <div class="row2">
+      <div><label>Billing Month</label><input id="billingMonth" type="month"></div>
+      <div><label>Due Date</label><input id="dueDate" type="date"></div>
+    </div>
+    <label>Billing Type</label>
+    <div class="row3">
+      <button class="typebtn" data-type="electricity">⚡ Electricity</button>
+      <button class="typebtn" data-type="water">💧 Water</button>
+      <button class="typebtn active" data-type="both">⚡💧 Both</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Tenant List</h3>
+    <label>Brand / Tenant Name</label><input id="newTenantName" placeholder="e.g. New Kiosk Brand">
+    <label>Owner / Operator</label><input id="newTenantOwner" placeholder="Owner or company/operator name">
+    <div class="row2">
+      <div><label>Branch</label><select id="newTenantBranch"></select></div>
+      <div><label>Kiosk / Account No.</label><input id="newTenantKiosk" placeholder="Kiosk #__"></div>
+    </div>
+    <label>Service Address</label><input id="newTenantAddress" placeholder="Campus / service address">
+    <div class="tenant-actions">
+      <button class="smallbtn primary" type="button" onclick="saveTenant()">Add / Update Tenant</button>
+      <button class="smallbtn" type="button" onclick="clearTenantEditor()">Clear</button>
+    </div>
+    <div class="hint">Tenant choices are saved in this browser and become available in the dropdown.</div>
+  </div>
+
+  <div class="card">
+    <h3>2. SOA Number</h3>
+    <label>Sequence No.</label><input id="sequence" type="number" min="1" step="1" value="1">
+    <div class="calc">
+      SOA Number:<br><strong id="numberPreview"></strong>
+    </div>
+    <button class="issuebtn primary" style="width:100%;margin-top:8px" onclick="reserveSOA()">Use This SOA Number</button>
+    <div class="hint">The system keeps the SOA number unique on this device. When connected to the VG App database, numbering can be shared across all admins.</div>
+  </div>
+
+  <div class="card" id="electricityInput">
+    <h3>3. Electricity</h3>
+
+    <label>How will electricity be computed?</label>
+    <div class="method-switch">
+      <button class="methodbtn active" type="button" data-emethod="meter">Meter Reading</button>
+      <button class="methodbtn" type="button" data-emethod="manual">Appliance Computation</button>
+    </div>
+
+    <div id="meterMethodBox">
+      <div class="row2">
+        <div><label>Previous Reading (kWh)</label><input id="ePrev" type="number" step="0.01" value="1250"></div>
+        <div><label>Current Reading (kWh)</label><input id="eCurr" type="number" step="0.01" value="1485"></div>
+      </div>
+      <div id="eWarn" class="warn hidden">Current reading cannot be lower than previous reading.</div>
+    </div>
+
+    <div id="manualMethodBox" class="hidden">
+      <div class="notice oknotice">
+        Use this when there is no meter reading and billing is based on the tenant’s equipment.
+        Monthly kWh = <b>Watts × Quantity × Hours/Day × Usage Factor × Days Open ÷ 1,000</b>.
+      </div>
+
+      <div class="factor-guide">
+        <b>Usage Factor Guide</b>
+        <div><b>1.00 — Continuous:</b> running for the full hours entered.</div>
+        <div><b>0.80 — Heavy:</b> running most of the time.</div>
+        <div><b>0.60 — Frequent:</b> used regularly during the day.</div>
+        <div><b>0.40 — Moderate:</b> cycles on and off, like some chillers/freezers.</div>
+        <div><b>0.25 — Light:</b> used only occasionally.</div>
+        <div style="margin-top:5px">Use the factor that best matches actual operation.</div>
+      </div>
+
+      <div class="load-editor">
+        <table>
+          <thead>
+            <tr>
+              <th>Appliance / Equipment</th>
+              <th>Watts</th>
+              <th>Qty</th>
+              <th>Hours/Day</th>
+              <th>Usage Factor</th>
+              <th>Days Open</th>
+              <th>Monthly kWh</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="loadRows"></tbody>
+        </table>
+      </div>
+      <div class="editorbar">
+        <button class="primary" type="button" onclick="addLoadRow()">+ Add Appliance</button>
+        <button class="smallbtn" type="button" onclick="addExampleLoads()">Load Sample</button>
+        <button class="smallbtn danger" type="button" onclick="clearLoads()">Clear All</button>
+      </div>
+      <div class="manual-summary">
+        <div>Estimated Daily Consumption<strong id="manualDailyKwh">0.00 kWh</strong></div>
+        <div>Estimated Monthly Consumption<strong id="manualMonthlyKwh">0.00 kWh</strong></div>
+      </div>
+    </div>
+
+    <div class="row2">
+      <div><label>Billing Rate (₱ / kWh)</label><input id="eRate" type="number" step="0.0001" value="12.50"></div>
+      <div><label>Additional Fees / Adjustment (₱)</label><input id="eFees" type="number" step="0.01" value="0"></div>
+    </div>
+    <label>Billing Basis / Note</label><input id="eBasis" value="Meter reading and applicable utility rate">
+    <div class="calc">Usage: <b id="eUseMini"></b><br>Total Electricity: <strong id="eTotalMini"></strong></div>
+  </div>
+
+  <div class="card" id="waterInput">
+    <h3>4. Water</h3>
+
+    <label>How will water be computed?</label>
+    <div class="water-method-switch">
+      <button class="watermethodbtn active" type="button" data-wmethod="meter">Meter Reading</button>
+      <button class="watermethodbtn" type="button" data-wmethod="minimum">Minimum Water Charge</button>
+      <button class="watermethodbtn" type="button" data-wmethod="manual">Manual Estimate</button>
+    </div>
+
+    <div class="notice oknotice">
+      Choose the correct billing method for this tenant. Add a short note if needed.
+    </div>
+
+    <div id="waterMeterBox">
+      <div class="row2">
+        <div><label>Previous Reading (m³)</label><input id="wPrev" type="number" step="0.01" value="42"></div>
+        <div><label>Current Reading (m³)</label><input id="wCurr" type="number" step="0.01" value="50"></div>
+      </div>
+      <div id="wWarn" class="warn hidden">Current reading cannot be lower than previous reading.</div>
+    </div>
+
+    <div id="waterMinimumBox" class="hidden">
+      <div class="row2">
+        <div><label>Minimum Water Charge (₱)</label><input id="wMinimumFee" type="number" min="0" step="0.01" value="500"></div>
+        <div><label>Equivalent Minimum Consumption (m³) — optional</label><input id="wMinimumM3" type="number" min="0" step="0.01" value="0"></div>
+      </div>
+      <label>Reason / Basis for Minimum Charge</label>
+      <textarea id="wMinimumBasis">Approved minimum monthly water charge under the tenant utility arrangement. Applied where the account is subject to a minimum service/consumption charge.</textarea>
+      <div class="hint">Use the agreed or approved minimum water charge and write the basis clearly.</div>
+    </div>
+
+    <div id="waterManualBox" class="hidden">
+      <div class="notice oknotice">
+        Estimated water formula: <b>Liters per Use × Uses/Day × Quantity × Days Open ÷ 1,000 = Monthly m³</b>.
+        Use documented, reasonable assumptions for the tenant's actual water-using activities.
+      </div>
+      <div class="water-editor">
+        <table>
+          <thead>
+            <tr>
+              <th>Water Use / Activity</th>
+              <th>Liters / Use</th>
+              <th>Uses / Day</th>
+              <th>Qty</th>
+              <th>Days Open</th>
+              <th>Monthly m³</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="waterRows"></tbody>
+        </table>
+      </div>
+      <div class="editorbar">
+        <button class="primary" type="button" onclick="addWaterRow()">+ Add Water Use</button>
+        <button class="smallbtn" type="button" onclick="addWaterExamples()">Load Sample</button>
+        <button class="smallbtn danger" type="button" onclick="clearWaterRows()">Clear All</button>
+      </div>
+      <div class="manual-summary">
+        <div>Estimated Daily Consumption<strong id="manualDailyM3">0.00 m³</strong></div>
+        <div>Estimated Monthly Consumption<strong id="manualMonthlyM3">0.00 m³</strong></div>
+      </div>
+    </div>
+
+    <div class="row2">
+      <div><label>Water Rate (₱ / m³)</label><input id="wRate" type="number" step="0.01" value="55"></div>
+      <div><label>Additional Fees / Adjustment (₱)</label><input id="wFees" type="number" step="0.01" value="0"></div>
+    </div>
+    <label>Billing Basis / Note</label><input id="wBasis" value="Meter reading and applicable utility rate">
+    <div class="calc">Charge Basis: <b id="wUseMini"></b><br>Total Water: <strong id="wTotalMini"></strong></div>
+  </div>
+
+  <div class="card">
+    <h3>5. Payment Details</h3>
+    <label>Payee / Billing Entity</label><input id="payee" value="VARDA ENTERPRISE">
+    <label>Payment Method</label>
+    <select id="paymentMethod"><option>Ateneo CPS (Central Payment System)</option><option>Mapúa University - Makati/Intra FSR</option><option>Mapúa University - Davao FSR</option><option>Mapúa University - Laguna FSR</option><option>Mapúa University - Intramuros FSR</option><option>St. Jude Malacañang - Manila FSR</option><option>DLSL - FSR</option><option>PUP Manila - FSR</option><option>Cash</option><option>Bank Transfer</option><option>GCash</option><option>Check</option><option>Credit Card</option><option>Other</option></select>
+    <label>Proof of Payment Email</label><input id="proofEmail" type="email" value="vardaenterp@gmail.com">
+    <label>How to Pay</label>
+    <textarea id="paymentInstructions">Please pay to any authorized VARDA ENTERPRISE payment account listed on the SOA. Use the SOA number as your payment reference and email the proof of payment after payment.</textarea>
+    <label>Remarks</label>
+    <textarea id="remarks">Please settle the amount due on or before the stated due date. For billing questions or discrepancies, contact the authorized Varda Group representative handling the account.</textarea>
+    <div class="hint">The authorized bank and e-wallet accounts will automatically appear on the printed SOA.</div>
+  </div>
+
+  <div class="card">
+    <h3>6. Signatories</h3>
+
+    <label>Prepared by</label><input id="preparedName" value="Varda Operations">
+    <label>Position</label><input id="preparedPos" value="Authorized Staff">
+    <label>Upload E-signature</label><input id="preparedSignUpload" type="file" accept="image/png,image/jpeg,image/webp">
+    <div class="signthumb" id="preparedSignThumb">No signature uploaded</div>
+
+    <label style="margin-top:12px">Inspected by</label><input id="inspectedName" value="Technical Representative">
+    <label>Position</label><input id="inspectedPos" value="Inspector / Technician">
+    <label>Upload E-signature</label><input id="inspectedSignUpload" type="file" accept="image/png,image/jpeg,image/webp">
+    <div class="signthumb" id="inspectedSignThumb">No signature uploaded</div>
+
+    <label style="margin-top:12px">Approved by</label><input id="approvedName" value="Authorized Approver">
+    <label>Position</label><input id="approvedPos" value="Approving Officer">
+    <label>Upload E-signature</label><input id="approvedSignUpload" type="file" accept="image/png,image/jpeg,image/webp">
+    <div class="signthumb" id="approvedSignThumb">No signature uploaded</div>
+  </div>
+
+  <div class="actions">
+    <button class="primary" onclick="printSOA()">Print / Save PDF</button>
+    <button class="dark" onclick="downloadSOA()">Download SOA + Acknowledgement</button>
+    <button class="green" onclick="saveDraft()">Save Work</button>
+    <button class="smallbtn" onclick="resetDraft()">Clear Form</button>
+  </div>
+  <div class="hint" style="margin-bottom:18px">Date and time follow this computer. Printing or downloading automatically finalizes the SOA number.</div>
+</aside>
+
+<main class="main">
+  <div class="toolbar">
+    <div><h2>SOA + Automatic Acknowledgement</h2><p>Two pages, ready for printing or PDF.</p></div>
+    <span class="chip" id="topChip">ELECTRICITY + WATER</span>
+  </div>
+
+  <section class="paper" id="soaPaper">
+    <div class="head">
+      <div class="org">
+        <div class="paperlogo" id="paperLogo"></div>
+        <div><h2>VARDA GROUP</h2><p>Tenant Utility Billing</p></div>
+      </div>
+      <div class="doc">
+        <h1>STATEMENT OF ACCOUNT</h1>
+        <p class="num">SOA No.: <b id="soaNo"></b></p>
+        <p>Billing Date/Time: <b id="billingDateTime"></b></p>
+        <span class="forpayment">FOR PAYMENT</span>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="box">
+        <div class="boxtitle">Account Information</div>
+        <div class="kv">
+          <div class="k">Tenant / Brand</div><div class="v" id="pTenant"></div>
+          <div class="k">Owner / Operator</div><div class="v" id="pOwner"></div>
+          <div class="k">Kiosk No.</div><div class="v" id="pKiosk"></div>
+          <div class="k">Branch</div><div class="v" id="pBranch"></div>
+          <div class="k">Service Address</div><div class="v" id="pAddress"></div>
+        </div>
+      </div>
+      <div class="box">
+        <div class="boxtitle">Billing Information</div>
+        <div class="kv">
+          <div class="k">Billing Period</div><div class="v" id="pPeriod"></div>
+          <div class="k">Due Date</div><div class="v" id="pDue"></div>
+          <div class="k">Billing Type</div><div class="v" id="pType"></div>
+          <div class="k">Electricity Method</div><div class="v" id="pEMethodInfo">Meter Reading</div>
+          <div class="k">Water Method</div><div class="v" id="pWMethodInfo">Meter Reading</div>
+          <div class="k">Document Ref.</div><div class="v mono" id="pControl"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="electricityPreview">
+      <h3 class="sectiontitle">ELECTRICITY CHARGES</h3>
+      <div class="method-note">Computation method: <b id="pEMethod">Meter Reading</b></div>
+      <table style="margin-top:6px">
+        <thead><tr><th>Description</th><th>Previous</th><th>Current</th><th>Usage (kWh)</th><th>Rate (₱/kWh)</th><th>Amount (₱)</th></tr></thead>
+        <tbody>
+          <tr>
+            <td id="pEDesc">Meter Reading</td>
+            <td id="pePrev"></td>
+            <td id="peCurr"></td>
+            <td id="peUse"></td>
+            <td id="peRate"></td>
+            <td id="peCharge"></td>
+          </tr>
+          <tr><td>Additional Fees / Adjustment</td><td>—</td><td>—</td><td>—</td><td>—</td><td id="peFees"></td></tr>
+          <tr class="totalrow"><td colspan="5">TOTAL ELECTRICITY CHARGES</td><td id="peTotal"></td></tr>
+        </tbody>
+      </table>
+
+      <div id="manualLoadPreview" class="print-loads hidden">
+        <div class="method-note"><b>Appliance Computation Schedule</b></div>
+        <table>
+          <thead>
+            <tr><th>Appliance / Equipment</th><th>Watts</th><th>Qty</th><th>Hours/Day</th><th>Usage Factor</th><th>Days</th><th>Monthly kWh</th></tr>
+          </thead>
+          <tbody id="manualLoadPreviewRows"></tbody>
+          <tfoot>
+            <tr class="totalrow"><td colspan="6">TOTAL ESTIMATED MONTHLY CONSUMPTION</td><td id="manualPreviewTotal"></td></tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <div class="hint" style="margin-top:5px">Billing basis: <b id="pEBasis"></b></div>
+    </div>
+
+    <div id="waterPreview">
+      <h3 class="sectiontitle">WATER CHARGES</h3>
+      <div class="method-note">Computation method: <b id="pWMethod">Meter Reading</b></div>
+      <table style="margin-top:6px">
+        <thead><tr><th>Description</th><th>Previous</th><th>Current</th><th>Usage / Basis</th><th>Rate</th><th>Amount (₱)</th></tr></thead>
+        <tbody>
+          <tr>
+            <td id="pWDesc">Meter Reading</td>
+            <td id="pwPrev"></td>
+            <td id="pwCurr"></td>
+            <td id="pwUse"></td>
+            <td id="pwRate"></td>
+            <td id="pwCharge"></td>
+          </tr>
+          <tr><td>Additional Fees / Adjustment</td><td>—</td><td>—</td><td>—</td><td>—</td><td id="pwFees"></td></tr>
+          <tr class="totalrow"><td colspan="5">TOTAL WATER CHARGES</td><td id="pwTotal"></td></tr>
+        </tbody>
+      </table>
+
+      <div id="minimumWaterPreview" class="terms hidden" style="margin-top:9px">
+        <h4>Minimum Water Charge Basis</h4>
+        <div id="pMinimumWaterBasis" style="font-size:9.5px;line-height:1.45"></div>
+      </div>
+
+      <div id="manualWaterPreview" class="print-loads hidden">
+        <div class="method-note"><b>Manual Water Consumption Schedule</b></div>
+        <table>
+          <thead>
+            <tr><th>Water Use / Activity</th><th>Liters / Use</th><th>Uses / Day</th><th>Qty</th><th>Days</th><th>Monthly m³</th></tr>
+          </thead>
+          <tbody id="manualWaterPreviewRows"></tbody>
+          <tfoot><tr class="totalrow"><td colspan="5">TOTAL ESTIMATED MONTHLY CONSUMPTION</td><td id="manualWaterPreviewTotal"></td></tr></tfoot>
+        </table>
+      </div>
+
+      <div class="hint" style="margin-top:5px">Billing basis: <b id="pWBasis"></b></div>
+    </div>
+
+    <div class="summary">
+      <div class="sumrow" id="sumERow"><span>Electricity Charges</span><b id="sumE"></b></div>
+      <div class="sumrow" id="sumWRow"><span>Water Charges</span><b id="sumW"></b></div>
+      <div class="sumrow"><span>TOTAL AMOUNT DUE</span><span id="grandTotal"></span></div>
+    </div>
+
+    <div class="paymentgrid">
+      <div class="box">
+        <div class="boxtitle">Payment Information</div>
+        <div class="kv">
+          <div class="k">Pay To</div><div class="v" id="pPayee"></div>
+          <div class="k">Payment Reference</div><div class="v" id="pPaymentRef"></div>
+          <div class="k">Payment Method</div><div class="v" id="pPaymentMethod"></div>
+          <div class="k">Amount Due</div><div class="v" id="pAmountDue"></div>
+          <div class="k">Due Date</div><div class="v" id="pDue2"></div>
+        </div>
+      </div>
+      <div class="box">
+        <div class="boxtitle">Payment Instructions / Remarks</div>
+        <div id="pPaymentInstructions" style="font-size:10.5px;line-height:1.5"></div>
+        <div id="pRemarks" style="font-size:10.5px;line-height:1.5;margin-top:7px"></div>
+      </div>
+    </div>
+
+    <div class="payment-accounts">
+      <h4>Where to Pay — Authorized Payment Accounts</h4>
+      <div class="method-note" style="margin-bottom:8px"><b>ALL PAYMENTS FOR VARDA ENTERPRISE</b> — Please use one of the authorized accounts below.</div>
+      <div class="pay-grid">
+        <div class="pay-card">
+          <div class="pay-card-head">BPI</div>
+          <div class="pay-card-body">
+            <span>Account Number</span><b>0879748717</b>
+            <span>Account Name</span><b>Christopher Guarin</b>
+          </div>
+        </div>
+        <div class="pay-card">
+          <div class="pay-card-head">RCBC</div>
+          <div class="pay-card-body">
+            <span>Account Number</span><b>0000009054670279</b>
+            <span>Account Name</span><b>Christopher Guarin</b>
+          </div>
+        </div>
+        <div class="pay-card">
+          <div class="pay-card-head">EASTWEST</div>
+          <div class="pay-card-body">
+            <span>Account Number</span><b>2000 6307 1675</b>
+            <span>Account Name</span><b>Christopher Guarin</b>
+          </div>
+        </div>
+        <div class="pay-card">
+          <div class="pay-card-head">GOTYME BANK</div>
+          <div class="pay-card-body">
+            <span>Account Number</span><b>13217108081</b>
+            <span>Account Name</span><b>Christopher Guarin</b>
+          </div>
+        </div>
+        <div class="pay-card">
+          <div class="pay-card-head">GCASH</div>
+          <div class="pay-card-body">
+            <span>Mobile Number</span><b>09166642136</b>
+            <span>Payment Channel</span><b>GCash</b>
+          </div>
+        </div>
+        <div class="pay-card">
+          <div class="pay-card-head">MAYA</div>
+          <div class="pay-card-body">
+            <span>Mobile Number</span><b>09188078357</b>
+            <span>Payment Channel</span><b>Maya</b>
+          </div>
+        </div>
+      </div>
+      <div class="proof-box">
+        <b>After payment:</b> Please email your proof of payment to <b id="pProofEmail">vardaenterp@gmail.com</b> and include your <b>SOA number</b> in the message for proper validation and acknowledgment.
+      </div>
+    </div>
+
+    <div class="terms">
+      <h4>Billing Notes</h4>
+      <ol>
+        <li>This SOA is for payment of the utility charges shown for the tenant and billing period above.</li>
+        <li>Charges are based on the selected billing method: meter reading, approved minimum charge, or documented manual estimate.</li>
+        <li>If a verified reading, rate, or computation error is found, Varda Group may issue a corrected SOA or adjustment.</li>
+        <li>Please pay only through the authorized payment accounts listed in this SOA and use the SOA number as your payment reference.</li>
+        <li>The attached acknowledgement becomes valid only after payment is received or validated and its completion fields are signed.</li>
+      </ol>
+    </div>
+
+    <div class="signatures">
+      <div class="sigbox"><div class="sigimg" id="pPreparedSign"></div><div class="sigline"><b id="pPreparedName"></b><span id="pPreparedPos"></span><br><span>Prepared by</span></div></div>
+      <div class="sigbox"><div class="sigimg" id="pInspectedSign"></div><div class="sigline"><b id="pInspectedName"></b><span id="pInspectedPos"></span><br><span>Inspected by</span></div></div>
+      <div class="sigbox"><div class="sigimg" id="pApprovedSign"></div><div class="sigline"><b id="pApprovedName"></b><span id="pApprovedPos"></span><br><span>Approved by</span></div></div>
+    </div>
+
+    <div class="footer">
+      <span>Varda Group • Utility Statement of Account</span>
+      <span class="mono">Document Ref: <b id="footerControl"></b></span>
+    </div>
+  </section>
+  <section class="paper ack-paper" id="ackPaper">
+    <div class="head">
+      <div class="org">
+        <div class="paperlogo" id="ackLogo"></div>
+        <div><h2>VARDA GROUP</h2><p>Tenant Utility Billing</p></div>
+      </div>
+      <div class="doc">
+        <h1>ACKNOWLEDGEMENT OF PAYMENT</h1>
+        <p class="num">Acknowledgement No.: <b id="ackNo"></b></p>
+        <p>Related SOA: <b id="ackSoaNo"></b></p>
+      </div>
+    </div>
+
+    <div class="ack-hero"><h2>PAYMENT ACKNOWLEDGEMENT</h2><p>Automatically prepared together with the related Utility Statement of Account</p></div>
+
+    <div class="grid2">
+      <div class="box"><div class="boxtitle">Billing Account</div><div class="kv"><div class="k">Tenant / Brand</div><div class="v" id="ackTenant"></div><div class="k">Owner / Operator</div><div class="v" id="ackOwner"></div><div class="k">Branch</div><div class="v" id="ackBranch"></div><div class="k">Kiosk / Account</div><div class="v" id="ackKiosk"></div></div></div>
+      <div class="box"><div class="boxtitle">Payment Details</div><div class="kv"><div class="k">Billing Period</div><div class="v" id="ackPeriod"></div><div class="k">Payment Method</div><div class="v" id="ackMethod"></div><div class="k">Related SOA</div><div class="v mono" id="ackRelated"></div><div class="k">Purpose</div><div class="v" id="ackPurpose"></div></div></div>
+    </div>
+
+    <div class="ack-amount"><small>AMOUNT TO BE ACKNOWLEDGED UPON PAYMENT</small><b id="ackAmount"></b><div class="ack-words" id="ackWords"></div></div>
+
+    <div class="ack-complete"><h3>TO BE COMPLETED UPON PAYMENT</h3><div class="ack-grid"><div><b>Date of Payment:</b> <span class="write-line"></span><br><b>Official / Payment Reference No.:</b> <span class="write-line"></span></div><div><b>Payment Method:</b> <span id="ackMethodCheck"></span><br><b>Amount Received:</b> <span class="write-line"></span></div></div></div>
+
+    <div class="signatures"><div class="sigbox"><div class="sigline"><b id="ackPaidBy"></b><span>Paid / Released by</span></div></div><div class="sigbox"><div class="sigline"><b id="ackReceivedBy"></b><span>Received / Validated by</span></div></div><div class="sigbox"><div class="sigline"><b id="ackApprovedBy"></b><span>Approved by</span></div></div></div>
+
+    <div class="ack-note">This acknowledgement is generated in advance with the related SOA. It becomes valid only after payment is received or validated and the payment date, payment reference number, amount received, and required signatures are completed.</div>
+    <div class="footer"><span>Varda Group • Utility Payment Acknowledgement</span><span class="mono">Related SOA: <b id="ackFooterSoa"></b></span></div>
+  </section>
+</main>
+</div>
+
 <script>
-const $=id=>document.getElementById(id),PARTY_KEY='vg_utility_billing_entities_v3',WORK_KEY='vg_utility_billing_work_v4';
-const defaults={School:['National Branch','LPU Batangas - Main','LPU Lima - Maritime','LPUD - DAVAO AREA','DLSL - Food Park','ADMU - 2GONZ','Mapua Davao - Food Hall','PUP Manila - Varda Main','St. Jude - Varda Fresh Restaurant'],Tenant:[],Supplier:[],Partner:[]};
-let entities=loadEntities();function loadEntities(){try{const x=JSON.parse(localStorage.getItem(PARTY_KEY)||'null');return x&&x.School?x:JSON.parse(JSON.stringify(defaults))}catch(e){return JSON.parse(JSON.stringify(defaults))}}function saveEntities(){localStorage.setItem(PARTY_KEY,JSON.stringify(entities))}function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}function money(n){return '₱'+(Number(n)||0).toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2})}function num(id){return Number($(id).value)||0}function today(){return new Date().toISOString().slice(0,10)}function newNo(){const d=new Date();return 'VG-SOA-'+d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+'-'+String(Date.now()).slice(-5)}
-function renderParty(){const t=$('partyType').value,list=entities[t]||[],old=$('partySelect').value;$('partySelect').innerHTML=list.map(x=>`<option>${esc(x.name||x)}</option>`).join('')||'<option value="">— Add a billing party —</option>';if(list.some(x=>(x.name||x)===old))$('partySelect').value=old;$('partyTags').innerHTML=list.slice(-8).map(x=>`<span class="partyTag">${esc(x.name||x)}</span>`).join('');calc()}
-$('addParty').onclick=()=>{const t=$('partyType').value,n=$('newParty').value.trim();if(!n)return alert('Enter the Billing Party / Account Name.');entities[t]=entities[t]||[];if(!entities[t].some(x=>(x.name||x).toLowerCase()===n.toLowerCase()))entities[t].push({name:n,owner:$('newOwner').value.trim(),brand:$('newBrand').value.trim(),ref:$('newRef').value.trim(),contact:$('newContact').value.trim(),address:$('newAddress').value.trim()});saveEntities();renderParty();$('partySelect').value=n;$('newParty').value='';$('newOwner').value='';$('newBrand').value='';$('newRef').value='';$('newContact').value='';$('newAddress').value='';calc()};$('partyType').onchange=renderParty;
-let appliances=[];function applianceRow(a,i){const d=document.createElement('div');d.className='appliance';d.innerHTML=`<div class="applianceGrid"><div><label>Appliance</label><input class="aName" value="${esc(a.name)}" placeholder="e.g. Aircon"></div><div><label>Watts</label><input class="aW" type="number" step=".01" value="${a.w||0}"></div><div><label>Qty</label><input class="aQ" type="number" step="1" value="${a.q||1}"></div><div><label>Hours/Day</label><input class="aH" type="number" step=".01" value="${a.h||0}"></div><button class="remove" type="button">Remove</button></div><div class="mini hint">Days: <input class="aD" type="number" step="1" value="${a.d||30}" style="width:70px;padding:4px"> &nbsp; Calculated: <b class="aK"></b> kWh</div>`;d.querySelector('.remove').onclick=()=>{appliances.splice(i,1);renderAppliances();calc()};d.querySelectorAll('input').forEach(x=>x.oninput=()=>{readAppliances();calc()});$('appliances').appendChild(d)}function readAppliances(){appliances=[...$('appliances').children].map(d=>({name:d.querySelector('.aName').value,w:numEl(d,'.aW'),q:numEl(d,'.aQ'),h:numEl(d,'.aH'),d:numEl(d,'.aD')}))}function numEl(p,s){return Number(p.querySelector(s).value)||0}function renderAppliances(){$('appliances').innerHTML='';appliances.forEach((a,i)=>applianceRow(a,i));calc()}$('addAppliance').onclick=()=>{readAppliances();appliances.push({name:'',w:0,q:1,h:0,d:30});renderAppliances()};
-function toggleModes(){$('meterBox').classList.toggle('hidden',$('eBasis').value!=='meter');$('applianceBox').classList.toggle('hidden',$('eBasis').value!=='appliance');const perLiter=$('wBasis').value==='perLiter';$('wMeterBox').classList.toggle('hidden',perLiter);$('wLiterBox').classList.toggle('hidden',!perLiter)}$('eBasis').onchange=()=>{toggleModes();calc()};$('wBasis').onchange=()=>{toggleModes();calc()};
-function calc(){readAppliances();toggleModes();const eMode=$('eBasis').value,wMode=$('wBasis').value;let eU=0;if(eMode==='meter')eU=Math.max(0,num('eCurr')-num('ePrev'));else eU=appliances.reduce((s,a)=>s+(a.w*a.q*a.h*a.d/1000),0);let wU,wA,wRateText;if(wMode==='meter'){wU=Math.max(0,num('wCurr')-num('wPrev'));wA=wU*num('wRate');wRateText=money(num('wRate'))+' / m³'}else{wU=num('wManual');wA=wU*num('wLiterRate');wRateText=money(num('wLiterRate'))+' / LITER'}const eA=eU*num('eRate')+num('eAdjust'),o=num('otherCharges'),p=num('prevBalance'),cur=eA+wA+o,total=cur+p;document.querySelectorAll('.aK').forEach((el,i)=>{const a=appliances[i];if(a)el.textContent=(a.w*a.q*a.h*a.d/1000).toFixed(2)});const t=$('partyType').value,party=$('partySelect').value||'—';$('partyChip').textContent=t.toUpperCase();$('pSoaNo').textContent=$('soaNo').value;$('pDate').textContent=new Date().toLocaleDateString('en-PH',{year:'numeric',month:'long',day:'numeric'});$('pPeriod').textContent=[$('periodFrom').value,$('periodTo').value].filter(Boolean).join(' to ')||'—';$('pPartyType').textContent=t;$('pParty').textContent=party;$('pAccount').textContent=$('accountRef').value||'—';$('pAddress').textContent=$('address').value||'—';$('pEBasis').textContent=eMode==='meter'?`Meter: ${num('ePrev')} → ${num('eCurr')}`:'Appliance-Based Consumption';$('pWBasis').textContent=wMode==='meter'?`Meter: ${num('wPrev')} → ${num('wCurr')}`:'PER LITER';$('pEUsage').textContent=eU.toFixed(2)+' kWh';$('pWUsage').textContent=wMode==='meter'?wU.toFixed(2)+' m³':wU.toLocaleString('en-PH',{maximumFractionDigits:2})+' LITER';$('pERate').textContent=money(num('eRate'));$('pWRate').textContent=wRateText;$('pEAmount').textContent=money(eA);$('pWAmount').textContent=money(wA);$('pOtherDesc').textContent=$('otherDesc').value||'Other Charges';$('pOtherAmount').textContent=money(o);$('pCurrent').textContent=money(cur);$('pPrev').textContent=money(p);$('pTotal').textContent=money(total);$('pPayment').textContent=$('paymentInfo').value||'—';$('pPrepared').textContent=$('preparedBy').value||' ';$('pChecked').textContent=$('checkedBy').value||' ';$('pApproved').textContent=$('approvedBy').value||' '}
-function data(){const ids=['partyType','partySelect','soaNo','periodFrom','periodTo','address','accountRef','eBasis','ePrev','eCurr','eRate','eAdjust','wBasis','wPrev','wCurr','wRate','wManual','wLiterRate','otherCharges','prevBalance','otherDesc','paymentInfo','preparedBy','checkedBy','approvedBy'];const vals={};ids.forEach(id=>vals[id]=$(id).value);vals.appliances=appliances;return vals}function apply(x){Object.entries(x||{}).forEach(([k,v])=>{if(k!=='appliances'&&$(k))$(k).value=v});appliances=x&&Array.isArray(x.appliances)?x.appliances:[];renderParty();if(x&&x.partySelect)$('partySelect').value=x.partySelect;renderAppliances();calc()}
-$('saveBtn').onclick=()=>{localStorage.setItem(WORK_KEY,JSON.stringify(data()));saveEntities();alert('Utility billing work saved on this device.')};$('clearBtn').onclick=()=>{if(confirm('Clear current utility billing form?')){localStorage.removeItem(WORK_KEY);location.reload()}};$('newSoaBtn').onclick=()=>{$('soaNo').value=newNo();calc()};document.addEventListener('input',e=>{if(e.target.matches('input,select,textarea'))calc()});
-(function init(){$('soaNo').value=newNo();$('periodFrom').value=today();$('periodTo').value=today();$('eRate').value='12.00';$('wRate').value='50.00';$('wLiterRate').value='0.05';$('eAdjust').value='0';renderParty();try{const w=JSON.parse(localStorage.getItem(WORK_KEY)||'null');if(w)apply(w)}catch(e){}toggleModes();calc()})();
-</script></body></html>
+const $=id=>document.getElementById(id);
+const DEFAULT_LOGO='data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAAAAAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDAAkGBwgHBgkIBwgKCgkLDRYPDQwMDRsUFRAWIB0iIiAdHx8kKDQsJCYxJx8fLT0tMTU3Ojo6Iys/RD84QzQ5Ojf/2wBDAQoKCg0MDRoPDxo3JR8lNzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzf/wAARCAFAAUADASIAAhEBAxEB/8QAHAABAAIDAQEBAAAAAAAAAAAAAAYHAwUIBAEC/8QAVBAAAQMDAQQFBQwFBwoGAwAAAQACAwQFEQYHEiExE0FRYXEUIoGRoRUXMjZCYnSisbLB0TVSVaPSIyUzVnKClBYkQ0RUZHOTwvAmNGODhJI3U+L/xAAaAQEAAgMBAAAAAAAAAAAAAAAAAQIDBAUG/8QANBEAAgEDAwEFBgUFAQEAAAAAAAECAwQREiExUQUTM0FxMmGBobHwFDRSkcEiIyTR4ULx/9oADAMBAAIRAxEAPwC8UREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREBGr/rKg0/eqa33NkkcVRD0gqGjeaw7xGHDnjvGVIKaohq4GT00rJYnjLXscC1w7iFUW2kZv1B9EP3yorp3Ut007Pv26f+SJzJTycY3+I6j3jisbnh4Z1afZ3fUI1IPc6MRRfSetrbqNrYQfJq7HnU0juJ72n5Q9vcpQrpp8HNqU505aZrDCIikoEREAREQBERAEREAREQBEXmrq2ChhMtQ/dHUOtx7golJRWXwSk28I9BIaCSQAOZK81JX09ZLKyndv8ARY3nDkc9nbyUQul5nuDi3PRwdUYPPx7VtNHf61/c/Fc2HaMatwqVPjff4G3K1cKTnLkkqIi6ZphERAEREAREQBERAEREAREQBERAEREAREQFPbZ/07QfRD98qvlYO2j9O0H0Q/fKr4LWn7TPVdn/AJaP35n1pcxzXscWuactc04IPaCrS0FtCdNJHa9QSgvdhsNW7hvHqa/v+d6+1VaEIGFEZOLM1xawuIaZfudQooBst1U66UhtNfJvVlM3MT3HjLHy9JH2Y71P1sp5WUeUrUZUZuEuUFFdX3O5W2qgNJP0cMrDw3GnzgePMdhClS1moLW26290IwJmHficep35HksVxCc6bUHhk0JRjUTmsohQ1NeP9s/dt/JbSDVFzpGsdcaMSRPGRIGlmR2g8ios5jo3uZI0sexxa5p5tI5gr2UFzq6HLYJMxH4UMg3mO9C8/C6qwl/VN/X5M7k7alKOYxX0+aLAtV6oroMU8hEgGTE/g4fn6FsVXYhirz5VZ2mmrY/PdTNdz+dGfwUp03exc4TFPgVUY87HJ47R+K7Fvda8Rn58NcP/AL7jk17bRmUPLlPlf8N2iIt40wiLVX29RWuHdGH1Lx5kf4nuVJzjTi5SeyLQg5vTHkyXi7Q2yHzsPmcPMjB5957AoPV1k1bOZqh5c48uwDsCwT1EtTM+ad5fI85LivgK8zeXsrh4W0TtW9rGisvkyAqT6N/1v+5+KiwKlGi/9b/ufio7NX+VH4/Qi88F/fmSdEReqOIEREAREQBERAEREAREQBERAEREAREQBERAU9to/T1B9EP3yq9CtrbNa3TUFFdI258neYpSOpruR9Yx6VUoWvNf1HqezZKVtHHkfpF8C+hYzoI9dpuE9puNPX0hxNA8OA/WHWD3EZHpXR1vq4q+hp6yA5injbIzwIyuZwrv2U1hqtIQxuOTTSvh9Gd4exyy0nvg4/bFFOEai5WxMUX4fIyPd6R7W7zt1uTjJ7Av2s5540l907TXRxnY7oKrGOkAyH9gcOvx5qGV9nuFucfKKZ5YP9LEC9h9I4j0gKzkWpcWVKs8vZ9TboXlWisLdFTU07opWywSYkYctLTxBUgkmZHUUV9pW7jZJRHVRt5NeefoI9uO1TCpoKSqB8opopM9bmDPr5rQz2B1PHVUtO5z6WrZugO4mGQcWHvGfwWpCxnReIvKfyfkzYleQqrLWH9V5ok6L8szuDe544o97Y2Oe8hrWjJJ6guscw11+u8dopOkIDpn8Io8/CPae4KupqiWqnfPO8vkecucVlvNzddbjJUnIj+DE0/JZ1evmvI0rzd/dOtPTH2Ud+zte6hqlyzO0r9grCCv20rnG00ZQVKtE/65/c/FRMFSvRH+uf3PxW72d+Zj8foaV74L+/MlKIi9QcMIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiA89wooLjRT0dWwPgnYWPb2grnrVGn6rTd1fR1ILozl0E2OErO3x7QujVrNQWOh1Bb3Udwj3mnix44Ojd+s09RVJx1I3rG8dtPf2Xyc3gr6txqnTNdpmu6CrbvwPJ6CoaPNkH4HtC0wWu1g9VTnGpFSi8pn6CuHYz8X636YfuNVPBXDsZ+L9Z9MP3Gq1L2jQ7W/LP1R7NrTnM0nvscWvbVRFrmnBBBOCCvBoDXrbj0drvcgZW/BiqDwE/cex32+K9u1z4on6TF9pVKq05uMjVsLOnc2jjLnLw/2OoEVY6A19vmO1X6bzuDYKt5+F2Nee3sPX1qzlljJSWUci5tqlvPRNf9CIisa4UZ13cfJbW2lYcSVTt0/wBgc/wHpUmVa67qTNf3RZ82CJrMd584/aFq3tR06La54Nuxpd5XSfC3NG0rK0rztKyNK8y0elaPQCv2CsLSsjSqNGJozNKl2h2no6t/UXNHsP5qHNKsHStN5PZ4i4YdKTIfTy9gC3+y4OVxnojn37UaWOpuERF6Q4gREQBERAEREAREQBERAEREAREQBERAEREARefy2lFd5CZ2Cq6LpRET5xZnG8B2ZXoQHjuttpLtQyUVwhbNBIOLT1HqIPUe9UbrTR1Zpio6Ru9PbpHYjqMfB+a/sPfyPsV/LFVU0NXTyU9VEyWGRpa9jxkOHeqygpG5Z3s7aW2680cwgq4tjHxerfph+41RLXeg57C59fbA+a2E5cObqfx7W9/V19qlmxbjp6t+mH7jVihFqWGdjtCvTr2euD2yj17Xvil/8qL8VSwV07XvikPpUf4qlgqVvaM/Y35b4s+4yOKsnZ7rswGK0XybMXBtPVPPwOxrz2dh6utVsF9IyFSMnF5RvXNtTuIaJ/8Aw6eRVnsw1e6bcsVzly8DFJK48XAfIJ7R1epWYtuMlJZR425t529RwmFUWpJTJqG4OJ5Tlvq4fgrdVNXx2b3cD/vUn3itDtLwl6m92Qs1pehgBWRpXnaVlYVw2jvSR6GFZGlYGlZC9rGF73BrQMknqWNoxNGytFG64V8NM3OHHLz2NHMqzmNaxgYwYa0YAHUFE9n1KXUUl0e0tFQd2EHnuA8/SfYApJFXwS10lJE7ekjbvPI5DjjHivQWFFUKeZcyOBfzc6riuI/bPUiIuiaAREQBERAEREAREQBERAEREAREQBERAEREBSu2qsqbdq60VlDO+CohpC6ORhwQd8/94Uz2ea+ptTwijrNynu0bfOj5NmA+Uz8R1eCg23j4xW36GfvlVrBNLTzMnp5HxSxuDmSMOHNI5EHqVM4Z0IUY1KK6nXSKudm+0aO+iO13p7IroBiOTk2p8Ox3d19XYrGVzRnBweGfHNDmlrgC0jBBHNa2yWOisbaplujMUVRN0xjHwWOIAO72DhyWzRCFJpYRB9sHxSb9Lj/6lSwKujbCD/kiMdVXFn2qlWla1b2j1XYv5Z+rMi+hfkL6FhOsfuKR8MjJInuZIxwc1zTxaRxBCv8A0bfm6hscNWSBUN/k6ho6njn6DzHiuflOdklzdSahkoHOPRVkRwM/LbxHs3llpSw8HL7WtlVoa1zH6eZcqpe++bfbiP8AepPvFXQqW1Cf5/uX0qT7xWHtHw16nJ7G8aXp/J5GlZWOXmBX7MrImF8jt1o5lcbGT0Eonr6RsbC97g1oGSStbCZtQXelttMS1k0oaPDrcfAZK1tfXuqCcndhbxA/Erd6UoailkdcJSYnvjLImYw5rXcyewkcPDxWxCEKC11BUj3NNy/9Pgsi63mKjp2220kNZEwRmRvyQBjA7+9Y9G8a6oP/AKX4qNgqSaL/APO1H/CH2qlC5nXvIyl8F02ODWoxpUJJEvREXpDjBERAEREAREQBERAEREAREQBERAEREAREQFH7eB/4htp/3M/fKrJWht5H8+2s9tK/76q9Y3ydW38NAEtIc0kOByCDgg9qufZttKFZ0Vn1HMBU8GwVjjgS9jX9ju/r8edMJjKJ4L1KUaiwzr1FTOzbaUaborPqSYmHgynrXnizsbIezsd1dfarlaQ4AtIIPIhXTycqpTlTeGYK2KlqYTSVrYpI6gFhikxiThkjHXw4qlddaIm09K6rog+a2PPBx4uhJ6nd3YfX3zPbDNJBZ7dLBI6OVlaHMew4LSGO4gr7ojW9Pf4Rab2IxWubuAuA3KkdYxy3u0dfV2LHLTJ6WdOzVxb0/wATT3j5opwFfVOde6FfZnPuNqY6S3E5fHzdT/m3v6uvtUFyteUXF4Z6W3uKdxDXBn7C2WnKvyC/26rzgRVLC7wJwfYStWCv2w4e3xH2qE8MyVIqUHF+Z06FSeoD/P8AcvpUn3irrb8EeCozVFQyC93JzzxNVLgDmfOKi/WYJLqeY7FWa0vT+TzSSsiYXvOAPatPWVjpjvPO6xvJvYsc875nF8h4DkOoLb2S1Zc2qrW8RxiiPV853f2DqWjiNGOqXJ6eUo0ll8mSxWcucysrmYxxihcOXznd/YFJmuWBpWQFcytUlUllnNqSlKWZGYFSTRJ/z6o/4Q+1RhpUm0Qc11R/wh9qzWC/yY/fkaV4v7MiZIiL1R58IiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiApfb3E4XGzy4810Mrc94c0/iqrV97abQbhpQVsTcyW+USn/hnzXfgfQqEVHydK2lmn6BERQbKZ8Vj7N9o0lkMdrvkjpLb8GKY8XU3ce1ntHgq5RE8FZwjNYZeu2OaObT9slhe2SOSp3mvachwLHYIPWqlaSCC0kEHIIPEFbHSWq2UFK6yX+J1ZYpjxZzfTO/Xj7O3Hq7Dn1FYJLO6Kop5m1lrqhvUtZHxbIOw9ju7/sYqibeTodl1Y049xLny95PtB6+bVtZadQyN6U+ZFUv5SdW6/v7+vx563X+gTRdLdLHEXUvF01M0ZMXa5va3u6vDlXfAjirI0Fr80vR2u/Sl0HBsNU45MfY156x39XXw5IzUlpkK9pUtp/iLX4x+/voVsDjmv204I8QrM1/oIOEl30/ECD581LGOfXvMH2j1diq8OwqSg4s37e6p3NPVD4rodQx/wBG3wC541YSdUXbJ5Vcg49XnFdDQ/0TP7IVA3yAVGsbqHcWNq5HO7/OOAr3LShlnA7FlprSfu/kw2ihGW1E7cnnGw9XeVvWOXja5Zo3YXBqyc3lndmm92e1jlkDl5WuWVrlrOJgaPQ0qU6FBNZVHqEQHtUTaVONCwFtHUVBH9JIGjwaPzK2uz4N3MfcaF89NBknREXpjz4REQBERAEREAREQBERAEREAREQBERAEREBiqYIqqnlp6hgfFKwsew8nNIwQuX9W2GbTd+qrbNksY7ehef9JGfgn8D3grqVQ7aTo5uqrUH0wa250oLqdx4b462E9h6uw+lQ1kz0KuiW/DOc0X7mikp5pIZ43RyxuLXseMFrhzBHavwqHSTPq+IiFsn0KR6W1O+ztloK+Hy6y1J/zikceXz2djh7fHio2voKgNJ8kzv1kZQxRXK1z+W2apP8hUt5tP6jx1OHtWnBymmtRVFhmlYYm1VuqRu1dFL8CZvb3OHUVuLvaacUjbvYpnVNoldjLv6Smf8A/rkHUew8j9uKcPNHTtL1vFOq9/J9f+/UkGhNdy2VzLfdXOltpOGP5up/zb3dXV2Le660NDdYXXvTYY+V46SSGIjdnHPeZ1b3d1+POqcqV6I1pU6amFPUb89secvi5mLtcz8R1+KQntpkVurOcJ9/bbS811L0hGImA/qhUdeGCPUF3f1yVsrvrEK8o3tkY17TlrgCD3Kjb47+fbj9Kl+8VjvvDSOX2Ms1pehga5ZmOXkDllY5chxPRNHsY5Z2OXjY5Z2OWJowyR7IQ6V7WRtLnuIDWjrJVq2ijFvt0FNzLG+ce13M+1RbRFkdlt0qm4GP5BpHP535KarsdnW7pxc5cv6Hne0a6nPu48L6hERdI5oREQBERAEREAREQBERAEREAREQBERAEREAREQFf7SNnseo2uuNqDIrq1vnA8G1AHU49Tuw+g91EVtJU0FVJS1sEkFREcPjkbhzV1utHqbSlo1NTdFdKYOkaMRzs82SPwd2dxyFDRsUbhw2fBy8EU/1Hsovtre+S1gXOlHEdHhsoHew8/QfQoJUQTUs7oKmGSGZvwo5WFrh6DxVcG/CpGfDMaIigufcrZ6fvlXYax09LuSRSN3KimlGY52dbXD8eYWrQIg0msMmlxt1JV0Lr1p4vfb8gVFM85lonH5Lu1nY71rRuPmO8CvNZrtWWWubWUEgbIAWva4bzJGHm1zetp7FIaqlo7rQzXSxMLGxtzV0GcupfnN/WjPb1cisU4eaOha3jX9uq/R/7/2dC285oKY9sTPsCo6+n+fLj9Kl++Vd9sObbSnthZ90Ki767+fLj9Kl++VjvVmCOf2N48vT+TAHLKxy8gct5YdOXS9EOpKcth655fNZ6D1+hc9U3LZI9BUqQpx1TeEeRjlOdJ6SfPuVt1jLIebIHDBf3u7B3da3mntHUFo3Zpv86qxx6SQea0/Nb1ePNSVbtCyUXqn+x5+87U1rRR46/wCj4AGgAAADkAvqIugcUIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiALw3Wz228Q9DdKGnqmdQlYHEeB5j0L3IgK5uex+wVLnPoKisoXHk1rxIwehwz7VHqvYtWtJ8jvVPIOoTU7mfYSrnRRhGWNaouGUJPsg1LGf5OW3TD5s7m/a1eduyjVRODT0bR2mpH5LoNE0ov+JqdShYtkGpX/Dlt0fjO4/Y1b2wbJLpb66Ksff46aaM8DSwFxI6wd4gEEcCCCCrdRMIq7io9sn4ijEUTIwAA1oAwMDh3dSquTQF5uV5rZpTBSU0lRI9r5H77nNLiQQ1v4kK10VZ04z9omhc1KDbpvDZFbJoOz2zdkmjNbOPlz8Wg9zeXrypS0BoAaAAOAA6l9RTGKisJFKlWdR5m8hERWMYREQBERAEREAREQBERAEREAREQGvv9xdaLNWXFlM6pNNEZDE126XAc+Phkqt/frpv2FUf4lv5K1KiFlRBJDK3ejkaWOB6wRgrlK70D7Xday3y/DpZnRHvwcA+kYKq20bdrThUypIvDSm1Gl1DfILX7my0rpw7ckfM1wyBnGAOvBVgrk+y17rVd6K4M5007JfEA8R6srq2KRksTZI3BzHgOaR1g8ki8lbmkqbWng/a0urtQw6YsktznidNuOaxkTXBpe5xxjJ9J9C3SqDbzdP0ZaWO/WqZB9Vv/Upb2MdGGuaiZ/frpv2FUf4lv5Kw9MXg36x0t0NK6lFQ0ubE54cQ3JAOe/GVy7R00lbVwUkAzLPI2Jg73HA+1dX26kjoKCno4BiKnibEzwaMfgoi2zPc04U0lFbnoVeao2p0lgvlTaxbZao0+6Hysma0bxAJGCOrKnldVR0NFPVznEUEbpHnsDQSfsXKNwrJbjX1NbOcy1ErpX+LiT+KN4K21FVG3Lgt3366b9hVH+Jb+Sluhda0+sI6wxUr6WSmc3Mb5A4uDs4PDvBC5tU32QXX3N1nBC92Iq6N1O7+18JvtGPSoTZsVbaCg3FbnQyIiuc0jut9Ux6StkNdJSPqhJOIdxjw0jIJzk+ChPv1037CqP8AEt/Je/br8VqP6c37j1Raq28m/b0IThmSLl9+um/YVR/iW/knv1037CqP8S38lUdLb62sa59HRVNQ1pw4wwueAew4CzGyXYDJtVeP/iyfkoyzN+Go9PmW1Btpt7nAT2asY3tZKx35KV6e1/p2/wAzaekrDDVO4NgqW9G53h1E9wK5vmhlgfuTxSRPHyZGlp9RX4BwcjmOKamVlaU2ttjrxFXmyLV8t+t8tsuUhkr6NoIkceMsXIE94PAnvCsPqV1uc+cHCTiytL3tbp7TeK23Os80rqWZ0ReJ2gOweeMLxe/XTfsKo/xLfyVb66+Od7+myfatGAXEAAkngAOtUyzoxtqTim0XINtdL12Ko/xDfyXso9s1kkdirt9fB3tDHgeo5VLGiqxzpKkf+y78lgPAkHgRzHYmpk/haT8jqKwaqsmoWn3Kr4ppAMuiOWyN8Wnj6VulyNTzzU08c9NK+KaM7zJI3FrmntBHJXxsw17/AJRRe5l1c1t0iblrxwFQ0cyB1OHWPSOvEp5NWtbOC1R4LBREVjUMVVUR0lLNUzO3YoWOkeewAZP2Kq/fspTxFiqMfSG/kpDtgu3ubo2eBjsS1zxTtweO6eLvqgj0rntVbN22oRnFykXJ79dN+wqj/Et/JWRp+6w3yy0dzp2lsdTEHhpOS09Y9ByFykrv2F3Xyix1lre7z6SbfYCfkP4/eDvWiZNxbxhDVFFnIiKxohERAEREAVB7arX5FqxtaxuI6+EPJx8tvmu9m6fSr8Vd7bbV5ZpWOvY3MlBOHE/Md5rvbun0KHwZ7aemoveUMuk9mFz91NFW6Rzt6WBhp5PFhwPZg+lc2K3tgtz43S0vd+rUxj6rv+lVjybt3HNPPQt9c1bSrp7ra0uUzXZihf5PHx4YZwP1t4roTUNybZ7HX3F5GKaB0gz1kDgPXhcquc57i+Q5e45cT1k81MjDZR3cia7ILV7o60gme3MVDG6od/a+C32nPoXQyrHYXavJ7FWXN7cPq59xhI+Qzh94u9Ss5THgw3U9VR+4ge2W7e5+j5KVjsS18jYAOvd+E72DHpXPxOASrF23XbyzU8NuY7MdBCN4Z/0j+J9gaolpG1m9amttvwSyWdvSf2B5zvYCqvdm7bxUKWX6nku1tqbTWmkrG7sojjkx3PaHD7cehYKSplo6qGqgOJYJGyMI/Wacj7FZ+3a1CKutt1jaA2aM08mB1t85vsLvUqrUPZmSlPvIJnWVrrY7jbqaugOY6iJsrfBwyvUq/wBi118u0l5G92ZKCUxY+YfOb9pHoVgLIjk1I6JOJW23X4rUf05v3Hqi1em3X4rUf05v3Hqi1SXJ0bTwi69gv6Fuv0tv3ArSwqe2L3u1Wq03KO5XGlpXvqWua2eUMLhuAZGVYp1jpoDJv1t/xLfzVlwadeMnUeEeTaFp+kvumaxs8bfKKeJ01PNjzmOaCefYcYIXNIOQD2q7Noe0i1my1FtsNU2rqaphifLGDuRMPBxz1kjgMdqpNVkbdpGUYPUTDZLUvp9eW4MJxMJInjtBYT9rQujepUBsYtclbrBtaGnoaGJz3Oxw3nAtaPHi4+hX/wBSmPBrXjXeHL+uvjne/psn2rw2H9OW36XD98L3a6+Od7+myfavDYf05bfpcP3wq+Z0I+GvQ6tC0Op9I2jUtI+OupmNnI/k6qNoEkZ7Qesdx4LfhFkOMpOLyjlK+2mpsd3qbbWgdNTv3SRyeOYcO4jBXnt9bUW6tgraOQx1EDw+Nw6iPw6laG3m2sjqrXdGNAdK19PIQOe75zftcqnWN7M7FKfeQTZ1Zp26xXyyUVzhGG1MQeW/qnkR6DkLYqudh1YZ9Jz0ziT5NVva3ua4B32kqw5ZGQxPkkcGsY0uc49QHNXRyakdM3Eo7bhdvK9RU1tY7MdFDvPHz38fuhvrUDs9sqbxcYqCibvTyhxaD81pcfYF+r9cn3i9V1yfzqZnSAdjSfNHoGFYOwq1dPea66vbltLEIoz89/E/VHtVOWdPwaPoVeOIzyU12R3X3M1pTRvdiKta6md4ni32jHpWn1xavcbVlzomt3Y2zF8Q+Y/zh9uPQtPTTyUtRFUQHEsL2yMPY4HI9oThmRpVIep1wi8loro7na6WvhI6OphbK3uyM4XrWQ4rWAiIgCIiALw3u3su1nrbfLjdqYXR8erIwD68L3IhKeHk5FljfDK+KUbskbix4PUQcH2qTbMrn7l61t0jnYjnead/HqfwH1t1Zdqdr9y9a1wa3EVVipZw/W+F9YOUTjkfE9skRw9hDmnsIOR7Vj4Z2dqkPVF67b7p5JpiGgY7D66cBw+Yzzj7d1USAScNGXHkO0qZbT9RN1DdqF8LgYoqGM4B4B7xvu9XAeheDZ1a/dfWVtp3N3oo5Onlzy3Wed7SAPSpe7MVFd1Sy/U6E0raxZdO2+3AYMEDWv73c3H1krY1E0dPBJNM4NjjaXvceoAZKyBQva3dvcvRdUxjsS1pFMzB44dxd9UH1q/BzYpznjqUHebg+7XasuMvwqqZ0uOwE8B6BgKw9hVq6e8V91kb5tNEIYyf1n8T7B7VWC29n1Pe7JTvp7TcZaaF799zWNbxdgDPEHsCxrk61SDlDTEvbara/dTRVcGN3paUCpjx8zn9XeXOKksuvNUyxvjlvU7mPaWuaWMwQeBHwVGhwGAjeStvTlTi0yw9id18i1VJQPdiOvhLQM/LZ5w9m8r6XJ1or5LVdaS4RfDppmyjvweI9IyF1bTzR1NPHPC7ejkYHsd2gjIVompeQxJS6ldbdfitR/Tm/ceqLV6bdfitR/Tm/ceqLUS5Ni08I+orX2N6ftF5tVxkutupqt8dS1rHSs3i0bgOApbqrZ9ZKnT1dHarTS09cIi6CSKPDt5vED04x6U0kyuYxnpaOe1v9I6SuWq6t8Vv6NkMRb088juEYPLhzJ4HgPWFH/RjxUx2VX33E1dTtlfu01b/AJtLnkCT5h9DsD0lQjLUclBuPJeWlNN0Ol7U2hoQXEnelmd8KV/afwHUFuupE6lkOM228s5f118c739Nk+1eGw/py2/S4fvhe7XXxzvf02T7V4bD+nLb9Lh++Fj8zsx8Neh1cEQIshxSrdvUjRZrXGcbzqtzh4Bhz9oVKKxNtV7ZcdSRW+B+9Fb4y15B4dK7i4egBo9arxY3yde2i40lkunYK0iz3V3yTVNA9DApHtWu3uVout3Hbs1Ximjwf1vhfVDl5tjludQ6KglkGHVkr6j+6fNb7Gg+lQzbrdunu9DaY3ZbSxGaQD9d/Aepo+srcI01HvLj78ir10RsjtfuZoqle9uJaxzql+Rxw7g36oHrXO3VhSSHXeqIIY4YbzOyONoYxoYzDQBgD4Kqng3K9OVSOlEx272vo7hbrtG3hNG6nkI/Wb5zfYXepVWtxd9U3y9UopbrcZamAPDwx7W8HDODwHeVpkZajBwgosvvYpdfLdKOoXuzJQTGMD5jvOb9rh6FYSoLYrdfIdWOonuxHXwlmCeG+3zm+zeHpV+q8eDm3MNNR+8IiKTAEREAREQFUbeLV0lDbrsxvGGQ08h+a7i32g+tUyun9dWr3Z0nc6JrcyOhL4uHy2+c32j2rmEcRnCpLk6dpPNPHQ+K3dg1qy653d7eW7TRHH953/Sqj5cTyXSuza1e5GjLdA9u7LLH08v9p/newED0JHkm7ninjqSdUftzu3lN9o7XG7zKOHpHj57/AP8AkD1q7nvaxjnvIa1oySeoLlfUdzdeb9X3J2cVE7ntz1N5NH/1AUy4Nazhmeroea2UM1zuNNQUoBmqZWxMzyyTjj3Ke+83qH/bbZ/zH/wLBsWtXl2rTWPbmOghMmSPlu81vs3j6FfqhLJluLiUJaYlE+83qH/bLZ/zH/wqMau0lcdJ1FPDcXwSeUMLmPgJLeBwRxA48R6106q922Wry3SjK5jcyUE7Xk/Md5rvtafQpcdilK6nKaUuChV0RskuvunoulY929LRk0z8njhvFv1SFzvgqzthd18nvVba5HYZVwiWMfPZz+qfYojybF1DVTb6El26/Faj+nN+49UWr026/Faj+nN+49UZhJckWnhF1bBf0LdfpbfuBWkqt2C/oa6/S2/cCtJWXBo3His5r2k2T3D1fWwsZu09QfKIOHDdfkkDwdvBRcEg5BII5EdSvHbhZPK7FT3aJmZaGTdkIH+jfw9jt31lUdgqjWGdG3nrppnTuhr4NQ6Yoq9zgZizo5x2SN4O9fP0rf8AUqS2HXzyW61VlmdiOrb0sIPVI0cR6W/dV29SunlHNrw0TaOX9dfHO9/TZPtWttM0dPdqKeZ27HFUxve7HJoeCT6lstdD/wAZ3v6bJ9q0eCqHWhvBeh0adpekACfdhp8IJP4VFtVbXqUUslPpqKR87gR5VMzdbH3taeJPjgeKpvivh4c+Hip1MwRtKaeeT9SSPlkdJK9z3vcXOc45LieJJK3GkdPVGpr5BboA4Rk708gH9HGOZ8eod5WfTOjb3qSVooaVzKYnzqqYFsbR3H5XgFfujtKUGlLb5LR5kmkw6eocMOld+AHUOpEsk166prC5NzTww0dJHBC0RwQsDGjqa0DA9gXLuqbqb3qK4XEkls87jHnqYODfYAugNpV29x9G3CZjt2aZnk8X9p/D2DJ9C5rA6gEkYrOPMmb7SOlLhqyqqILc+CMwRh73zkhvE4A4A8efqUo95vUP+2Wz/mP/AIVMdiNq8j0tLXvbiSvnLgfmM81vt3j6VYqlR2KVbmcZtR4KJ95vUP8Atts/5j/4FA7pQT2u5VVvqgBPTSujfu8iR1ju611kqE212ryLVbK5jf5OugDicfLZ5p9m6oaL29xKc9MiD2uuktlypa+H+kppmyjv3TnHq4Lq6lnjqqaKohdvRSsD2HtBGQuSMLobZDdfdLRlPE92ZaJxpnZPHA4t+qR6kiTeQzFSJsiIrnOCIiAIiIAow7Z9pNzi51jpSSST8L81J0QlSceGRf3vNJfsOl+t+ak7WhjQ1oAAGAB1L6iEuUpcsx1EEdTTy087d+KVhY9p62kYIUb97zSX7DpfrfmpQiBSlHhmssmn7TYWzNtFDFSiYgydHnzscs58StmiIQ228sLBXUdPX0k1JWRNmp5mlkkbuTgepZ1jqJmU8Ek8zt2ONpe53YAMkoQiNHZ7pEAk2OlA/vfmvTbNG6bttZFXW6108NRESY5Yy7IyMHr7CqhZLfNqeppoI6t1NQxgyNjJPRwx5wPNHwnH8+oJWUmoNmOoaXySrfV08w3wyNrtydoOHNczjg947Qq5Nzup+y579C7rzZbbfKZlNdqSOqhY/fax+cB2CM8O4lab3vdJfsOm+t+ai+2urdJpm01FPJLGJakOGCWnBjceKjemtnV0v9hpbrDqAw+UNLmxPEhxhxHEh3d2JncpCDUNTnhFx2WxWuxQyRWijjpY5Hb72szxOMZ4rZKkdl2obvb9XnTlxqpKiCR8kJZJIX9FIzJy0njjzSMeC+7QtRXXUmrRpezTvip2zCnLWPLelk+UXEfJHHh3Eqc7B0JOeG/fkuWrpqa4Uk1JVRsnp5WlkkbuIcDzBUf97zSX7Dpfrfmqp1Jo69aBhprxQ3dzx0gY+SEGMxuPLIyQ5pxjj6uKmt51G7UWx+tubT0VR0bWTCMkbsjZGg47jz8CoyO7ccOEtmyT0OiNNUFXFV0doghqIXB8cjS7LT61IlVWweaWWkvPSyySYmixvvLsea7tWv2vTzR66sjY5pGNMMWQ15AP8seoKc7ZIdKUqmhssOt0Ppmuq5qurs9PLPM8vke7ey5x5nmsHve6S/YdN9b81X23aomhvNs6KaVg8leSGPLc+f3Lz3DZxe6CxSXimvzpTFB5QYgZGO3Q3eOHbx4gKPgXjB6U3PGSyve80l+w6X635r2UOkNO0Dg+lstCx45O6EOI9Jyopsb1RXXugrKG5zOqJaPcMc7+LnMdng49ZBHPvVjqVgw1HOMnFs+AAAADAHIL6iKTEa69WS23yBkF2pGVUUb99rHk4DsYzwPYStR73mkv2HS/W/NShELKclsmYKGjp7fRxUlFE2GnhaGRxt5NA6lnREKhay92C1X5kTLvRRVTYSTGJM+aTz5LZohKbTyiL+95pL9h0v1vzW1slgtVhbK20UUdK2YgyBmfOI5cz3rZomCXOTWGwiIhUIiIAiIgCqiq2lajhqZomaa3mskc1rtybiASAeStdMKGjJTlGPtLJUnvnal/qx+7m/hT3ztS/wBWP3c38KtvCYUYfUyd7T/R8ypPfO1L/Vj93N/Cnvnal/qx+7m/hVt4TCYfUd7T/R8ypPfO1L/Vj93N/Cv1FtM1I+RjTpnAc4Ancm4ZPgrZwmEw+o72n+j5hajVzZH6VvDYc75opgMf2Ctuvjmh7S1wBaRgg8iFYwJ4eSmNg0rBVXuNuOmdBE5g6yAXfiQvBeNcbQbIY/dZkdI6UO6PpKVnnY54we8L13XQWptL391y0dvzQZJi6Nzd+Np5sc13Bw9fVyKwXLRWuNUwVFzvhHlUUW7TUz3Ma5/HiAAd1g5nJ4kqm+DoZpuettYf7m32vVElXojT1TOQZZnxyPIGAXGEk8PEqM0UmubZomG50NxdDZGM8xsTm77Gl5BON3I87PHKnOvtMXi76OsVvt9J0tVS9H0zOka3dxFuniTg8VvtJ6flj2f09ivMHRyOp5IZo94O3d5zuscORBU43MaqRjTXD3IRsRsdFVS1F+mqHS19PI6IQkf0e8M75PWSCR61otJ/5rthDKvg4XCpbx/WIfj7QpJsz0xqjS+pJfLaH+bqhjopZWzMIy3ix+M57R/eXp2jbP7hXXZt/wBNEeWEtdLCHhjt9vJ7DyzwGR3ZUY2LOce8km9mjc7ZJI2aEqQ8jL5oWs8d8H7AVBdPMkbsV1E52dx9TlnoMQPtX2s09tE1hLT0t8Y6Knhdnfn6NjGnlvbrOLjj/sK0otJ0MWj3aaYXCmdTmJ0mPOLjxL/He4qeSmqNKCjnO+SDbAv/ACl7H/rRfdctfth46+sYHE9FDw/94rw0Wl9f6Or53WOIytk810kBY9koHIlruIPo4Z5rbaf0Rqe+anp75rB3RtgeyTce5pfJunLWhreDW5/745UeWC70qo6mpYPFt6x7tWzPLyR+f/uktt2n3m0Mo5DvUE8TQGiSBgdHgYBI44xhbva7pK+aiudDNZ6LyiOKmex56VjcOLsgecQrItEMlPaqOCZu7JHBGx4znBDQCpxuU71RpxxhsjOzbRztJ2yfyuVktdVOa6Yx/BYAODQevmePepiiKxqyk5PLIpr3Utx05FRPtlt8uM73teN153AAMfBB7VDvfO1L/Vj93N/CrcTChp9TJCpCKw45Kk987Uv9WP3c38K+e+dqX+rH7ub+FW5hMKMPqW72n+j5lR++dqX+rH7ub+FfffO1L/Vj93N/CrbwmEw+o72n+j5lR++dqX+rH7ub+FTPQeo7jqKlq5bnbvIXQyNYxu68bwIznzgpThFKT6lZ1INYUcBERSYQiIgCIqu1htRqdM61NomoYJLfH0TppgXdI1rgCSBy4ZQlJvgtFFChrSeTaGzTsMNPJRPofKmVAcd53m5GOrCx7Pda1mqbBc7jVUkEElJK5jWRFxDgGB3HKE6XjJOUVUQbUblJs8n1KbfSCojrxSiIOduFpAOeec8V+vfI1Daau0O1NYKaG33Qt6GamqN5wBxxxk8t4HBwoyNDLVRVjrfXGr9KPnqp7DQe5flJhp6h1QS6QcS0lodkZAPUvl11xq6x6ZqbxebDQU+Hwtpg2cvEgfvb2cOyMAD1qcjSyz0UG1trWs07ou3X2mpIJZ6p0QdHIXbrd+MuOMceYWv1Hry+0mqbdYbJa6KqnraNk7emlczziHEjOcYw1Aotlkoq/wBI66ul4ut2sNztEVJeqGF0jWMl3o3kYGCeri5vHJBBXi0nrrVF61XNZKmzW+IUUm7XOjmJMQzjLcnDuKDSyzUVWaZ2rS3DWj7FdKOnp4HzyU8M8bnZMgcQ0HPDjjHiQtrZNoYnj1XU3iCKClsdR0TTDkukG85o4HrJaB6UyHBk+RVdbNZ69vlGbrZtLUJtriTE2aoIllaD1cRnxxjsyrBsNfNc7NSV1TSPo5pog6Snfnejd1tOQPsQhxaNgiret17fLpqSts2iLPTVvkGRU1NVKWs3gcEDBHWCBx44PDAX6s20iets2oBXW5tHfLLBJLLSucSx+7niDzHEYI7xgnKZJ0ssZFBbfrasqtmU2q30kDamOOV4hBduHdeWjv6lprttMulJpPTl2p7dSSVN3fIx0TnODWFrt0YOevvTI0stNFXNq17e6fWFJpzVdkgo5qxuYJaaffHXjPPgS0jnwUw1VdZLJpu43SCNkklLTulax+cOI6jhCHFo2yKr9LbUpL1p6+1M9JBDcrbTOqY4GuduSxgc+PHgeB8QvxdtplzotG6fvUFvpH1N0kkY6JznBrd0kDBz3dajJOh8FpooVabnr6olqGXLT9tpGine6F4qd8OlGN1pAdnB48epRuLbCI9NV81fQxw3+mqPJ20GThxJ59uBhwPeB2hTkaW+C2UVa3zVeu7PaRdJ9PW40rKZs1Q4zkGInm3d3skjhnhzyvdoPU2q9RupayvstFT2eojc5tTFPl2RwHmk55g9SDS8ZJ4ihe0HWFXpatsUFLSwTtuNQYpDKSCwAsGRj+0Vu9YXiWw6ZuF1p4mSy0sW+1jyd1xyBxx4oRhm5RVrpzVevL7T0VfBpu3G21LwTMKrBDN7Djul2eGCvTtP2gz6Omoaa30kNVU1DHyPbKXAMYOAPDtOfUUyTpecFgoodf8AWbqLZ4zVNuhimc+KGRsUhO6N9zQQcceGT6lGRtK1NbbdRXm+6YiFlqg1wqKSo3nNa7kSCTjwOOzKZCi2WuirrV+0Cvt9zsVJpqjpLgLxCJIHSvLd4uIDeOQBz616Hak1hbrDebnqCxUNJ5HTdLTiOo3xI7PEHDiQMYQaWT1FUB2n6oo7HR6hr9O0TrNUSbolhqTv8yORJx8E8wpDq3aBPQVdntmnqBlZcrtEyaEVD+jYxjvg548zg8MjkmRoZPkUT0tddWz3SWi1RZKali6AyRVVJKXsc4OA3TxODxJ9CliENYCp252mmvu2a82usAMNTZ9wnGS07rMOHeDg+hXEsQpqcVBqRBF05G6ZdwbxHZnmgi8FBbNae40m1Jlruzs1NBRzUgz+o0ebjuweHdhenZ1qW2aRsWpLRqCZ1JXtmeWwPjdvPO5u4GBzyOvtBV5+S04qTU9BF05GOl3BvY8eawVVpttZMJqy30k8o5Plga9w9JCjBdzzyc/ijnpNg8klRGWCourZY94Y3mYDc+BLSvTVUU+mr5pa7atqam72F8MToHyPO7SvLQcbvLzcA4+UB3YV/TUtPPCIZ4IpIhjzHsDhw5cCktLTzQthmgikibjDHsBaMcuBTA7wrPb7NFPoOjmhkY+KStjcx7XZDgY3kEHrXp2t0VRWbLh5NG6Qw9BK8NGSGAYJ9Gc+CsGShpJKdlPJSwOgZ8GN0YLW+AxhZw0Bu6AN3GMYQqpYwUJrzVNq1JoKwWOzTOqbmZIA6mZG7eYWxlpB4c8kYwvZrC2VVXtbsNtpq+S31RtrGNqYeLo3BsvL1Y8CrjprRbaWc1FLb6SGY85I4GtcfSBlZ3UtO6obUOgiM7RhspYN4DuPPrKYLa8cFO7LKyl05qa+27VIfFqF2891ZNIX9PGBvEDPhvZ+UPBYtm2oLU/ajqKVtYwx3SUiiO67+WJfvcOHDh24VyzUNJPKJpqWCSUDAe+NpI9JC/EVrt8MjZIaGmY9py1zYWgjwICYIcs5KJsWmnams+sm0nC40V1NTRub8LfBfloPePbjsXj0lQ3DUuidbiFrpq+WenqXMaPOkcHOe4Y7Tx4dq6HgpaenLzTwRRF53n7jA3ePacc0gpaemLzTwRRGQ5eY2Bu8e/HNME94UHUavhl0Jb22zU1VaLraqUU77bG0t8pcCBvb3Llk9vNXDoCqqK7RdnqqyaSaolpWOkkkOXOPaVs5bNa5qg1M1to5Jyc9K+nYXZ8cZXtAAAAGAEKykmilND3ii0Bq7U1r1PIaMVUwmgqHscWyNDnkch1hwPiCOa81hparVl513f7XTSGiq6CempiW46Z7g3AHfhme7eCuutt1DXhorqOnqQ34Imia/HhkLPDDFBE2KCNkcbRhrGNAAHcAmC2vzKCturrNS7GquwT1RZdcSwimLHbxLpMg8sYwePgsWrqGopNA6ApKkPp5zLIeIw5m+4EHHbhwKvh9otklV5U+3UjqnOemdA0vz272MrPUUtPU7nlEEUu4ct6RgduntGeSYGvcpS2RHSO1aP8Ay2qJq8zs3bddKmQ7rc5AyDwHMtP6pOeRyrM2k/EO+/QpPsW+qaOmqw0VVPDMG/B6SMOx61kkijliMUkbXxuGCxzQQR2YQq5ZaZzxebFUU+zuw6qtRLX+ROo68NHB0Ty5oJ9e6fFvYsep9z3qdEdK7EfTzbxB5DedldEClpxTeTCCLoMY6LcG7jsxyWN9uonwshfR07oo/gMMTS1vgMcEwW7wrbQtXs9tNxrKmwXqqmmbSPdN5S6QtbE0gud5zQOoKvrk653S41e0mktsIt1PcYy2B7PhtbgbxHXxDQT2nuXRDbVbmhwbQUoDhuuxC3iOw8FmbS07ac0zYIhAQR0QYN3B7uSYIU8PJCta3ekvuye5XOgkD6eoo95va07wy094OQfBezZL/wDjuy/8F333KUNoqVlO6mbTQtgdziEYDT6MYWSGKOCNsUMbI42/BaxoAHoCkjO2Cptu80dNX6SnmcGxxVj3vd2NBjJPqWw1jrXT2pNFagpLLcBUzR0Rlc3ontw3faM5cB1kKxamjpqvd8qp4Zt34PSRh2PDKxstdvjDwyhpmh7d14ELRvDsPDiFBOpYXuKM2eDQUUdlqK671jL62Zh8na6To+l3/NGA3GDw6+tZa73Y1dtC1DXWS1Q3SnpYX20CWcRtY1zSwuBJ4knfPpV2NtNtY4OZQUjXNOQRA0EH1LPT0tPS73k0EUW+cu6Ngbk9pwmCde+Tn2juUvvPai0/W+bVWmsjaWOPFrXTDh6HB/rC2N11pa7hswt+lLT0tdd56aCndBFC49G5paTxxxPDAxlXa63UTjKXUdOTN/SExN8/jnjw48e1fqnoaSlcXU1LBETzMcYb9gTA1roUDre009mqtDWzUE7ooIKMMrJI3HMY38uwRx4ZI4dikAOj4tCath0jcqqre6jD6gVBed0AkNxvNHaVb1TQ0lU5rqqlgmc0YBkjDiB6QvzHbaGJkjI6Kma2Qbrw2JoDh2HhxTBGvY5ymtFwpdF6cvdfUVVz030pdUW8SlrYP5Rw4Y6jx49ROOtTjXFXs+1LLbYrnXy0DjRNloq+BvmGMkjoyMHBaWngQMdqtkUlOKbyYQRdBjHRbg3ceHJYJbRbZoGwTW+kkhaSRG+BpaCeZxhME68lS7IKyvj1hcrXbrvUXfT0EJIqJQ4NDvN3d3e5H4QwOeMq51hpaSmo4hDR08UEQOQyJga31BZlJWTy8n//2Q==';
+const branches=[
+ {name:'LPU Batangas - Main',code:'LPUB',address:'LPU Batangas Main Campus, Batangas City'},
+ {name:'LPU Lima',code:'LPUL',address:'LPU Lima Campus, Malvar, Batangas'},
+ {name:'DLSL - Food Park',code:'DLSL',address:'De La Salle Lipa, Lipa City, Batangas'},
+ {name:'ADMU - 2GONZ',code:'ADMU',address:'Ateneo de Manila University, Quezon City'},
+ {name:'Mapua Davao - Food Hall',code:'MAPD',address:'Mapua Malayan Colleges Mindanao, Davao City'},
+ {name:'PUP Manila - Varda Main',code:'PUPM',address:'Polytechnic University of the Philippines, Manila'},
+ {name:'St. Jude - Varda Fresh Restaurant',code:'STJU',address:'St. Jude campus location'}
+];
+const starterTenants=[
+ {id:'t-munchito',name:'MUNCHITO',owner:'RAYMOND LABOS',branch:'LPU Batangas - Main',kiosk:'Kiosk 4',address:'LPU Batangas Main Campus, Batangas City',locked:true},
+ {id:'t-friednoodle',name:'THE FRIED NOODLES HAUS',owner:'TESSA JAVIER DE CHAVEZ',branch:'LPU Batangas - Main',kiosk:'Kiosk 5',address:'LPU Batangas Main Campus, Batangas City',locked:true},
+ {id:'t-glowjuice',name:'THE GLOW JUICE BAR',owner:'RAFAEL IBARRA HIZZON',branch:'LPU Batangas - Main',kiosk:'Kiosk 6',address:'LPU Batangas Main Campus, Batangas City',locked:true},
+ {id:'t-eats',name:'EATS',owner:'AA GROUP',branch:'LPU Batangas - Main',kiosk:'Kiosk 9',address:'LPU Batangas Main Campus, Batangas City',locked:true},
+ {id:'t-qlclugaw',name:'QLC LUGAW',owner:'LHORAINE CULLA',branch:'LPU Batangas - Main',kiosk:'VLPP-014',address:'LPU Batangas Main Campus, Batangas City',locked:true},
+ {id:'t-zesty-main',name:'ZESTY LEMON',owner:'REA CALIMBAS',branch:'LPU Batangas - Main',kiosk:'VLPP-015',address:'LPU Batangas Main Campus, Batangas City',locked:true},
+ {id:'t-zesty-lima',name:'ZESTY LEMON',owner:'REA CALIMBAS',branch:'LPU Lima',kiosk:'VLPP-001',address:'LPU Lima Campus, Malvar, Batangas',locked:true}
+];
+let billingType='both',electricityMethod='meter',waterMethod='meter',logoData=DEFAULT_LOGO,preparedSignData='',inspectedSignData='',approvedSignData='';
+let loadItems=[];
+let waterItems=[];
+let reservedSOA='',reservedAt='',controlRef='',editingTenantId='';
+const money=n=>'₱'+Number(n||0).toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2});
+const num=n=>Number(n||0).toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2});
+const pad=(n,l=2)=>String(n).padStart(l,'0');
+function now(){return new Date()}
+function dtLabel(d){return d.toLocaleString('en-PH',{year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true})}
+function dateLabel(v){return v?new Date(v+'T00:00:00').toLocaleDateString('en-PH',{year:'numeric',month:'long',day:'numeric'}):'—'}
+function monthRange(v){if(!v)return'—';const[y,m]=v.split('-').map(Number),a=new Date(y,m-1,1),b=new Date(y,m,0),f=d=>d.toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'});return f(a)+' – '+f(b)}
+function acknowledgementNo(soa){return String(soa||'VG-SOA').replace('-UTIL-','-AR-')}
+function amountInWords(value){
+ const ones=['','ONE','TWO','THREE','FOUR','FIVE','SIX','SEVEN','EIGHT','NINE','TEN','ELEVEN','TWELVE','THIRTEEN','FOURTEEN','FIFTEEN','SIXTEEN','SEVENTEEN','EIGHTEEN','NINETEEN'],tens=['','','TWENTY','THIRTY','FORTY','FIFTY','SIXTY','SEVENTY','EIGHTY','NINETY'];
+ function underThousand(n){let out=[];if(n>=100){out.push(ones[Math.floor(n/100)]+' HUNDRED');n%=100}if(n>=20){out.push(tens[Math.floor(n/10)]);if(n%10)out.push(ones[n%10])}else if(n)out.push(ones[n]);return out.join(' ')}
+ let centavos=Math.max(0,Math.round((Number(value)||0)*100)),whole=Math.floor(centavos/100),cents=centavos%100;if(!whole)return 'ZERO PESOS'+(cents?' AND '+pad(cents)+'/100':'')+' ONLY';let parts=[];
+ [[1000000000,'BILLION'],[1000000,'MILLION'],[1000,'THOUSAND']].forEach(([unit,label])=>{if(whole>=unit){parts.push(underThousand(Math.floor(whole/unit))+' '+label);whole%=unit}});if(whole)parts.push(underThousand(whole));return parts.join(' ')+' PESOS'+(cents?' AND '+pad(cents)+'/100':'')+' ONLY'
+}
+function random4(){const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let out='';if(window.crypto&&crypto.getRandomValues){const a=new Uint32Array(4);crypto.getRandomValues(a);for(let i=0;i<4;i++)out+=chars[a[i]%chars.length]}else for(let i=0;i<4;i++)out+=chars[Math.floor(Math.random()*chars.length)];return out}
+function branchObj(){return branches.find(b=>b.name===$('branch').value)||branches[0]}
+function customTenants(){try{return JSON.parse(localStorage.getItem('vg_custom_tenants_v3')||'[]')}catch(e){return[]}}
+function allTenants(){return starterTenants.concat(customTenants())}
+function populateBranches(){
+ $('branch').innerHTML=branches.map(b=>`<option value="${b.name}">${b.name}</option>`).join('');
+ $('newTenantBranch').innerHTML=branches.map(b=>`<option value="${b.name}">${b.name}</option>`).join('');
+}
+function populateTenants(preferredId){
+ const arr=allTenants().filter(t=>t.branch===$('branch').value);
+ $('tenant').innerHTML=arr.length?arr.map(t=>`<option value="${t.id}">${t.kiosk} — ${t.name}</option>`).join(''):'<option value="">No tenant yet — add one below</option>';
+ if(preferredId&&arr.some(t=>t.id===preferredId))$('tenant').value=preferredId;
+ calc();
+}
+function tenantObj(){return allTenants().find(t=>t.id===$('tenant').value)||{name:'—',owner:'—',kiosk:'—',address:branchObj().address,branch:$('branch').value}}
+function clearTenantEditor(){editingTenantId='';$('newTenantName').value='';$('newTenantOwner').value='';$('newTenantKiosk').value='';$('newTenantAddress').value='';$('newTenantBranch').value=$('branch').value}
+function loadTenantForEdit(){
+ const t=tenantObj();if(!t.id)return;
+ editingTenantId=t.locked?'':t.id;
+ $('newTenantName').value=t.name||'';$('newTenantOwner').value=t.owner||'';$('newTenantKiosk').value=t.kiosk||'';$('newTenantAddress').value=t.address||'';$('newTenantBranch').value=t.branch||$('branch').value;
+ if(t.locked)alert('This is a starter tenant. Saving will create a customizable copy so the built-in list remains protected.');
+}
+function saveTenant(){
+ const name=$('newTenantName').value.trim();if(!name){alert('Please enter the tenant / brand name.');return}
+ let arr=customTenants();const data={id:editingTenantId||('custom-'+Date.now()+'-'+random4()),name,owner:$('newTenantOwner').value.trim()||'—',branch:$('newTenantBranch').value,kiosk:$('newTenantKiosk').value.trim()||'—',address:$('newTenantAddress').value.trim()||branches.find(b=>b.name===$('newTenantBranch').value)?.address||'—',locked:false};
+ const i=arr.findIndex(x=>x.id===editingTenantId);if(i>=0)arr[i]=data;else arr.push(data);
+ localStorage.setItem('vg_custom_tenants_v3',JSON.stringify(arr));
+ $('branch').value=data.branch;populateTenants(data.id);clearTenantEditor();
+}
+function removeSelectedTenant(){
+ const t=tenantObj();if(!t.id)return;if(t.locked){alert('Built-in starter tenants cannot be removed. You may add a customized tenant entry instead.');return}
+ if(!confirm(`Remove ${t.name} from this browser's tenant choices?`))return;
+ const arr=customTenants().filter(x=>x.id!==t.id);localStorage.setItem('vg_custom_tenants_v3',JSON.stringify(arr));populateTenants();
+}
+function sequenceKey(){const m=$('billingMonth').value||'nomonth';return`vg_soa_seq_${branchObj().code}_${m}`}
+function ledger(){try{return JSON.parse(localStorage.getItem('vg_soa_ledger_v3')||'[]')}catch(e){return[]}}
+function baseNo(seq){
+ const m=$('billingMonth').value||`${now().getFullYear()}-${pad(now().getMonth()+1)}`;const[y,mo]=m.split('-');
+ return`VG-${branchObj().code}-UTIL-${y}-${mo}-${pad(Math.max(1,Number(seq)||1),3)}`
+}
+function displayNo(seq,suffix){return baseNo(seq)+'-'+suffix}
+function loadNextSeq(){
+ const l=ledger(),used=new Set(l.map(x=>x.base));let s=Math.max(1,Number(localStorage.getItem(sequenceKey())||1));while(used.has(baseNo(s)))s++;
+ $('sequence').value=s;calc();
+}
+function makeControl(){
+ const d=now();return`VG-${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}-${random4()}`
+}
+function reserveSOA(){
+ if(reservedSOA)return reservedSOA;
+ let s=Math.max(1,Number($('sequence').value)||1),l=ledger(),used=new Set(l.map(x=>x.base));
+ while(used.has(baseNo(s)))s++;
+ const base=baseNo(s),suffix=(window.__vgSessionSuffix||random4());
+ reservedSOA=displayNo(s,suffix);reservedAt=now().toISOString();controlRef=(window.__vgSessionControl||makeControl());
+ l.push({soa:reservedSOA,base,control:controlRef,time:reservedAt,branch:$('branch').value,tenant:tenantObj().name,month:$('billingMonth').value});
+ localStorage.setItem('vg_soa_ledger_v3',JSON.stringify(l));localStorage.setItem(sequenceKey(),String(s+1));$('sequence').value=s;calc();return reservedSOA;
+}
+function clearReservation(){reservedSOA='';reservedAt='';controlRef='';window.__vgSessionSuffix='';window.__vgSessionControl='';loadNextSeq()}
+function initDates(){const d=now();$('billingMonth').value=`${d.getFullYear()}-${pad(d.getMonth()+1)}`;const due=new Date(d.getFullYear(),d.getMonth()+1,10);$('dueDate').value=`${due.getFullYear()}-${pad(due.getMonth()+1)}-${pad(due.getDate())}`}
+function renderImg(el,data,fallback){el.innerHTML=data?`<img src="${data}" alt="">`:fallback}
+function readImage(file,cb){if(!file)return;if(file.size>2500000){alert('Please use an image under 2.5 MB.');return}const r=new FileReader();r.onload=()=>cb(r.result);r.readAsDataURL(file)}
+function setThumb(id,data,text){$(id).innerHTML=data?`<img src="${data}" alt="">`:text}
+function clearLogo(){logoData=DEFAULT_LOGO;localStorage.removeItem('vg_logo_v3');$('logoUpload').value='';setThumb('logoThumb',DEFAULT_LOGO,'VARDA GROUP<br>DEFAULT');calc()}
+
+function defaultDaysOpen(){
+  const v=$('billingMonth').value;
+  if(!v)return 26;
+  const[y,m]=v.split('-').map(Number);
+  const days=new Date(y,m,0).getDate();
+  let weekdays=0;
+  for(let d=1;d<=days;d++){const day=new Date(y,m-1,d).getDay();if(day!==0)weekdays++;}
+  return weekdays;
+}
+function factorOptions(selected){
+  const opts=[
+    ['1.00','Full / Continuous'],
+    ['0.80','Heavy Use'],
+    ['0.60','Frequent Use'],
+    ['0.40','Moderate / Cycling'],
+    ['0.25','Light / Occasional']
+  ];
+  return opts.map(([v,l])=>`<option value="${v}" ${Number(selected)===Number(v)?'selected':''}>${v} — ${l}</option>`).join('');
+}
+function addLoadRow(item){
+  loadItems.push(Object.assign({
+    id:'load-'+Date.now()+'-'+random4(),
+    appliance:'New Appliance',
+    watts:0,qty:1,hours:8,factor:0.40,days:defaultDaysOpen()
+  },item||{}));
+  renderLoadEditor();calc();
+}
+function addExampleLoads(){
+  loadItems=[
+    {id:'load-'+Date.now()+'-A',appliance:'Double Tank Fryer',watts:3000,qty:1,hours:2,factor:0.40,days:26},
+    {id:'load-'+Date.now()+'-B',appliance:'Small Freezer / Chiller',watts:69,qty:1,hours:24,factor:0.40,days:26},
+    {id:'load-'+Date.now()+'-C',appliance:'Heater',watts:1650,qty:1,hours:2,factor:1.00,days:26}
+  ];
+  renderLoadEditor();calc();
+}
+function clearLoads(){
+  if(loadItems.length && !confirm('Clear all appliances from the manual computation?'))return;
+  loadItems=[];renderLoadEditor();calc();
+}
+function removeLoadRow(id){
+  loadItems=loadItems.filter(x=>x.id!==id);renderLoadEditor();calc();
+}
+function updateLoad(id,key,value){
+  const item=loadItems.find(x=>x.id===id);if(!item)return;
+  if(key==='appliance')item[key]=value;
+  else item[key]=Math.max(0,Number(value)||0);
+  calc();
+}
+function loadKwh(item){
+  return (Number(item.watts)||0)*(Number(item.qty)||0)*(Number(item.hours)||0)*(Number(item.factor)||0)*(Number(item.days)||0)/1000;
+}
+function loadDailyKwh(item){
+  return (Number(item.watts)||0)*(Number(item.qty)||0)*(Number(item.hours)||0)*(Number(item.factor)||0)/1000;
+}
+function renderLoadEditor(){
+  const body=$('loadRows'); if(!body)return;
+  body.innerHTML=loadItems.map(item=>`
+    <tr>
+      <td><input class="appliance" value="${String(item.appliance||'').replace(/"/g,'&quot;')}" oninput="updateLoad('${item.id}','appliance',this.value)"></td>
+      <td><input class="watts" type="number" min="0" step="1" value="${item.watts}" oninput="updateLoad('${item.id}','watts',this.value)"></td>
+      <td><input class="qty" type="number" min="0" step="1" value="${item.qty}" oninput="updateLoad('${item.id}','qty',this.value)"></td>
+      <td><input class="hours" type="number" min="0" max="24" step="0.25" value="${item.hours}" oninput="updateLoad('${item.id}','hours',this.value)"></td>
+      <td><select class="factor" onchange="updateLoad('${item.id}','factor',this.value)">${factorOptions(item.factor)}</select></td>
+      <td><input class="days" type="number" min="0" max="31" step="1" value="${item.days}" oninput="updateLoad('${item.id}','days',this.value)"></td>
+      <td><b>${num(loadKwh(item))}</b></td>
+      <td><button type="button" onclick="removeLoadRow('${item.id}')">Remove</button></td>
+    </tr>`).join('');
+}
+function manualElectricityTotals(){
+  const monthly=loadItems.reduce((s,x)=>s+loadKwh(x),0);
+  const daily=loadItems.reduce((s,x)=>s+loadDailyKwh(x),0);
+  return{monthly,daily};
+}
+function renderManualPreview(){
+  const body=$('manualLoadPreviewRows');if(!body)return;
+  body.innerHTML=loadItems.map(item=>`
+    <tr>
+      <td>${item.appliance||'—'}</td>
+      <td>${num(item.watts)}</td>
+      <td>${num(item.qty)}</td>
+      <td>${num(item.hours)}</td>
+      <td>${Number(item.factor||0).toFixed(2)}</td>
+      <td>${num(item.days)}</td>
+      <td>${num(loadKwh(item))}</td>
+    </tr>`).join('');
+  $('manualPreviewTotal').textContent=num(manualElectricityTotals().monthly)+' kWh';
+}
+function setElectricityMethod(method){
+  electricityMethod=method;
+  document.querySelectorAll('.methodbtn').forEach(b=>b.classList.toggle('active',b.dataset.emethod===method));
+  $('meterMethodBox').classList.toggle('hidden',method!=='meter');
+  $('manualMethodBox').classList.toggle('hidden',method!=='manual');
+  if(method==='manual' && loadItems.length===0)addLoadRow({appliance:'New Appliance',watts:0,qty:1,hours:8,factor:.40,days:defaultDaysOpen()});
+  if(method==='manual' && (!$('eBasis').value || $('eBasis').value.includes('Meter reading'))){
+    $('eBasis').value='Manual appliance load computation using rated watts, operating hours, usage factor, days open, and applicable utility rate';
+  }
+  if(method==='meter' && (!$('eBasis').value || $('eBasis').value.includes('Manual appliance'))){
+    $('eBasis').value='Meter reading and applicable utility rate';
+  }
+  renderLoadEditor();calc();
+}
+
+function waterRowM3(item){
+  return (Number(item.liters)||0)*(Number(item.uses)||0)*(Number(item.qty)||0)*(Number(item.days)||0)/1000;
+}
+function waterRowDailyM3(item){
+  return (Number(item.liters)||0)*(Number(item.uses)||0)*(Number(item.qty)||0)/1000;
+}
+function addWaterRow(item){
+  waterItems.push(Object.assign({
+    id:'water-'+Date.now()+'-'+random4(),
+    activity:'Water Use / Activity',liters:0,uses:1,qty:1,days:defaultDaysOpen()
+  },item||{}));
+  renderWaterEditor();calc();
+}
+function addWaterExamples(){
+  waterItems=[
+    {id:'water-'+Date.now()+'-A',activity:'Handwashing / Sink Use',liters:2,uses:20,qty:1,days:26},
+    {id:'water-'+Date.now()+'-B',activity:'Utensil / Dish Washing',liters:8,uses:8,qty:1,days:26},
+    {id:'water-'+Date.now()+'-C',activity:'Cleaning / Sanitation',liters:20,uses:1,qty:1,days:26}
+  ];
+  renderWaterEditor();calc();
+}
+function clearWaterRows(){
+  if(waterItems.length && !confirm('Clear all manual water-use rows?'))return;
+  waterItems=[];renderWaterEditor();calc();
+}
+function removeWaterRow(id){
+  waterItems=waterItems.filter(x=>x.id!==id);renderWaterEditor();calc();
+}
+function updateWaterRow(id,key,value){
+  const item=waterItems.find(x=>x.id===id);if(!item)return;
+  if(key==='activity')item[key]=value;else item[key]=Math.max(0,Number(value)||0);
+  calc();
+}
+function waterManualTotals(){
+  return{
+    monthly:waterItems.reduce((s,x)=>s+waterRowM3(x),0),
+    daily:waterItems.reduce((s,x)=>s+waterRowDailyM3(x),0)
+  };
+}
+function renderWaterEditor(){
+  const body=$('waterRows');if(!body)return;
+  body.innerHTML=waterItems.map(item=>`
+    <tr>
+      <td><input class="activity" value="${String(item.activity||'').replace(/"/g,'&quot;')}" oninput="updateWaterRow('${item.id}','activity',this.value)"></td>
+      <td><input class="liters" type="number" min="0" step="0.1" value="${item.liters}" oninput="updateWaterRow('${item.id}','liters',this.value)"></td>
+      <td><input class="uses" type="number" min="0" step="0.1" value="${item.uses}" oninput="updateWaterRow('${item.id}','uses',this.value)"></td>
+      <td><input class="qty" type="number" min="0" step="1" value="${item.qty}" oninput="updateWaterRow('${item.id}','qty',this.value)"></td>
+      <td><input class="days" type="number" min="0" max="31" step="1" value="${item.days}" oninput="updateWaterRow('${item.id}','days',this.value)"></td>
+      <td><b>${num(waterRowM3(item))}</b></td>
+      <td><button type="button" onclick="removeWaterRow('${item.id}')">Remove</button></td>
+    </tr>`).join('');
+}
+function renderManualWaterPreview(){
+  const body=$('manualWaterPreviewRows');if(!body)return;
+  body.innerHTML=waterItems.map(item=>`
+    <tr>
+      <td>${item.activity||'—'}</td>
+      <td>${num(item.liters)}</td>
+      <td>${num(item.uses)}</td>
+      <td>${num(item.qty)}</td>
+      <td>${num(item.days)}</td>
+      <td>${num(waterRowM3(item))}</td>
+    </tr>`).join('');
+  $('manualWaterPreviewTotal').textContent=num(waterManualTotals().monthly)+' m³';
+}
+function setWaterMethod(method){
+  waterMethod=method;
+  document.querySelectorAll('.watermethodbtn').forEach(b=>b.classList.toggle('active',b.dataset.wmethod===method));
+  $('waterMeterBox').classList.toggle('hidden',method!=='meter');
+  $('waterMinimumBox').classList.toggle('hidden',method!=='minimum');
+  $('waterManualBox').classList.toggle('hidden',method!=='manual');
+  if(method==='manual' && waterItems.length===0)addWaterRow({activity:'Water Use / Activity',liters:0,uses:1,qty:1,days:defaultDaysOpen()});
+  if(method==='minimum' && (!$('wBasis').value || $('wBasis').value.includes('Meter reading') || $('wBasis').value.includes('Manual estimated'))){
+    $('wBasis').value='Approved minimum monthly water charge under the tenant utility arrangement';
+  }
+  if(method==='manual' && (!$('wBasis').value || $('wBasis').value.includes('Meter reading') || $('wBasis').value.includes('minimum monthly'))){
+    $('wBasis').value='Manual estimated water consumption using documented water-use assumptions and applicable utility rate';
+  }
+  if(method==='meter' && (!$('wBasis').value || $('wBasis').value.includes('minimum monthly') || $('wBasis').value.includes('Manual estimated'))){
+    $('wBasis').value='Meter reading and applicable utility rate';
+  }
+  renderWaterEditor();calc();
+}
+function calc(){
+ const t=tenantObj();
+ $('pTenant').textContent=t.name;$('pOwner').textContent=t.owner||'—';$('pKiosk').textContent=t.kiosk;$('pBranch').textContent=$('branch').value;$('pAddress').textContent=t.address;
+ $('pPeriod').textContent=monthRange($('billingMonth').value);$('pDue').textContent=dateLabel($('dueDate').value);$('pDue2').textContent=dateLabel($('dueDate').value);
+ if(!window.__vgSessionSuffix) window.__vgSessionSuffix=random4();
+ const finalNumber=reservedSOA||displayNo($('sequence').value,window.__vgSessionSuffix);
+ $('numberPreview').textContent=finalNumber;$('soaNo').textContent=finalNumber;$('pPaymentRef').textContent=finalNumber;
+ const when=reservedAt?new Date(reservedAt):now();$('billingDateTime').textContent=dtLabel(when);
+ if(!window.__vgSessionControl) window.__vgSessionControl=makeControl();
+ const cref=controlRef||window.__vgSessionControl;$('pControl').textContent=cref;$('footerControl').textContent=cref;
+ const ep=+$('ePrev').value||0,ec=+$('eCurr').value||0,er=+$('eRate').value||0,ef=+$('eFees').value||0;
+ const wp=+$('wPrev').value||0,wc=+$('wCurr').value||0,wr=+$('wRate').value||0,wf=+$('wFees').value||0;
+ const wMinimumFee=+$('wMinimumFee').value||0,wMinimumM3=+$('wMinimumM3').value||0;
+ const ev=ec>=ep,wv=wc>=wp;
+ const manualTotals=manualElectricityTotals();
+ const waterManual=waterManualTotals();
+ const eu=electricityMethod==='manual'?manualTotals.monthly:(ev?ec-ep:0);
+ let wu=0,wch=0;
+ if(waterMethod==='meter'){wu=wv?wc-wp:0;wch=wu*wr;}
+ else if(waterMethod==='minimum'){wu=wMinimumM3;wch=wMinimumFee;}
+ else {wu=waterManual.monthly;wch=wu*wr;}
+ const ech=eu*er,et=ech+ef,wt=wch+wf;
+ $('eWarn').classList.toggle('hidden',electricityMethod!=='meter'||ev);$('wWarn').classList.toggle('hidden',waterMethod!=='meter'||wv);
+ $('eUseMini').textContent=num(eu)+' kWh';$('eTotalMini').textContent=money(et);
+ $('wUseMini').textContent=waterMethod==='minimum'?(wMinimumM3>0?num(wMinimumM3)+' m³ minimum':'Fixed minimum fee'):num(wu)+' m³';
+ $('wTotalMini').textContent=money(wt);
+ $('manualDailyKwh').textContent=num(manualTotals.daily)+' kWh';$('manualMonthlyKwh').textContent=num(manualTotals.monthly)+' kWh';
+ $('pEMethod').textContent=electricityMethod==='manual'?'Appliance Computation':'Meter Reading';$('pEMethodInfo').textContent=$('pEMethod').textContent;
+ $('pEDesc').textContent=electricityMethod==='manual'?'Appliance Computation':'Meter Reading';
+ $('pePrev').textContent=electricityMethod==='manual'?'—':num(ep);$('peCurr').textContent=electricityMethod==='manual'?'—':num(ec);$('peUse').textContent=num(eu);$('peRate').textContent=money(er);$('peCharge').textContent=money(ech);$('peFees').textContent=money(ef);$('peTotal').textContent=money(et);
+ $('manualLoadPreview').classList.toggle('hidden',electricityMethod!=='manual');
+ if(electricityMethod==='manual')renderManualPreview();
+ $('manualDailyM3').textContent=num(waterManual.daily)+' m³';$('manualMonthlyM3').textContent=num(waterManual.monthly)+' m³';
+ const wMethodLabel=waterMethod==='meter'?'Meter Reading':(waterMethod==='minimum'?'Minimum Water Charge':'Estimated Water Use');
+ $('pWMethod').textContent=wMethodLabel;$('pWMethodInfo').textContent=wMethodLabel;
+ $('pWDesc').textContent=wMethodLabel;
+ $('pwPrev').textContent=waterMethod==='meter'?num(wp):'—';
+ $('pwCurr').textContent=waterMethod==='meter'?num(wc):'—';
+ $('pwUse').textContent=waterMethod==='minimum'?(wMinimumM3>0?num(wMinimumM3)+' m³ minimum':'Fixed minimum fee'):num(wu)+' m³';
+ $('pwRate').textContent=waterMethod==='minimum'?'Fixed':money(wr);
+ $('pwCharge').textContent=money(wch);$('pwFees').textContent=money(wf);$('pwTotal').textContent=money(wt);
+ $('minimumWaterPreview').classList.toggle('hidden',waterMethod!=='minimum');
+ $('manualWaterPreview').classList.toggle('hidden',waterMethod!=='manual');
+ $('pMinimumWaterBasis').textContent=$('wMinimumBasis').value||'—';
+ if(waterMethod==='manual')renderManualWaterPreview();
+ const useE=billingType==='electricity'||billingType==='both',useW=billingType==='water'||billingType==='both';
+ $('electricityInput').classList.toggle('hidden',!useE);$('electricityPreview').classList.toggle('hidden',!useE);$('sumERow').classList.toggle('hidden',!useE);
+ $('waterInput').classList.toggle('hidden',!useW);$('waterPreview').classList.toggle('hidden',!useW);$('sumWRow').classList.toggle('hidden',!useW);
+ const type=billingType==='both'?'Electricity + Water':billingType.charAt(0).toUpperCase()+billingType.slice(1);$('pType').textContent=type;$('topChip').textContent=type.toUpperCase();
+ $('sumE').textContent=money(useE?et:0);$('sumW').textContent=money(useW?wt:0);const total=(useE?et:0)+(useW?wt:0);$('grandTotal').textContent=money(total);$('pAmountDue').textContent=money(total);
+ $('pEBasis').textContent=$('eBasis').value||'—';$('pWBasis').textContent=$('wBasis').value||'—';
+ const paymentMethod=$('paymentMethod').value||'—';$('pPayee').textContent=$('payee').value||'VARDA ENTERPRISE';$('pPaymentMethod').textContent=paymentMethod;$('pProofEmail').textContent=$('proofEmail').value||'vardaenterp@gmail.com';$('pPaymentInstructions').textContent=$('paymentInstructions').value||'';$('pRemarks').textContent=$('remarks').value||'';
+ $('pPreparedName').textContent=$('preparedName').value||'—';$('pPreparedPos').textContent=$('preparedPos').value||'';
+ $('pInspectedName').textContent=$('inspectedName').value||'—';$('pInspectedPos').textContent=$('inspectedPos').value||'';
+ $('pApprovedName').textContent=$('approvedName').value||'—';$('pApprovedPos').textContent=$('approvedPos').value||'';
+ const arNo=acknowledgementNo(finalNumber);$('ackNo').textContent=arNo;$('ackSoaNo').textContent=finalNumber;$('ackTenant').textContent=t.name;$('ackOwner').textContent=t.owner||'—';$('ackBranch').textContent=$('branch').value;$('ackKiosk').textContent=t.kiosk;$('ackPeriod').textContent=monthRange($('billingMonth').value);$('ackMethod').textContent=paymentMethod;$('ackRelated').textContent=finalNumber;$('ackPurpose').textContent=type+' utility charges';$('ackAmount').textContent=money(total);$('ackWords').textContent=amountInWords(total);$('ackMethodCheck').textContent='☒ '+paymentMethod+'   ☐ Other: __________';$('ackPaidBy').textContent=t.owner||t.name;$('ackReceivedBy').textContent=$('preparedName').value||'—';$('ackApprovedBy').textContent=$('approvedName').value||'—';$('ackFooterSoa').textContent=finalNumber;
+ renderImg($('paperLogo'),logoData,'<img src="'+DEFAULT_LOGO+'" alt="Varda Group logo">');renderImg($('ackLogo'),logoData,'<img src="'+DEFAULT_LOGO+'" alt="Varda Group logo">');renderImg($('pPreparedSign'),preparedSignData,'');renderImg($('pInspectedSign'),inspectedSignData,'');renderImg($('pApprovedSign'),approvedSignData,'');
+}
+$('logoUpload').addEventListener('change',e=>readImage(e.target.files[0],d=>{logoData=d;localStorage.setItem('vg_logo_v3',d);setThumb('logoThumb',d,'UPLOAD<br>LOGO');calc()}));
+[['preparedSignUpload','preparedSignThumb','prepared'],['inspectedSignUpload','inspectedSignThumb','inspected'],['approvedSignUpload','approvedSignThumb','approved']].forEach(([input,thumb,key])=>{
+ $(input).addEventListener('change',e=>readImage(e.target.files[0],d=>{if(key==='prepared')preparedSignData=d;if(key==='inspected')inspectedSignData=d;if(key==='approved')approvedSignData=d;localStorage.setItem('vg_sig_'+key+'_v3',d);setThumb(thumb,d,'No signature uploaded');calc()}))
+});
+document.querySelectorAll('.typebtn').forEach(b=>b.addEventListener('click',()=>{billingType=b.dataset.type;document.querySelectorAll('.typebtn').forEach(x=>x.classList.toggle('active',x===b));calc()}));
+document.querySelectorAll('.methodbtn').forEach(b=>b.addEventListener('click',()=>setElectricityMethod(b.dataset.emethod)));
+document.querySelectorAll('.watermethodbtn').forEach(b=>b.addEventListener('click',()=>setWaterMethod(b.dataset.wmethod)));
+$('branch').addEventListener('change',()=>{clearReservation();populateTenants();$('newTenantBranch').value=$('branch').value});
+$('tenant').addEventListener('change',calc);
+$('billingMonth').addEventListener('change',clearReservation);
+$('sequence').addEventListener('input',()=>{if(!reservedSOA)calc()});
+document.querySelectorAll('input:not([type=file]),select,textarea').forEach(el=>{if(['branch','tenant','billingMonth','sequence','newTenantBranch'].includes(el.id))return;el.addEventListener('input',calc);el.addEventListener('change',calc)});
+function saveDraft(){
+ const fields={};document.querySelectorAll('input:not([type=file]),select,textarea').forEach(el=>{if(!['newTenantName','newTenantOwner','newTenantKiosk','newTenantAddress','newTenantBranch'].includes(el.id))fields[el.id]=el.value});
+ const s={fields,billingType,electricityMethod,waterMethod,loadItems,waterItems,logoData,preparedSignData,inspectedSignData,approvedSignData,reservedSOA,reservedAt,controlRef};
+ try{localStorage.setItem('vg_utility_draft_v3',JSON.stringify(s));alert('Draft saved on this device.')}catch(e){alert('Draft could not be saved. Try smaller image files.')}
+}
+function loadDraft(){
+ try{
+  const s=JSON.parse(localStorage.getItem('vg_utility_draft_v3')||'null');
+  logoData=localStorage.getItem('vg_logo_v3')||DEFAULT_LOGO;preparedSignData=localStorage.getItem('vg_sig_prepared_v3')||'';inspectedSignData=localStorage.getItem('vg_sig_inspected_v3')||'';approvedSignData=localStorage.getItem('vg_sig_approved_v3')||'';
+  if(s){Object.entries(s.fields||{}).forEach(([k,v])=>{if($(k))$(k).value=v});billingType=s.billingType||'both';electricityMethod=s.electricityMethod||'meter';waterMethod=s.waterMethod||'meter';loadItems=Array.isArray(s.loadItems)?s.loadItems:[];waterItems=Array.isArray(s.waterItems)?s.waterItems:[];logoData=s.logoData||logoData;preparedSignData=s.preparedSignData||preparedSignData;inspectedSignData=s.inspectedSignData||inspectedSignData;approvedSignData=s.approvedSignData||approvedSignData;reservedSOA=s.reservedSOA||'';reservedAt=s.reservedAt||'';controlRef=s.controlRef||''}
+ }catch(e){}
+ setThumb('logoThumb',logoData,'VARDA GROUP<br>DEFAULT');setThumb('preparedSignThumb',preparedSignData,'No signature uploaded');setThumb('inspectedSignThumb',inspectedSignData,'No signature uploaded');setThumb('approvedSignThumb',approvedSignData,'No signature uploaded');
+ document.querySelectorAll('.typebtn').forEach(x=>x.classList.toggle('active',x.dataset.type===billingType));
+ document.querySelectorAll('.methodbtn').forEach(x=>x.classList.toggle('active',x.dataset.emethod===electricityMethod));
+ $('meterMethodBox').classList.toggle('hidden',electricityMethod!=='meter');
+ $('manualMethodBox').classList.toggle('hidden',electricityMethod!=='manual');
+ renderLoadEditor();
+ document.querySelectorAll('.watermethodbtn').forEach(x=>x.classList.toggle('active',x.dataset.wmethod===waterMethod));
+ $('waterMeterBox').classList.toggle('hidden',waterMethod!=='meter');
+ $('waterMinimumBox').classList.toggle('hidden',waterMethod!=='minimum');
+ $('waterManualBox').classList.toggle('hidden',waterMethod!=='manual');
+ renderWaterEditor();
+}
+function resetDraft(){localStorage.removeItem('vg_utility_draft_v3');location.reload()}
+function printSOA(){reserveSOA();calc();setTimeout(()=>window.print(),50)}
+function downloadSOA(){
+ reserveSOA();calc();
+ const pages=[$('soaPaper'),$('ackPaper')].map(page=>page.cloneNode(true).outerHTML).join(''),css=[...document.styleSheets].map(s=>{try{return[...s.cssRules].map(r=>r.cssText).join('\n')}catch(e){return''}}).join('\n');
+ const name=(reservedSOA||'VG-SOA').replace(/[^\w.-]+/g,'_');
+ const out=`<!doctype html><html><head><meta charset="utf-8"><title>${name}</title><style>${css}body{background:#fff}.paper{box-shadow:none;max-width:1000px;margin:20px auto}.side,.toolbar{display:none}</style></head><body>${pages}</body></html>`;
+ const blob=new Blob([out],{type:'text/html'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name+'.html';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500)
+}
+populateBranches();initDates();loadDraft();
+$('brandLogo').src=DEFAULT_LOGO;
+setElectricityMethod(electricityMethod);
+setWaterMethod(waterMethod);
+if(!$('branch').value)$('branch').value=branches[0].name;
+populateTenants();
+if(!reservedSOA)loadNextSeq();
+setInterval(()=>{if(!reservedAt)calc()},30000);
+calc();
+</script>
+</body>
+</html>
