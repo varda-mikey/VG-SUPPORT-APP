@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Supplier Ordering | Varda Group</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f4f5f7;color:#202735;font:16px/1.45 Arial,sans-serif}header{background:#8f1723;color:white;padding:20px 24px;display:flex;align-items:center;gap:18px}header img{width:68px;background:white;border-radius:8px}h1{font-size:24px;margin:0}h2{font-size:20px;margin:0 0 12px}main{max-width:1180px;margin:auto;padding:24px}.panel{background:white;border:1px solid #dce0e5;border-radius:12px;padding:22px;margin-bottom:20px}.fields{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}label{display:block;font-size:14px;font-weight:bold}input,textarea,select{width:100%;font:inherit;padding:10px;border:1px solid #9ca6b4;border-radius:6px;background:white;color:#202735}label input,label select{margin-top:5px}button{font:700 16px Arial;padding:12px 18px;border:0;border-radius:7px;background:#971c29;color:white;cursor:pointer}button.secondary{background:#e9edf2;color:#202735}button:disabled{opacity:.45;cursor:not-allowed}.tools{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:16px 0}.tools input{flex:1;min-width:180px}.muted{color:#596475;font-size:14px}.tableWrap{overflow-x:auto}table{border-collapse:collapse;width:100%}th{text-align:left;background:#f0f2f5;font-size:14px}td,th{padding:12px 10px;border-bottom:1px solid #dfe3e8}td small{display:block;color:#596475;font-size:14px}.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}.qty{width:90px}.price{width:120px}.warning{color:#9b3a00}.summary{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;padding:18px;background:#fff3d9;border-radius:8px;margin-top:18px}.summary strong{font-size:22px}#preview{display:none}body.preview #editor{display:none}body.preview #preview{display:block}.paper{background:white;padding:30px;border:1px solid #dce0e5}.paperHead{display:flex;gap:18px;align-items:center;border-bottom:3px solid #971c29;padding-bottom:18px;margin-bottom:20px}.paperHead img{width:76px}.meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px}.signatures{display:flex;justify-content:space-between;gap:25px;margin-top:50px}.signatures div{width:45%;border-top:1px solid #657080;padding-top:8px}.empty{padding:24px;text-align:center;color:#596475}[hidden]{display:none!important}
+@media(max-width:640px){main{padding:12px}.panel{padding:14px}.fields,.meta{grid-template-columns:1fr}header{padding:16px}h1{font-size:21px}.paper{padding:15px}td,th{padding:10px 6px}.summary strong{font-size:20px}}
+@page{size:A4;margin:12mm}@media print{body{background:white;font-size:11pt}header,#editor,.noPrint{display:none!important}main{padding:0;max-width:none}#preview{display:block!important}.paper{padding:0;border:0}th{background:#eee}thead{display:table-header-group}tr,.signatures{break-inside:avoid}.paperHead img{width:65px}.meta{grid-template-columns:1fr 1fr}.num{white-space:nowrap}td,th{padding:8px 5px}.paperHead{margin-bottom:15px}.summary{background:white;border-top:2px solid #971c29}}
+</style></head><body>
+<header><img src="varda-logo.jpg" alt="Varda Group"><div><h1>Supplier Ordering</h1><div>J&amp;F Foods · Yummy! &amp; Pinoy</div></div></header>
+<main><section id="editor">
+<div class="panel"><h2>Order details</h2><div class="fields">
+<label>Supplier<input id="supplier" value="J&amp;F Foods" maxlength="150"></label>
+<label>Branch<input id="branch" placeholder="Enter branch" maxlength="150"></label>
+<label>Order date<input id="orderDate" type="date"></label>
+<label>Prepared by<input id="prepared" maxlength="150"></label>
+<label>Delivery date<input id="delivery" type="date"></label>
+<label>Order reference<input id="reference" placeholder="Optional" maxlength="100"></label>
+</div></div>
+<div class="panel"><h2>Product list</h2><p class="muted">Enter quantity in packs. Each pack size has one row. Prices are from the supplied catalog and can be corrected for this order.</p>
+<div class="tools"><input type="search" id="search" aria-label="Search items" placeholder="Type to search product, brand or pack size…"><button class="secondary" id="selected">Show ordered only</button><button class="secondary" id="clear">Clear quantities</button></div>
+<p id="count" class="muted"></p><div class="tableWrap"><table><thead><tr><th>Item / pack size</th><th class="num">Price / pack (₱)</th><th class="num">Qty (packs)</th><th class="num">Amount</th></tr></thead><tbody id="items"></tbody></table></div>
+<div class="summary"><div><div id="status" role="status" aria-live="polite"></div><strong id="total"></strong></div><button id="review">Review / Print order</button></div>
+</div><div class="panel"><label>Order notes<textarea id="notes" rows="3" maxlength="2000" placeholder="Delivery instructions or remarks"></textarea></label><p class="muted">Printing prepares your order; it does not send it to the supplier.</p></div>
+</section>
+<section id="preview"><div class="tools noPrint"><button class="secondary" id="edit">← Edit order</button><button id="print">Print / Save PDF</button></div><article class="paper" id="paper"></article></section>
+</main><script>
+"use strict";
+const catalog=[{"id":"jf-1","name":"Yummy! Hotdogs","pack":"500g · 15 pcs","price":119,"qty":0},{"id":"jf-2","name":"Yummy! Cheesedogs","pack":"500g · 15 pcs","price":120,"qty":0},{"id":"jf-3","name":"Yummy! Hotdogs","pack":"1kg · 30 pcs","price":210.5,"qty":0},{"id":"jf-4","name":"Yummy! Cheesedogs","pack":"1kg · 30 pcs","price":210.5,"qty":0},{"id":"jf-5","name":"Yummy! Combo Pack","pack":"200g · 6 pcs","price":null,"qty":0},{"id":"jf-6","name":"Yummy! Hotdog Cocktails","pack":"500g · 28 pcs","price":119,"qty":0},{"id":"jf-7","name":"Yummy! Jumbo Hotdogs","pack":"1kg · 17 pcs","price":null,"qty":0},{"id":"jf-8","name":"Yummy! Longganiza Hamonado","pack":"270g","price":90.1,"qty":0},{"id":"jf-9","name":"Yummy! Hickory Smoked Bacon","pack":"200g","price":161.85,"qty":0},{"id":"jf-10","name":"Yummy! Pork Luncheon Meat","pack":"220g","price":72.98,"qty":0},{"id":"jf-11","name":"Yummy! Pork Tapa","pack":"220g","price":66.79,"qty":0},{"id":"jf-12","name":"Yummy! Sweet Ham","pack":"250g · 8 pcs","price":76.58,"qty":0},{"id":"jf-13","name":"Yummy! Tender Pork Tocino","pack":"220g","price":61.08,"qty":0},{"id":"jf-14","name":"Yummy! Pork Luncheon Meat","pack":"500g","price":null,"qty":0},{"id":"jf-15","name":"Yummy! Beef Tapa","pack":"220g","price":71.55,"qty":0},{"id":"jf-16","name":"Yummy! Hungarian Style Pepper & Paprika Mini Sausage","pack":"270g · 12 pcs","price":88.62,"qty":0},{"id":"jf-17","name":"Yummy! Mexican Style Chipotle & Cheese Mini Sausage","pack":"270g · 12 pcs","price":112.95,"qty":0},{"id":"jf-18","name":"Yummy! Taiwanese Style Sweet Garlic Mini Sausage","pack":"270g · 12 pcs","price":null,"qty":0},{"id":"jf-19","name":"Pinoy Hotdogs Kingsize","pack":"1.10kg · 17 pcs","price":139.56,"qty":0},{"id":"jf-20","name":"Pinoy Cheesedogs Kingsize","pack":"1.10kg · 17 pcs","price":149.99,"qty":0},{"id":"jf-21","name":"Pinoy Hotdogs Super Kingsize","pack":"1.24kg · 16 pcs","price":151.89,"qty":0},{"id":"jf-22","name":"Pinoy Cheesedogs Super Kingsize","pack":"1.24kg · 16 pcs","price":160.47,"qty":0}];
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const money=c=>new Intl.NumberFormat("en-PH",{style:"currency",currency:"PHP"}).format(c/100);
+const selectedItems=()=>catalog.filter(p=>p.qty>0);
+const lineAmount=p=>p.price===null?null:Math.round(p.price*100)*p.qty;
+const totals=()=>{const rows=selectedItems();return {rows,packs:rows.reduce((s,p)=>s+p.qty,0),missing:rows.filter(p=>p.price===null).length,cents:rows.reduce((s,p)=>s+(lineAmount(p)||0),0)}};
+let orderedOnly=false;
+function render(){
+const terms=$("search").value.toLowerCase().trim().split(/\s+/).filter(Boolean);
+const rows=catalog.filter(p=>(!orderedOnly||p.qty>0)&&terms.every(t=>(p.name+" "+p.pack).toLowerCase().includes(t)));
+$("count").textContent=rows.length+" of "+catalog.length+" products";
+$("items").innerHTML=rows.map(p=>'<tr><td><b>'+esc(p.name)+'</b><small>'+esc(p.pack)+'</small></td><td class="num"><input class="price" type="number" min="0.01" max="1000000" step="0.01" data-id="'+p.id+'" data-field="price" aria-label="Price per pack for '+esc(p.name+" "+p.pack)+'" placeholder="Enter price" value="'+(p.price??"")+'"></td><td class="num"><input class="qty" type="number" min="0" max="100000" step="1" data-id="'+p.id+'" data-field="qty" aria-label="Quantity in packs for '+esc(p.name+" "+p.pack)+'" value="'+(p.qty||"")+'" placeholder="0"></td><td class="num" id="amount-'+p.id+'">'+(p.qty?lineAmount(p)===null?"Price needed":money(lineAmount(p)):"—")+'</td></tr>').join("")||'<tr><td colspan="4" class="empty">No matching items.</td></tr>';
+update();
+}
+function update(){const t=totals();$("status").textContent=t.rows.length+" items · "+t.packs+" packs"+(t.missing?" · "+t.missing+" missing prices":"");$("total").textContent=(t.missing?"Priced subtotal: ":"Total: ")+money(t.cents);$("review").disabled=!t.rows.length;}
+$("items").addEventListener("input",e=>{
+const el=e.target,p=catalog.find(p=>p.id===el.dataset.id);if(!p)return;
+let n=Number(el.value);
+if(el.dataset.field==="qty"){p.qty=Number.isFinite(n)?Math.min(100000,Math.max(0,Math.floor(n))):0;if(el.value!==""&&Number(el.value)!==p.qty)el.value=p.qty;}
+else {p.price=el.value!==""&&Number.isFinite(n)&&n>0&&n<=1000000?Math.round(n*100)/100:null;}
+$("amount-"+p.id).textContent=p.qty?lineAmount(p)===null?"Price needed":money(lineAmount(p)):"—";update();
+});
+$("items").addEventListener("change",e=>{if(e.target.dataset.field==="price"){const p=catalog.find(p=>p.id===e.target.dataset.id);e.target.value=p.price??"";}});
+$("search").addEventListener("input",render);
+$("selected").onclick=()=>{orderedOnly=!orderedOnly;$("selected").textContent=orderedOnly?"Show all items":"Show ordered only";render();};
+$("clear").onclick=()=>{if(selectedItems().length&&!confirm("Clear all order quantities?"))return;catalog.forEach(p=>p.qty=0);render();};
+function buildPreview(){
+const t=totals();
+const fields=[["Supplier","supplier"],["Branch","branch"],["Order date","orderDate"],["Delivery date","delivery"],["Order reference","reference"],["Prepared by","prepared"]];
+$("paper").innerHTML='<div class="paperHead"><img src="varda-logo.jpg" alt="Varda Group"><div><h1>VARDA GROUP</h1><h2>SUPPLIER ORDER</h2></div></div><div class="meta">'+fields.map(([label,id])=>'<div><b>'+label+':</b> '+esc($(id).value||"—")+'</div>').join("")+'</div><table><thead><tr><th>Item / pack size</th><th class="num">Qty<br>(packs)</th><th class="num">Unit price</th><th class="num">Amount</th></tr></thead><tbody>'+t.rows.map(p=>'<tr><td>'+esc(p.name)+'<small>'+esc(p.pack)+'</small></td><td class="num">'+p.qty+'</td><td class="num">'+(p.price===null?"Pending":money(Math.round(p.price*100)))+'</td><td class="num">'+(lineAmount(p)===null?"Pending":money(lineAmount(p)))+'</td></tr>').join("")+'</tbody></table><div class="summary"><span>'+t.rows.length+' items · '+t.packs+' packs</span><strong>'+(t.missing?'Priced subtotal: ':'Grand total: ')+money(t.cents)+'</strong></div>'+(t.missing?'<p class="warning"><b>INCOMPLETE PRICING — '+t.missing+' ordered item(s) need a unit price. This subtotal excludes those items.</b></p>':'')+($("notes").value?'<p><b>Notes:</b><br>'+esc($("notes").value).replace(/\n/g,"<br>")+'</p>':'')+'<div class="signatures"><div>'+esc($("prepared").value||"Prepared by")+'<br><small>Prepared by</small></div><div>Approved by</div></div>';
+}
+$("review").onclick=()=>{buildPreview();document.body.classList.add("preview");window.scrollTo(0,0);};
+$("edit").onclick=()=>{document.body.classList.remove("preview");render();};
+$("print").onclick=()=>{buildPreview();window.print();};
+window.addEventListener("beforeprint",buildPreview);
+const now=new Date();$("orderDate").value=[now.getFullYear(),String(now.getMonth()+1).padStart(2,"0"),String(now.getDate()).padStart(2,"0")].join("-");
+render();
+</script></body></html>
