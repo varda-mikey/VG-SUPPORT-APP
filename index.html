@@ -114,7 +114,7 @@ button{
   </div>
 
   <div class="menuGrid">
-    <div class="card"><div class="icon">🛒</div><h2>Supplier Ordering</h2><p>Search J&amp;F Foods products, enter pack quantities, calculate totals, and preview or print only the ordered items.</p><button onclick="openSystem('supplier-order','Supplier Ordering')">Open Supplier Ordering</button></div>
+    <div class="card"><div class="icon">🛒</div><h2>Supplier Ordering</h2><p>Search 128 supplier products, enter pack quantities, calculate totals, and preview or print only ordered items.</p><button onclick="openSystem('supplier-order','Supplier Ordering')">Open Supplier Ordering</button></div>
     <div class="card"><div class="icon">🏷️</div><h2>Price Tag Maker</h2><p>Automatic name + grams calories that work offline, Weekly Menu master + local food rules, automatic allergens, optional USDA enhance, and Student Meal eligibility/inverted promo tags.</p><button onclick="openSystem('price','Price Tag Maker')">Open Price Tag Maker</button></div>
     <!-- VG_CPM_CARD_V2: independent Christmas Price Tag Maker -->
     <div class="card"><div class="icon">🎄</div><h2>Christmas Price Tag Maker</h2><p>All Price Tag Maker tools with Christmas colors, decorations, and a greeting. Bulk entry, auto nutrition, Student Meal controls, and print-ready sheets.</p><button onclick="openChristmasPriceTag()">Open Christmas Price Tag Maker</button></div>
@@ -190,7 +190,7 @@ function openSystem(key,title){
   const frame=document.getElementById('toolFrame');
   frame.removeAttribute('src');
   frame.removeAttribute('srcdoc');
-  if(key==='supplier-order') frame.src='supplier-order-v1.html?v=1';
+  if(key==='supplier-order') frame.src='supplier-order-v1.html?v=2';
   else if(key==='utility') frame.src='utility-v2.html?v=2';
   else if(key==='schedule') frame.src='schedule-v2.html?v=2';
   else if(key==='catering') frame.src='catering-v1.html?v=3';
