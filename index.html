@@ -68,6 +68,7 @@ button{
 .card h2{font-size:18px;margin:10px 0 6px}
 .card p{font-size:13px;color:#6b7280;font-weight:750;line-height:1.35;margin:0 0 14px}
 .card button{margin-top:auto;width:100%;font-size:14px;padding:13px}
+.cardActions{margin-top:auto;display:grid;gap:8px}.cardActions button{margin-top:0}.cardActions .viewAcknowledgments{background:#701326;color:#fff}
 .toolMode .main{display:none}
 .toolShell{display:none;height:100vh;grid-template-rows:auto 1fr;background:#fff}
 .toolMode .toolShell{display:grid}
@@ -136,7 +137,7 @@ button{
     <div class="card"><div class="icon">🍽️</div><h2>Catering Form Maker</h2><p>Create catering service requests, automatic costing and analysis, editable previews, school themes, signatures, and print/PDF-ready forms.</p><button onclick="openSystem('catering','Catering Form Maker')">Open Catering Form Maker</button></div>
 
     <div class="card"><div class="icon">📋</div><h2>VARDA GROUP RETAIL AUDIT</h2><p>Main Canteen and Kiosk audits with monthly sales, daily average, leftovers, compliance scoring, corrective actions, print and JPEG summary.</p><button onclick="openSystem('retail-audit','VARDA GROUP RETAIL AUDIT')">Open Retail Audit</button></div>
-    <div class="card"><div class="icon">⚖️</div><h2>Varda Policy & V-Points</h2><p>Find the matching VARDA ACT policy and points, view ACT-001 to ACT-085, or create a connected ready-to-print Incident Report and Notice to Explain.</p><button onclick="openSystem('policy','Varda Policy & V-Points')">Open Policy Finder</button></div>
+    <div class="card"><div class="icon">⚖️</div><h2>Varda Policy & V-Points</h2><p>Find the matching VARDA ACT policy and points, create Incident Reports and NTEs, or securely view employee policy acknowledgments by branch.</p><div class="cardActions"><button onclick="openSystem('policy','Varda Policy & V-Points')">Open Policy Finder</button><button class="viewAcknowledgments" onclick="window.open('https://varda-mikey.github.io/VARDA-POLICY/?admin=1','_blank','noopener,noreferrer')">View All Acknowledgments</button></div></div>
     <div class="card"><div class="icon">📊</div><h2>Employee Appraisal</h2><p>Shared live position weights across every device, automatic 100% balancing, job-description summary, criterion remarks, performance impact, merit guidance, and a three-page executive printout.</p><button onclick="openSystem('appraisal','Employee Appraisal')">Open Employee Appraisal</button></div>
 
     <div class="card"><div class="icon">🍽️</div><h2>Varda Group Catering Form</h2><p>Create the Catering Form alone, with an automatic SOA, or with both SOA and Acknowledgement of Payment—all from one encoding.</p><button onclick="openSystem('catering','Varda Group Catering Form')">Open Varda Group Catering Form</button></div>
