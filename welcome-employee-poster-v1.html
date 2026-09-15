@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Welcome Employee Poster Creator</title>
+<style>
+:root{--wine:#720b15;--wine2:#4d050b;--gold:#f1b91d;--cream:#fff8e8;--ink:#271b1c}
+*{box-sizing:border-box}body{margin:0;background:#ece9e4;color:var(--ink);font:14px/1.35 Inter,Arial,sans-serif}.app{display:grid;grid-template-columns:370px minmax(0,1fr);min-height:100vh}.panel{background:#fff;border-right:1px solid #ddd4c8;padding:18px;position:sticky;top:0;height:100vh;overflow:auto}.brand{display:flex;gap:11px;align-items:center}.mark{width:44px;height:44px;border-radius:12px;background:linear-gradient(145deg,var(--wine),#a50b1b);color:#fff;display:grid;place-items:center;font-weight:1000}.brand h1{font-size:18px;color:var(--wine);margin:0}.brand small,.hint{color:#746b64;font-size:11px}.group{border-top:1px solid #eee6dc;margin-top:14px;padding-top:14px}.group h2{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#906e22;margin:0 0 9px}.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}label{display:block;font-size:12px;font-weight:800;margin:9px 0 5px}input,textarea,select{width:100%;border:1px solid #cec5bb;border-radius:9px;padding:9px 10px;font:inherit;background:#fff}textarea{min-height:78px;resize:vertical}.file{border:1px dashed #c9a75d;background:#fffaf0;padding:9px}.range{display:grid;grid-template-columns:1fr 44px;gap:7px;align-items:center}.range input{padding:0}.range output{text-align:right;font-weight:900;color:var(--wine)}button{border:0;border-radius:9px;padding:11px 12px;font-weight:900;cursor:pointer}.primary{width:100%;background:var(--wine);color:#fff;margin-top:14px}.secondary{width:100%;background:#f4ead8;color:var(--wine);margin-top:8px}.ghost{background:#fff;border:1px solid #d7cec3;color:#5c4b43}.workspace{padding:22px;min-width:0}.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:13px}.topbar h2{margin:0;color:var(--wine)}.actions{display:flex;gap:8px;flex-wrap:wrap}.stage{padding:18px;background:#cbc6bd;border-radius:15px;overflow:auto;box-shadow:inset 0 2px 5px #0002}.canvasWrap{position:relative;width:min(100%,1152px);aspect-ratio:3/2;margin:auto;box-shadow:0 14px 38px #281b173d;background:#fff}.canvasWrap canvas{display:block;width:100%;height:100%}.loading{position:absolute;inset:0;display:grid;place-items:center;background:#fff9;color:var(--wine);font-weight:900}.status{margin:10px 0 0;text-align:center;color:#665e58;font-size:12px}.chip{display:inline-flex;border-radius:99px;background:#f7ebd2;color:#6c4500;padding:4px 9px;font-weight:800}.hidden{display:none!important}
+@media(max-width:900px){.app{grid-template-columns:1fr}.panel{height:auto;position:relative}.workspace{padding:12px}.stage{padding:7px}.topbar{align-items:flex-start;flex-direction:column}}
+</style>
+</head>
+<body>
+<main class="app">
+<aside class="panel">
+ <div class="brand"><div class="mark">VG</div><div><h1>Welcome Employee Poster Creator</h1><small>Photo, details, preview & JPEG</small></div></div>
+ <div class="group"><h2>1. Employee photos</h2>
+  <label for="personFile">Employee photo</label><input class="file" id="personFile" type="file" accept="image/*"><div class="hint">Transparent PNG works best. JPG is also supported with soft-edge blending.</div>
+  <div class="row"><div><label>Photo X</label><div class="range"><input id="personX" type="range" min="-25" max="50" value="2"><output>2</output></div></div><div><label>Photo Y</label><div class="range"><input id="personY" type="range" min="-25" max="50" value="8"><output>8</output></div></div></div>
+  <div class="row"><div><label>Photo size</label><div class="range"><input id="personScale" type="range" min="30" max="150" value="86"><output>86</output></div></div><div><label>Photo edge</label><select id="personStyle"><option value="soft">Soft edge</option><option value="full">Full photo</option><option value="cutout">Transparent cutout</option></select></div></div>
+  <label for="backgroundFile">Optional background photo</label><input class="file" id="backgroundFile" type="file" accept="image/*">
+  <div class="row"><div><label>Background opacity</label><div class="range"><input id="bgOpacity" type="range" min="0" max="100" value="18"><output>18</output></div></div><div><label>Background zoom</label><div class="range"><input id="bgScale" type="range" min="80" max="200" value="110"><output>110</output></div></div></div>
+  <div class="row"><div><label>Background X</label><div class="range"><input id="bgX" type="range" min="-50" max="50" value="0"><output>0</output></div></div><div><label>Background Y</label><div class="range"><input id="bgY" type="range" min="-50" max="50" value="0"><output>0</output></div></div></div>
+ </div>
+ <div class="group"><h2>2. Main employee details</h2>
+  <label for="employeeName">Full name</label><input id="employeeName" placeholder="EMPLOYEE NAME">
+  <label for="position">Position / designation</label><textarea id="position" rows="2" placeholder="POSITION / DESIGNATION"></textarea>
+  <label for="branches">Branches or assignments — one per line</label><textarea id="branches" rows="5" placeholder="BRANCH 1&#10;BRANCH 2"></textarea>
+  <label for="welcomeRemarks">Welcome remarks</label><textarea id="welcomeRemarks" rows="8" placeholder="Write the welcome message here…"></textarea>
+ </div>
+ <div class="group"><h2>3. Profile highlights</h2>
+  <label for="education">Education / main profile title</label><input id="education" placeholder="DEGREE OR MAIN PROFILE">
+  <label for="profileLine">Short profile line</label><textarea id="profileLine" rows="2" placeholder="A short inspiring description."></textarea>
+  <label for="highlight1">Highlight 1 title</label><input id="highlight1" placeholder="EDUCATION"><input id="highlight1Detail" placeholder="Short supporting detail">
+  <label for="highlight2">Highlight 2 title</label><input id="highlight2" placeholder="EXPERIENCE"><input id="highlight2Detail" placeholder="Short supporting detail">
+  <label for="highlight3">Highlight 3 title</label><input id="highlight3" placeholder="PREVIOUS ROLE"><input id="highlight3Detail" placeholder="Short supporting detail">
+  <label for="supportName">Bottom support name</label><input id="supportName" placeholder="EMPLOYEE NAME">
+ </div>
+ <div class="group"><h2>4. Text fit</h2>
+  <div class="row"><div><label>Name size</label><div class="range"><input id="nameSize" type="range" min="34" max="78" value="57"><output>57</output></div></div><div><label>Remarks size</label><div class="range"><input id="remarksSize" type="range" min="17" max="32" value="23"><output>23</output></div></div></div>
+ </div>
+ <button class="primary" id="download">Download High-Quality JPEG</button><button class="secondary" id="sample">Load Sample Details</button><button class="secondary" id="reset">Reset All Fields</button>
+ <p class="hint">JPEG export: 1536 × 1024 px, suitable for posting, messaging, and landscape TV display.</p>
+</aside>
+<section class="workspace"><div class="topbar"><div><h2>Live poster preview</h2><div class="hint">Every field updates automatically. Use the sliders to fit the uploaded photos.</div></div><div class="actions"><span class="chip">3:2 Landscape</span><button class="ghost" id="fitPhoto">Center Employee Photo</button></div></div><div class="stage"><div class="canvasWrap"><canvas id="poster" width="1536" height="1024"></canvas><div class="loading" id="loading">Loading VARDA template…</div></div></div><p class="status" id="status">Ready for employee details.</p></section>
+</main>
+<script>
+'use strict';
+const $=id=>document.getElementById(id),canvas=$('poster'),ctx=canvas.getContext('2d');
+const template=new Image(),images={person:null,bg:null};
+template.onload=()=>{$('loading').classList.add('hidden');render()};template.onerror=()=>{$('loading').textContent='Template image could not be loaded.'};template.src='welcome-employee-poster-bg.png';
+const textIds=['employeeName','position','branches','welcomeRemarks','education','profileLine','highlight1','highlight1Detail','highlight2','highlight2Detail','highlight3','highlight3Detail','supportName'];
+const rangeIds=['personX','personY','personScale','bgOpacity','bgScale','bgX','bgY','nameSize','remarksSize'];
+function readFile(file,key){if(!file)return;const r=new FileReader();r.onload=()=>{const img=new Image();img.onload=()=>{images[key]=img;render()};img.src=r.result};r.readAsDataURL(file)}
+function value(id){return $(id).value.trim()}
+function fitImage(img,x,y,w,h,zoom=1,ox=0,oy=0){const s=Math.max(w/img.width,h/img.height)*zoom,dw=img.width*s,dh=img.height*s;return{x:x+(w-dw)/2+ox,y:y+(h-dh)/2+oy,w:dw,h:dh}}
+function drawBackground(){if(!images.bg)return;ctx.save();ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(930,0);ctx.bezierCurveTo(1060,260,1090,660,930,880);ctx.lineTo(0,880);ctx.closePath();ctx.clip();ctx.globalAlpha=Number($('bgOpacity').value)/100;const z=Number($('bgScale').value)/100,p=fitImage(images.bg,0,0,1030,880,z,Number($('bgX').value)*8,Number($('bgY').value)*8);ctx.drawImage(images.bg,p.x,p.y,p.w,p.h);ctx.restore()}
+function drawPerson(){const img=images.person;if(!img)return;const scale=Number($('personScale').value)/100,targetH=760*scale,s=targetH/img.height,w=img.width*s,h=targetH,x=Number($('personX').value)*6,y=120+Number($('personY').value)*4,style=$('personStyle').value;const off=document.createElement('canvas');off.width=660;off.height=900;const o=off.getContext('2d');o.drawImage(img,x,y,w,h);if(style==='soft'){const g=o.createRadialGradient(300,470,210,300,470,470);g.addColorStop(0,'rgba(0,0,0,1)');g.addColorStop(.72,'rgba(0,0,0,.98)');g.addColorStop(1,'rgba(0,0,0,0)');o.globalCompositeOperation='destination-in';o.fillStyle=g;o.fillRect(0,0,660,900)}ctx.save();ctx.beginPath();ctx.rect(0,115,650,770);ctx.clip();ctx.drawImage(off,0,0);ctx.restore()}
+function font(weight,size,family='Arial'){ctx.font=`${weight} ${size}px ${family}`;ctx.textBaseline='top'}
+function lines(text,maxWidth){const paras=String(text||'').split(/\n/),out=[];paras.forEach(p=>{if(!p){out.push('');return}let line='';p.split(/\s+/).forEach(word=>{const t=line?line+' '+word:word;if(ctx.measureText(t).width>maxWidth&&line){out.push(line);line=word}else line=t});if(line)out.push(line)});return out}
+function drawWrapped(text,x,y,maxWidth,lineHeight,maxLines,align='left'){ctx.textAlign=align;const arr=lines(text,maxWidth).slice(0,maxLines);arr.forEach((l,i)=>ctx.fillText(l,x,y+i*lineHeight));return arr.length}
+function shrinkToFit(text,maxWidth,start,min){let s=start;while(s>min){font(900,s,'Arial');if(ctx.measureText(text).width<=maxWidth)break;s--}return s}
+function drawText(){
+ ctx.save();ctx.fillStyle='#8a1018';ctx.textAlign='center';let n=value('employeeName').toUpperCase(),ns=shrinkToFit(n,560,Number($('nameSize').value),34);font(900,ns,'Arial');drawWrapped(n,705,248,560,ns*.94,2,'center');
+ ctx.fillStyle='#26191a';font(900,27,'Arial');drawWrapped(value('position').toUpperCase(),736,444,410,31,2,'center');
+ ctx.fillStyle='#211b1b';font(800,25,'Arial');value('branches').split(/\n/).map(x=>x.trim()).filter(Boolean).slice(0,5).forEach((b,i)=>ctx.fillText(b.toUpperCase(),650,582+i*38));
+ ctx.fillStyle='#fff';ctx.textAlign='left';font(500,Number($('remarksSize').value),'Arial');drawWrapped(value('welcomeRemarks'),1095,126,385,Number($('remarksSize').value)*1.28,18,'left');
+ ctx.fillStyle='#73101a';ctx.textAlign='center';font(900,18,'Arial');drawWrapped(value('education').toUpperCase(),205,742,330,22,2,'center');font(500,18,'Georgia');drawWrapped(value('profileLine'),205,790,330,22,2,'center');
+ const hs=[[value('highlight1'),value('highlight1Detail')],[value('highlight2'),value('highlight2Detail')],[value('highlight3'),value('highlight3Detail')]],xs=[1064,1248,1435];hs.forEach((h,i)=>{ctx.fillStyle='#fff';font(900,15,'Arial');drawWrapped(h[0].toUpperCase(),xs[i],824,155,18,2,'center');font(500,12,'Arial');drawWrapped(h[1],xs[i],865,155,15,3,'center')});
+ ctx.fillStyle='#7c1019';ctx.textAlign='left';font(900,31,'Arial');let support=(value('supportName')||n).toUpperCase();let ss=31;while(ss>19){font(900,ss,'Arial');if(ctx.measureText(support).width<475)break;ss--}ctx.fillText(support,692,910);ctx.restore()
+}
+function render(){if(!template.complete||!template.naturalWidth)return;ctx.clearRect(0,0,canvas.width,canvas.height);ctx.drawImage(template,0,0,canvas.width,canvas.height);drawBackground();drawPerson();drawText()}
+function updateRange(el){const out=el.parentElement.querySelector('output');if(out)out.value=el.value;render()}
+textIds.forEach(id=>$(id).addEventListener('input',render));rangeIds.forEach(id=>$(id).addEventListener('input',e=>updateRange(e.target)));$('personStyle').addEventListener('change',render);$('personFile').addEventListener('change',e=>readFile(e.target.files[0],'person'));$('backgroundFile').addEventListener('change',e=>readFile(e.target.files[0],'bg'));
+$('fitPhoto').onclick=()=>{$('personX').value=2;$('personY').value=8;$('personScale').value=86;rangeIds.slice(0,3).forEach(id=>updateRange($(id)));render()};
+$('sample').onclick=()=>{const sample={employeeName:'EMPLOYEE NAME',position:'POSITION / DESIGNATION',branches:'BRANCH / ASSIGNMENT',welcomeRemarks:'We are thrilled to welcome you to the VARDA family. Your dedication, talent, and passion for service will help us grow stronger together. As you begin this new chapter, know that your team is ready to support you every step of the way.',education:'EDUCATION OR PROFILE',profileLine:'A passion for serving.',highlight1:'EDUCATION',highlight1Detail:'Add education details.',highlight2:'EXPERIENCE',highlight2Detail:'Add work experience.',highlight3:'PREVIOUS ROLE',highlight3Detail:'Add previous role.',supportName:'EMPLOYEE NAME'};Object.entries(sample).forEach(([k,v])=>$(k).value=v);render()};
+$('reset').onclick=()=>{if(!confirm('Clear all employee details and uploaded photos?'))return;textIds.forEach(id=>$(id).value='');$('personFile').value='';$('backgroundFile').value='';images.person=images.bg=null;render();$('status').textContent='All fields cleared.'};
+$('download').onclick=()=>{if(!value('employeeName'))return alert('Please enter the employee name first.');render();canvas.toBlob(blob=>{if(!blob)return alert('JPEG could not be created. Please try again.');const a=document.createElement('a'),safe=value('employeeName').replace(/[^a-z0-9]+/gi,'_').replace(/^_|_$/g,'')||'Employee';a.href=URL.createObjectURL(blob);a.download=`VARDA_Welcome_${safe}.jpeg`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1500);$('status').textContent='High-quality JPEG downloaded successfully.'},'image/jpeg',.95)};
+render();
+</script>
+</body>
+</html>

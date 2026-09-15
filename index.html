@@ -142,6 +142,8 @@ button{
     <div class="card"><div class="icon">🍽️</div><h2>Varda Group Catering Form</h2><p>Create the Catering Form alone, with an automatic SOA, or with both SOA and Acknowledgement of Payment—all from one encoding.</p><button onclick="openSystem('catering','Varda Group Catering Form')">Open Varda Group Catering Form</button></div>
     <div class="card"><div class="icon">🎟️</div><h2>Voucher Maker</h2><p>Create school-themed gift, meal, drink, snack, food, and special vouchers with automatic numbering, flexible validity, one-time or accumulated use, cashier controls, and A4 print presets.</p><button onclick="openSystem('voucher','Voucher Maker')">Open Voucher Maker</button></div>
     <div class="card"><div class="icon">🏆</div><h2>C.E.R.A.P. Certificate Maker</h2><p>Create editable, print-ready certificates with branch, date, font, and approver controls.</p><button onclick="openSystem('cerap','C.E.R.A.P. Certificate Maker')">Open Certificate Maker</button></div>
+
+    <div class="card"><div class="icon">👋</div><h2>Welcome Employee Poster Creator</h2><p>Create a branded welcome poster with employee photo, background, name, position, branches, welcome remarks, highlights, and high-quality JPEG download.</p><button onclick="openSystem('welcomeEmployee','Welcome Employee Poster Creator')">Open Poster Creator</button></div>
     <div class="card"><div class="icon">📺</div><h2>Varda TV System</h2><p>Manage every Varda TV screen, upload single images or slideshows, control display seconds, and copy the unique link for each television.</p><button onclick="window.open('https://varda-mikey.github.io/vtv/admin.html','_blank','noopener,noreferrer')">Open Varda TV Control</button></div>
 </div>
 </div>
@@ -200,6 +202,7 @@ function openSystem(key,title){
   else if(key==='appraisal') frame.src='appraisal-v1.html?v=4';
   else if(key==='voucher') frame.src='voucher-v7.html?v=1';
   else if(key==='cerap') frame.src='cerap-certificate-v1.html?v=1';
+  else if(key==='welcomeEmployee') frame.src='welcome-employee-poster-v1.html?v=1';
   else frame.srcdoc=decodeHtml(key);
   window.scrollTo(0,0);
 }
