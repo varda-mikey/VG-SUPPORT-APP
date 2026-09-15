@@ -14,21 +14,27 @@
 <main class="app">
 <aside class="panel">
  <div class="brand"><div class="mark">VG</div><div><h1>Welcome Employee Poster Creator</h1><small>Photo, details, preview & JPEG</small></div></div>
- <div class="group"><h2>1. Employee photos</h2>
-  <label for="personFile">Employee photo</label><input class="file" id="personFile" type="file" accept="image/*"><div class="hint">Transparent PNG works best. JPG is also supported with soft-edge blending.</div>
-  <div class="row"><div><label>Photo X</label><div class="range"><input id="personX" type="range" min="-25" max="50" value="2"><output>2</output></div></div><div><label>Photo Y</label><div class="range"><input id="personY" type="range" min="-25" max="50" value="8"><output>8</output></div></div></div>
-  <div class="row"><div><label>Photo size</label><div class="range"><input id="personScale" type="range" min="30" max="150" value="86"><output>86</output></div></div><div><label>Photo edge</label><select id="personStyle"><option value="soft">Soft edge</option><option value="full">Full photo</option><option value="cutout">Transparent cutout</option></select></div></div>
-  <label for="backgroundFile">Optional background photo</label><input class="file" id="backgroundFile" type="file" accept="image/*">
-  <div class="row"><div><label>Background opacity</label><div class="range"><input id="bgOpacity" type="range" min="0" max="100" value="18"><output>18</output></div></div><div><label>Background zoom</label><div class="range"><input id="bgScale" type="range" min="80" max="200" value="110"><output>110</output></div></div></div>
-  <div class="row"><div><label>Background X</label><div class="range"><input id="bgX" type="range" min="-50" max="50" value="0"><output>0</output></div></div><div><label>Background Y</label><div class="range"><input id="bgY" type="range" min="-50" max="50" value="0"><output>0</output></div></div></div>
+ <div class="group"><h2>1. Choose poster background first</h2>
+  <label for="backgroundMode">Background style</label><select id="backgroundMode"><option value="clean">Clean VARDA background (recommended)</option><option value="upload">Upload a custom background</option></select>
+  <label for="backgroundFile">Custom background photo</label><input class="file" id="backgroundFile" type="file" accept="image/*"><div class="hint">Custom backgrounds stay faint and inside a protected area so all text remains readable.</div>
+  <div class="row"><div><label>Background opacity</label><div class="range"><input id="bgOpacity" type="range" min="5" max="18" value="11"><output>11</output></div></div><div><label>Background zoom</label><div class="range"><input id="bgScale" type="range" min="90" max="160" value="110"><output>110</output></div></div></div>
+  <div class="row"><div><label>Background X</label><div class="range"><input id="bgX" type="range" min="-30" max="30" value="0"><output>0</output></div></div><div><label>Background Y</label><div class="range"><input id="bgY" type="range" min="-30" max="30" value="0"><output>0</output></div></div></div>
  </div>
- <div class="group"><h2>2. Main employee details</h2>
+ <div class="group"><h2>2. Employee photo & clean frame</h2>
+  <label for="personFile">Employee photo</label><input class="file" id="personFile" type="file" accept="image/*"><div class="hint">The photo is automatically pre-cut inside the selected frame.</div>
+  <label for="frameShape">Photo frame</label><select id="frameShape"><option value="circle">Circle frame</option><option value="box">Rounded box frame</option></select>
+  <div class="row"><div><label>Frame X position</label><div class="range"><input id="personX" type="range" min="235" max="290" value="260"><output>260</output></div></div><div><label>Frame Y position</label><div class="range"><input id="personY" type="range" min="430" max="490" value="455"><output>455</output></div></div></div>
+  <label>Frame size</label><div class="range"><input id="personScale" type="range" min="260" max="420" value="380"><output>380</output></div>
+  <div class="row"><div><label>Photo zoom inside</label><div class="range"><input id="photoZoom" type="range" min="100" max="280" value="115"><output>115</output></div></div><div><label>Crop left / right</label><div class="range"><input id="photoCropX" type="range" min="-100" max="100" value="0"><output>0</output></div></div></div>
+  <label>Crop up / down</label><div class="range"><input id="photoCropY" type="range" min="-100" max="100" value="0"><output>0</output></div>
+ </div>
+ <div class="group"><h2>3. Main employee details</h2>
   <label for="employeeName">Full name</label><input id="employeeName" placeholder="EMPLOYEE NAME">
   <label for="position">Position / designation</label><textarea id="position" rows="2" placeholder="POSITION / DESIGNATION"></textarea>
   <label for="branches">Branches or assignments — one per line</label><textarea id="branches" rows="5" placeholder="BRANCH 1&#10;BRANCH 2"></textarea>
-  <label for="welcomeRemarks">Welcome remarks</label><textarea id="welcomeRemarks" rows="8" placeholder="Write the welcome message here…"></textarea>
+  <label for="welcomeRemarks">Welcome remarks — auto-generated from position and branch</label><textarea id="welcomeRemarks" rows="8" placeholder="Enter the position and branch to generate remarks automatically."></textarea><button class="secondary" id="remarksAuto" type="button">Regenerate Welcome Remarks</button>
  </div>
- <div class="group"><h2>3. Profile highlights</h2>
+ <div class="group"><h2>4. Profile highlights</h2>
   <label for="education">Education / main profile title</label><input id="education" placeholder="DEGREE OR MAIN PROFILE">
   <label for="profileLine">Short profile line</label><textarea id="profileLine" rows="2" placeholder="A short inspiring description."></textarea>
   <label for="highlight1">Highlight 1 title</label><input id="highlight1" placeholder="EDUCATION"><input id="highlight1Detail" placeholder="Short supporting detail">
@@ -36,10 +42,10 @@
   <label for="highlight3">Highlight 3 title</label><input id="highlight3" placeholder="PREVIOUS ROLE"><input id="highlight3Detail" placeholder="Short supporting detail">
   <label for="supportName">Bottom support name</label><input id="supportName" placeholder="EMPLOYEE NAME">
  </div>
- <div class="group"><h2>4. Text fit</h2>
+ <div class="group"><h2>5. Safe text fit</h2>
   <div class="row"><div><label>Name size</label><div class="range"><input id="nameSize" type="range" min="34" max="78" value="57"><output>57</output></div></div><div><label>Remarks size</label><div class="range"><input id="remarksSize" type="range" min="17" max="32" value="23"><output>23</output></div></div></div>
  </div>
- <button class="primary" id="download">Download High-Quality JPEG</button><button class="secondary" id="sample">Load Sample Details</button><button class="secondary" id="reset">Reset All Fields</button>
+ <button class="primary" id="download">Download High-Quality JPEG</button><button class="secondary" id="reset">Reset All Fields</button>
  <p class="hint">JPEG export: 1536 × 1024 px, suitable for posting, messaging, and landscape TV display.</p>
 </aside>
 <section class="workspace"><div class="topbar"><div><h2>Live poster preview</h2><div class="hint">Every field updates automatically. Use the sliders to fit the uploaded photos.</div></div><div class="actions"><span class="chip">3:2 Landscape</span><button class="ghost" id="fitPhoto">Center Employee Photo</button></div></div><div class="stage"><div class="canvasWrap"><canvas id="poster" width="1536" height="1024"></canvas><div class="loading" id="loading">Loading VARDA template…</div></div></div><p class="status" id="status">Ready for employee details.</p></section>
@@ -47,35 +53,45 @@
 <script>
 'use strict';
 const $=id=>document.getElementById(id),canvas=$('poster'),ctx=canvas.getContext('2d');
-const template=new Image(),images={person:null,bg:null};
+const template=new Image(),images={person:null,bg:null};let remarksManual=false;
 template.onload=()=>{$('loading').classList.add('hidden');render()};template.onerror=()=>{$('loading').textContent='Template image could not be loaded.'};template.src='welcome-employee-poster-bg.png';
 const textIds=['employeeName','position','branches','welcomeRemarks','education','profileLine','highlight1','highlight1Detail','highlight2','highlight2Detail','highlight3','highlight3Detail','supportName'];
-const rangeIds=['personX','personY','personScale','bgOpacity','bgScale','bgX','bgY','nameSize','remarksSize'];
+const rangeIds=['personX','personY','personScale','photoZoom','photoCropX','photoCropY','bgOpacity','bgScale','bgX','bgY','nameSize','remarksSize'];
 function readFile(file,key){if(!file)return;const r=new FileReader();r.onload=()=>{const img=new Image();img.onload=()=>{images[key]=img;render()};img.src=r.result};r.readAsDataURL(file)}
 function value(id){return $(id).value.trim()}
 function fitImage(img,x,y,w,h,zoom=1,ox=0,oy=0){const s=Math.max(w/img.width,h/img.height)*zoom,dw=img.width*s,dh=img.height*s;return{x:x+(w-dw)/2+ox,y:y+(h-dh)/2+oy,w:dw,h:dh}}
-function drawBackground(){if(!images.bg)return;ctx.save();ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(930,0);ctx.bezierCurveTo(1060,260,1090,660,930,880);ctx.lineTo(0,880);ctx.closePath();ctx.clip();ctx.globalAlpha=Number($('bgOpacity').value)/100;const z=Number($('bgScale').value)/100,p=fitImage(images.bg,0,0,1030,880,z,Number($('bgX').value)*8,Number($('bgY').value)*8);ctx.drawImage(images.bg,p.x,p.y,p.w,p.h);ctx.restore()}
-function drawPerson(){const img=images.person;if(!img)return;const scale=Number($('personScale').value)/100,targetH=760*scale,s=targetH/img.height,w=img.width*s,h=targetH,x=Number($('personX').value)*6,y=120+Number($('personY').value)*4,style=$('personStyle').value;const off=document.createElement('canvas');off.width=660;off.height=900;const o=off.getContext('2d');o.drawImage(img,x,y,w,h);if(style==='soft'){const g=o.createRadialGradient(300,470,210,300,470,470);g.addColorStop(0,'rgba(0,0,0,1)');g.addColorStop(.72,'rgba(0,0,0,.98)');g.addColorStop(1,'rgba(0,0,0,0)');o.globalCompositeOperation='destination-in';o.fillStyle=g;o.fillRect(0,0,660,900)}ctx.save();ctx.beginPath();ctx.rect(0,115,650,770);ctx.clip();ctx.drawImage(off,0,0);ctx.restore()}
+function drawBackground(){if($('backgroundMode').value!=='upload'||!images.bg)return;ctx.save();roundedPath(ctx,475,245,535,620,38);ctx.clip();ctx.globalAlpha=Math.min(.18,Number($('bgOpacity').value)/100);ctx.filter='grayscale(65%) contrast(85%)';const z=Number($('bgScale').value)/100,p=fitImage(images.bg,475,245,535,620,z,Number($('bgX').value)*4,Number($('bgY').value)*4);ctx.drawImage(images.bg,p.x,p.y,p.w,p.h);ctx.restore()}
+function roundedPath(c,x,y,w,h,r){r=Math.min(r,w/2,h/2);c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath()}
+function framePath(c,shape,x,y,w,h){if(shape==='circle'){c.beginPath();c.arc(x+w/2,y+h/2,w/2,0,Math.PI*2);c.closePath()}else roundedPath(c,x,y,w,h,34)}
+function drawPerson(){
+ const img=images.person;if(!img)return;
+ const shape=$('frameShape').value,size=Number($('personScale').value),fw=size,fh=shape==='circle'?size:Math.round(size*1.12),rawX=Number($('personX').value),rawY=Number($('personY').value),cx=Math.max(35+fw/2,Math.min(485-fw/2,rawX)),cy=Math.max(225+fh/2,Math.min(690-fh/2,rawY)),x=cx-fw/2,y=cy-fh/2;
+ ctx.save();ctx.shadowColor='rgba(62,8,14,.34)';ctx.shadowBlur=24;ctx.shadowOffsetY=12;ctx.fillStyle='#fff';framePath(ctx,shape,x,y,fw,fh);ctx.fill();ctx.restore();
+ ctx.save();framePath(ctx,shape,x,y,fw,fh);ctx.clip();const zoom=Number($('photoZoom').value)/100,base=Math.max(fw/img.width,fh/img.height)*zoom,dw=img.width*base,dh=img.height*base,dx=x+(fw-dw)/2+Number($('photoCropX').value)*2,dy=y+(fh-dh)/2+Number($('photoCropY').value)*2;ctx.drawImage(img,dx,dy,dw,dh);ctx.restore();
+ ctx.save();framePath(ctx,shape,x,y,fw,fh);ctx.lineWidth=18;ctx.strokeStyle='#fff';ctx.stroke();framePath(ctx,shape,x,y,fw,fh);ctx.lineWidth=11;ctx.strokeStyle='#e7ad19';ctx.stroke();framePath(ctx,shape,x,y,fw,fh);ctx.lineWidth=3;ctx.strokeStyle='#7d1019';ctx.stroke();ctx.restore()
+}
 function font(weight,size,family='Arial'){ctx.font=`${weight} ${size}px ${family}`;ctx.textBaseline='top'}
 function lines(text,maxWidth){const paras=String(text||'').split(/\n/),out=[];paras.forEach(p=>{if(!p){out.push('');return}let line='';p.split(/\s+/).forEach(word=>{const t=line?line+' '+word:word;if(ctx.measureText(t).width>maxWidth&&line){out.push(line);line=word}else line=t});if(line)out.push(line)});return out}
 function drawWrapped(text,x,y,maxWidth,lineHeight,maxLines,align='left'){ctx.textAlign=align;const arr=lines(text,maxWidth).slice(0,maxLines);arr.forEach((l,i)=>ctx.fillText(l,x,y+i*lineHeight));return arr.length}
 function shrinkToFit(text,maxWidth,start,min){let s=start;while(s>min){font(900,s,'Arial');if(ctx.measureText(text).width<=maxWidth)break;s--}return s}
+function drawFit(text,x,y,w,h,start,min,weight=900,family='Arial',align='center',color='#211b1b'){if(!text)return;let size=start,arr=[],lh=0;while(size>=min){font(weight,size,family);arr=lines(text,w);lh=size*1.08;if(arr.length*lh<=h&&arr.every(line=>ctx.measureText(line).width<=w))break;size--}ctx.fillStyle=color;ctx.textAlign=align;const startY=y+(h-arr.length*lh)/2;arr.forEach((line,i)=>ctx.fillText(line,x,startY+i*lh))}
 function drawText(){
- ctx.save();ctx.fillStyle='#8a1018';ctx.textAlign='center';let n=value('employeeName').toUpperCase(),ns=shrinkToFit(n,560,Number($('nameSize').value),34);font(900,ns,'Arial');drawWrapped(n,705,248,560,ns*.94,2,'center');
- ctx.fillStyle='#26191a';font(900,27,'Arial');drawWrapped(value('position').toUpperCase(),736,444,410,31,2,'center');
- ctx.fillStyle='#211b1b';font(800,25,'Arial');value('branches').split(/\n/).map(x=>x.trim()).filter(Boolean).slice(0,5).forEach((b,i)=>ctx.fillText(b.toUpperCase(),650,582+i*38));
- ctx.fillStyle='#fff';ctx.textAlign='left';font(500,Number($('remarksSize').value),'Arial');drawWrapped(value('welcomeRemarks'),1095,126,385,Number($('remarksSize').value)*1.28,18,'left');
- ctx.fillStyle='#73101a';ctx.textAlign='center';font(900,18,'Arial');drawWrapped(value('education').toUpperCase(),205,742,330,22,2,'center');font(500,18,'Georgia');drawWrapped(value('profileLine'),205,790,330,22,2,'center');
+ ctx.save();let n=value('employeeName').toUpperCase();drawFit(n,728,245,560,105,Number($('nameSize').value),30,900,'Arial','center','#8a1018');
+ drawFit(value('position').toUpperCase(),739,432,405,80,30,18,900,'Arial','center','#26191a');
+ ctx.fillStyle='#211b1b';ctx.textAlign='left';value('branches').split(/\n/).map(x=>x.trim()).filter(Boolean).slice(0,5).forEach((b,i)=>{let bs=24;while(bs>16){font(800,bs,'Arial');if(ctx.measureText(b.toUpperCase()).width<=315)break;bs--}ctx.fillText(b.toUpperCase(),620,575+i*39)});
+ drawFit(value('welcomeRemarks'),1050,116,425,560,Number($('remarksSize').value),17,500,'Arial','left','#fff');
+ drawFit(value('education').toUpperCase(),235,728,350,47,20,14,900,'Arial','center','#73101a');drawFit(value('profileLine'),235,777,350,40,18,13,500,'Georgia','center','#73101a');
  const hs=[[value('highlight1'),value('highlight1Detail')],[value('highlight2'),value('highlight2Detail')],[value('highlight3'),value('highlight3Detail')]],xs=[1064,1248,1435];hs.forEach((h,i)=>{ctx.fillStyle='#fff';font(900,15,'Arial');drawWrapped(h[0].toUpperCase(),xs[i],824,155,18,2,'center');font(500,12,'Arial');drawWrapped(h[1],xs[i],865,155,15,3,'center')});
- ctx.fillStyle='#7c1019';ctx.textAlign='left';font(900,31,'Arial');let support=(value('supportName')||n).toUpperCase();let ss=31;while(ss>19){font(900,ss,'Arial');if(ctx.measureText(support).width<475)break;ss--}ctx.fillText(support,692,910);ctx.restore()
+ ctx.fillStyle='#7c1019';ctx.textAlign='left';font(900,29,'Arial');let support=(value('supportName')||n).toUpperCase();let ss=29;while(ss>17){font(900,ss,'Arial');if(ctx.measureText(support).width<470)break;ss--}if(support)ctx.fillText(support,700,895);ctx.restore()
 }
+function buildRemarks(){const p=value('position'),bs=value('branches').split(/\n/).map(x=>x.trim()).filter(Boolean);if(!p&&!bs.length)return '';const role=p||'new role',where=bs.length===1?` at ${bs[0]}`:bs.length>1?` supporting ${bs.slice(0,-1).join(', ')} and ${bs.at(-1)}`:'';return `We are thrilled to welcome you to the VARDA family as our new ${role}${where}. Your experience, dedication, and passion for service will help strengthen our team and support excellent daily operations. As you begin this new chapter, know that the entire VARDA family is ready to support your growth and success. Welcome to the team!`}
+function autoRemarks(force=false){if(!force&&remarksManual)return;const text=buildRemarks();if(text)$('welcomeRemarks').value=text;render()}
 function render(){if(!template.complete||!template.naturalWidth)return;ctx.clearRect(0,0,canvas.width,canvas.height);ctx.drawImage(template,0,0,canvas.width,canvas.height);drawBackground();drawPerson();drawText()}
 function updateRange(el){const out=el.parentElement.querySelector('output');if(out)out.value=el.value;render()}
-textIds.forEach(id=>$(id).addEventListener('input',render));rangeIds.forEach(id=>$(id).addEventListener('input',e=>updateRange(e.target)));$('personStyle').addEventListener('change',render);$('personFile').addEventListener('change',e=>readFile(e.target.files[0],'person'));$('backgroundFile').addEventListener('change',e=>readFile(e.target.files[0],'bg'));
-$('fitPhoto').onclick=()=>{$('personX').value=2;$('personY').value=8;$('personScale').value=86;rangeIds.slice(0,3).forEach(id=>updateRange($(id)));render()};
-$('sample').onclick=()=>{const sample={employeeName:'EMPLOYEE NAME',position:'POSITION / DESIGNATION',branches:'BRANCH / ASSIGNMENT',welcomeRemarks:'We are thrilled to welcome you to the VARDA family. Your dedication, talent, and passion for service will help us grow stronger together. As you begin this new chapter, know that your team is ready to support you every step of the way.',education:'EDUCATION OR PROFILE',profileLine:'A passion for serving.',highlight1:'EDUCATION',highlight1Detail:'Add education details.',highlight2:'EXPERIENCE',highlight2Detail:'Add work experience.',highlight3:'PREVIOUS ROLE',highlight3Detail:'Add previous role.',supportName:'EMPLOYEE NAME'};Object.entries(sample).forEach(([k,v])=>$(k).value=v);render()};
-$('reset').onclick=()=>{if(!confirm('Clear all employee details and uploaded photos?'))return;textIds.forEach(id=>$(id).value='');$('personFile').value='';$('backgroundFile').value='';images.person=images.bg=null;render();$('status').textContent='All fields cleared.'};
-$('download').onclick=()=>{if(!value('employeeName'))return alert('Please enter the employee name first.');render();canvas.toBlob(blob=>{if(!blob)return alert('JPEG could not be created. Please try again.');const a=document.createElement('a'),safe=value('employeeName').replace(/[^a-z0-9]+/gi,'_').replace(/^_|_$/g,'')||'Employee';a.href=URL.createObjectURL(blob);a.download=`VARDA_Welcome_${safe}.jpeg`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1500);$('status').textContent='High-quality JPEG downloaded successfully.'},'image/jpeg',.95)};
+textIds.filter(id=>!['position','branches','welcomeRemarks'].includes(id)).forEach(id=>$(id).addEventListener('input',render));$('position').addEventListener('input',()=>autoRemarks());$('branches').addEventListener('input',()=>autoRemarks());$('welcomeRemarks').addEventListener('input',()=>{remarksManual=true;render()});rangeIds.forEach(id=>$(id).addEventListener('input',e=>updateRange(e.target)));$('frameShape').addEventListener('change',render);$('backgroundMode').addEventListener('change',render);$('personFile').addEventListener('change',e=>readFile(e.target.files[0],'person'));$('backgroundFile').addEventListener('change',e=>{$('backgroundMode').value='upload';readFile(e.target.files[0],'bg')});$('remarksAuto').onclick=()=>{remarksManual=false;autoRemarks(true)};
+$('fitPhoto').onclick=()=>{const defaults={personX:260,personY:455,personScale:380,photoZoom:115,photoCropX:0,photoCropY:0};Object.entries(defaults).forEach(([id,v])=>{$(id).value=v;updateRange($(id))});render()};
+$('reset').onclick=()=>{if(!confirm('Clear all employee details and uploaded photos?'))return;textIds.forEach(id=>$(id).value='');$('personFile').value='';$('backgroundFile').value='';$('backgroundMode').value='clean';remarksManual=false;images.person=images.bg=null;render();$('status').textContent='All fields cleared.'};
+$('download').onclick=()=>{const missing=[];if(!images.person)missing.push('employee photo');if(!value('employeeName'))missing.push('employee name');if(!value('position'))missing.push('position');if(!value('branches'))missing.push('branch or assignment');if(missing.length)return alert('Please complete: '+missing.join(', ')+'.');if(!value('welcomeRemarks'))autoRemarks(true);render();canvas.toBlob(blob=>{if(!blob)return alert('JPEG could not be created. Please try again.');const a=document.createElement('a'),safe=value('employeeName').replace(/[^a-z0-9]+/gi,'_').replace(/^_|_$/g,'')||'Employee';a.href=URL.createObjectURL(blob);a.download=`VARDA_Welcome_${safe}.jpeg`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1500);$('status').textContent='High-quality JPEG downloaded successfully.'},'image/jpeg',.95)};
 render();
 </script>
 </body>
