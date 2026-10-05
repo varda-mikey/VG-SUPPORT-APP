@@ -115,7 +115,7 @@ button{
   </div>
 
   <div class="menuGrid">
-    <div class="card"><div class="icon">📝</div><h2>Purchase Request / Order</h2><p>Inventory-based Varda purchase request with line amounts, optional daily or weekly PAR, approval fields, and print/PDF.</p><button onclick="openSystem('purchase-request','Purchase Request / Order')">Open Purchase Request</button></div>
+    <div class="card"><div class="icon">📝</div><h2>Purchase Request / Order</h2><p>Automatic PR numbers, shared branch folders, inventory-based requests, optional daily or weekly PAR, and downloadable PDF records.</p><button onclick="openSystem('purchase-request','Purchase Request / Order')">Open Purchase Request</button></div>
     <div class="card"><div class="icon">🛒</div><h2>Supplier Ordering</h2><p>Search 154 supplier products, manage your items, upload/download Excel, calculate quantities and totals, and print your final order.</p><button onclick="openSystem('supplier-order','Supplier Ordering')">Open Supplier Ordering</button></div>
     <div class="card"><div class="icon">🏷️</div><h2>Price Tag Maker</h2><p>Automatic name + grams calories that work offline, Weekly Menu master + local food rules, automatic allergens, optional USDA enhance, and Student Meal eligibility/inverted promo tags.</p><button onclick="openSystem('price','Price Tag Maker')">Open Price Tag Maker</button></div>
     <!-- VG_CPM_CARD_V2: independent Christmas Price Tag Maker -->
@@ -183,6 +183,8 @@ function decodeHtml(key){
 function unlock(){document.body.classList.remove('locked');sessionStorage.setItem('VG_APP_SUPPORT_LOGIN','YES')}
 function lockApp(){
   sessionStorage.removeItem('VG_APP_SUPPORT_LOGIN');
+  sessionStorage.removeItem('vg-pr-creator-session');
+  sessionStorage.removeItem('vg-pr-purchaser-session');
   document.body.classList.add('locked');
   document.body.classList.remove('toolMode');
   document.getElementById('toolFrame').removeAttribute('srcdoc');
@@ -196,7 +198,7 @@ function openSystem(key,title){
   frame.removeAttribute('src');
   frame.removeAttribute('srcdoc');
   if(key==='supplier-order') frame.src='supplier-order-v1.html?v=4';
-  else if(key==='purchase-request') frame.src='purchase-request-v1.html?v=1';
+  else if(key==='purchase-request') frame.src='purchase-request-v1.html?v=3';
   else if(key==='utility') frame.src='utility-v2.html?v=2';
   else if(key==='schedule') frame.src='schedule-v2.html?v=2';
   else if(key==='catering') frame.src='catering-v1.html?v=3';
@@ -219,6 +221,7 @@ document.getElementById('loginForm').addEventListener('submit',e=>{
   if(document.getElementById('password').value===STAFF_PASSWORD){
     document.getElementById('err').classList.remove('show');
     unlock();
+    fetch('https://lwjeroszacnqibggxair.supabase.co/functions/v1/pr-gateway',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'login',data:{role:'creator'},password:document.getElementById('password').value})}).then(r=>r.json()).then(s=>{if(s.token)sessionStorage.setItem('vg-pr-creator-session',JSON.stringify(s))}).catch(()=>{});
   }else{
     document.getElementById('err').classList.add('show');
   }
