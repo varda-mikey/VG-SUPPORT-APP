@@ -115,7 +115,7 @@ button{
   </div>
 
   <div class="menuGrid">
-    <div class="card"><div class="icon">📝</div><h2>Purchase Request / Order</h2><p>Automatic PR numbers, shared branch folders, inventory-based requests, optional daily or weekly PAR, and downloadable PDF records.</p><button onclick="openSystem('purchase-request','Purchase Request / Order')">Open Purchase Request</button></div>
+    <div class="card"><div class="icon">📝</div><h2>Purchase Request / Order</h2><p>Automatic PR numbers, shared branch folders, inventory-based requests, optional daily or weekly PAR, and downloadable PDF records.</p><button onclick="openSystem('purchase-request','Purchase Request / Order')">Open Manual / Automatic PO</button></div>
     <div class="card"><div class="icon">🛒</div><h2>Supplier Ordering</h2><p>Search 154 supplier products, manage your items, upload/download Excel, calculate quantities and totals, and print your final order.</p><button onclick="openSystem('supplier-order','Supplier Ordering')">Open Supplier Ordering</button></div>
     <div class="card"><div class="icon">🏷️</div><h2>Price Tag Maker</h2><p>Automatic name + grams calories that work offline, Weekly Menu master + local food rules, automatic allergens, optional USDA enhance, and Student Meal eligibility/inverted promo tags.</p><button onclick="openSystem('price','Price Tag Maker')">Open Price Tag Maker</button></div>
     <!-- VG_CPM_CARD_V2: independent Christmas Price Tag Maker -->
@@ -198,7 +198,7 @@ function openSystem(key,title){
   frame.removeAttribute('src');
   frame.removeAttribute('srcdoc');
   if(key==='supplier-order') frame.src='supplier-order-v1.html?v=4';
-  else if(key==='purchase-request') frame.src='purchase-request-v1.html?v=3';
+  else if(key==='purchase-request') frame.src='purchase-request-v1.html?v=5';
   else if(key==='utility') frame.src='utility-v2.html?v=2';
   else if(key==='schedule') frame.src='schedule-v2.html?v=2';
   else if(key==='catering') frame.src='catering-v1.html?v=3';
