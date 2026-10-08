@@ -68,6 +68,8 @@ button{
 .card h2{font-size:18px;margin:10px 0 6px}
 .card p{font-size:13px;color:#6b7280;font-weight:750;line-height:1.35;margin:0 0 14px}
 .card button{margin-top:auto;width:100%;font-size:14px;padding:13px}
+.card .adminTileLink{display:block;margin-top:auto;width:100%;padding:13px;border-radius:10px;background:var(--gold);color:var(--dark);text-decoration:none;text-align:center;font-size:14px;font-weight:900;box-shadow:0 2px 0 rgba(0,0,0,.18)}
+.card .adminTileLink:focus-visible{outline:3px solid var(--red);outline-offset:3px}
 .cardActions{margin-top:auto;display:grid;gap:8px}.cardActions button{margin-top:0}.cardActions .viewAcknowledgments{background:#701326;color:#fff}
 .toolMode .main{display:none}
 .toolShell{display:none;height:100vh;grid-template-rows:auto 1fr;background:#fff}
@@ -115,6 +117,7 @@ button{
   </div>
 
   <div class="menuGrid">
+    <div class="card" id="kapirataAdminTile"><div class="icon">🏀🏴‍☠️</div><h2>Kapirata / Pirates Admin</h2><p>Review challenge videos, receipt records, and available or claimed discount vouchers.</p><a class="adminTileLink" href="https://varda-mikey.github.io/Kapirata-Basketball-Challenge/admin.html" target="_blank" rel="noopener noreferrer">Open Pirates Admin</a></div>
     <div class="card"><div class="icon">📝</div><h2>Purchase Request / Order</h2><p>Automatic PR numbers, shared branch folders, inventory-based requests, optional daily or weekly PAR, and downloadable PDF records.</p><button onclick="openSystem('purchase-request','Purchase Request / Order')">Open Manual / Automatic PO</button></div>
     <div class="card"><div class="icon">🛒</div><h2>Supplier Ordering</h2><p>Search 154 supplier products, manage your items, upload/download Excel, calculate quantities and totals, and print your final order.</p><button onclick="openSystem('supplier-order','Supplier Ordering')">Open Supplier Ordering</button></div>
     <div class="card"><div class="icon">🏷️</div><h2>Price Tag Maker</h2><p>Automatic name + grams calories that work offline, Weekly Menu master + local food rules, automatic allergens, optional USDA enhance, and Student Meal eligibility/inverted promo tags.</p><button onclick="openSystem('price','Price Tag Maker')">Open Price Tag Maker</button></div>
