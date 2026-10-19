@@ -44,4 +44,15 @@ click('payment','m4');await submit({coverMonths:'2026-04,2026-05',amount:'1500',
 vm.runInContext('state='+JSON.stringify({version:1,suppliers:batchFixture.suppliers,bills:[{...batchFixture.bills[0],id:'june',title:'My car — June 2026',due:'2026-06-16'}]}),ui);click('payment','june');await submit({coverMonths:'2026-04,2026-05',amount:'2000',date:'2026-10-17',ref:'NEW-MONTHS'});assert.equal(stored.bills.length,3);assert.equal(new Set(stored.bills.map(b=>vm.runInContext('accountKey('+JSON.stringify(b)+')',ui))).size,1);
 console.log('PASS: April–May single payment, oldest-first partial allocation, one shared receipt, proof opening from either month, whole-payment reversal and missing monthly bill creation');
 
+
+const cardFixture={version:1,suppliers:[{id:'s',name:'Card payee'}],bills:[{...card,payments:[{id:'older',date:'2026-09-12',amount:10000,ref:'SEP <receipt>'}]},{...card,id:'card-oct',due:'2026-10-05',payments:[{id:'newer',date:'2026-10-18',amount:20000,ref:'OCT'}]},{...card,id:'unrelated',supplier:'other',payments:[{id:'other',date:'2026-10-19',amount:30000,ref:'OTHER'}]}]};
+vm.runInContext('state='+JSON.stringify(cardFixture),ui);
+const cardAPI=vm.runInContext('({cardPaymentRows,cardPaymentHistory,render})',ui),cardGroup=compact.viewGroups([cardFixture.bills[1]])[0];
+const history=cardAPI.cardPaymentRows(cardGroup);assert.equal(history.length,2);assert.equal(history[0].payment.id,'newer');
+let markup=cardAPI.cardPaymentHistory(cardGroup);assert.match(markup,/2026-09-12/);assert.match(markup,/2026-10-18/);assert.match(markup,/SEP &lt;receipt&gt;/);assert(!markup.includes('OTHER'));assert.match(markup,/data-id="card-oct" data-payment="newer"/);
+const beforePaid=cardFixture.bills.reduce((n,b)=>n+a.paid(b),0);click('attach','card-oct','newer');await el('existingProof').onchange({target:{files:[{name:'card-proof.pdf',size:8,type:'application/pdf',data:'data:application/pdf;base64,JVBERi0='}]}});assert.equal(stored.bills.reduce((n,b)=>n+a.paid(b),0),beforePaid);assert.equal(stored.bills[1].payments[0].proof.name,'card-proof.pdf');assert.match(cardAPI.cardPaymentHistory(cardGroup),/>View<\/button>/);el('proofViewer').close();click('proof','card-oct','newer');assert(el('proofViewer').open);
+vm.runInContext('state='+JSON.stringify(stored),ui);el('scope').value='month';el('month').value='2026-10';cardAPI.render();assert.match(el('reportCards').innerHTML,/2026-09-12/);const cardPDF=extras.exportOnePage();assert.equal(cardPDF.getNumberOfPages(),1);assert.match(cardPDF.output(),/2026-09-12/);assert.match(cardPDF.output(),/2026-10-18/);
+vm.runInContext('state.bills.forEach(b=>b.payments=[])',ui);assert.match(cardAPI.cardPaymentHistory(cardGroup),/No payments recorded yet/);
+console.log('PASS: inline card history across billing months, newest-first rows, account isolation, safe references, late proof upload without double deduction, reload and PDF history');
+
 })().catch(e=>{console.error(e);process.exitCode=1});
