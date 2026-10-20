@@ -1,15 +1,20 @@
 begin;
 set local role service_role;
 do $$
-declare audit_token text:=repeat('c',64); staff_token text:=null; payload jsonb; rec jsonb; result jsonb; aid uuid; cid uuid; uid uuid; req uuid; path text; count_before integer;
+declare audit_token text:=repeat('c',64); staff_token text:=null; payload jsonb; rec jsonb; result jsonb; aid uuid; cid uuid; uid uuid; req uuid; path text; count_before integer; draft uuid:=gen_random_uuid(); original_path text;
 begin
  insert into app_private.retail_audit_sessions values(encode(extensions.digest(convert_to(audit_token,'UTF8'),'sha256'),'hex'),'Test auditor',now()+interval '1 hour');
  begin perform public.retail_audit_gateway('review_access','{}',null);raise exception 'FAIL review without password';exception when sqlstate '28000' then null;end;
  result:=public.retail_audit_gateway('auditor_login','{"name":"Test","password":"invalid","ip":"automated-test"}',null);if result->>'error' is null then raise exception 'FAIL wrong password';end if;
  select jsonb_build_object('fields',jsonb_build_object('auditorName','Automated test','auditorRole','Retail Head','auditDate','2026-10-20'),'items',jsonb_agg(jsonb_build_object('s',0,'i',n,'label','Test checkpoint '||n,'result',case when n=1 then 'noncompliant' when n=2 then 'action' when n=3 then 'na' else 'compliant' end))) into payload from generate_series(1,45) n;
+ original_path:='audit/'||draft::text||'/0/1/sample.jpg';insert into storage.objects(bucket_id,name) values('retail-audit-evidence',original_path);
+ payload:=payload||jsonb_build_object('draft_id',draft);
+ payload:=jsonb_set(payload,'{items,0,evidence}',jsonb_build_array(jsonb_build_object('path',original_path,'name','Auditor investigation.jpg','mime','image/jpeg')));
  req:=gen_random_uuid();rec:=public.retail_audit_gateway('submit_audit',jsonb_build_object('submission_key',req,'branch','TEST ONLY','audit_type','main','payload',payload),audit_token);
  aid:=(rec->>'id')::uuid;if (rec->>'score')::integer<>97 then raise exception 'FAIL score %',rec->>'score';end if;
  result:=public.retail_audit_gateway('submit_audit',jsonb_build_object('submission_key',req),audit_token);if result->>'id'<>rec->>'id' then raise exception 'FAIL duplicate audit';end if;
+ perform public.retail_audit_gateway('audit_evidence_access',jsonb_build_object('audit_id',aid,'path',original_path),null);
+ begin perform public.retail_audit_gateway('audit_evidence_access',jsonb_build_object('audit_id',aid,'path','not-this-audit.jpg'),null);raise exception 'FAIL unrelated audit photo';exception when others then if SQLERRM like 'FAIL%' then raise;end if;end;
  perform public.retail_audit_gateway('branches','{}',staff_token);
  perform public.retail_audit_gateway('list','{}',staff_token);
  perform public.retail_audit_gateway('create_cpar',jsonb_build_object('audit_id',aid),staff_token);
@@ -48,5 +53,5 @@ begin
  begin perform public.retail_audit_gateway('review_access','{}',audit_token);raise exception 'FAIL logout';exception when sqlstate '28000' then null;end;
  if has_table_privilege('anon','public.retail_audits','SELECT') or has_function_privilege('anon','public.retail_audit_gateway(text,jsonb,text)','EXECUTE') then raise exception 'FAIL anonymous access';end if;
 end $$;
-select 'PASS: protected auditor sessions, acknowledgment, reviewer identity, final closure snapshots, scores, immutable originals, CPAR filtering, idempotency, proof, history, returns, concurrency and verification' as result;
+select 'PASS: protected auditor sessions, acknowledgment, reviewer identity, final closure snapshots, original audit photo evidence, scores, immutable originals, CPAR filtering, idempotency, proof, history, returns, concurrency and verification' as result;
 rollback;

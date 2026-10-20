@@ -17,7 +17,7 @@ alter table public.retail_cpar_updates drop constraint if exists retail_cpar_upd
 alter table public.retail_cpar_updates add constraint retail_cpar_updates_kind_check check(kind in ('update','submitted','acknowledged','returned','verified'));
 create or replace function public.retail_audit_gateway(p_action text,p_data jsonb default '{}',p_token text default null) returns jsonb
 language plpgsql security invoker set search_path='' as $$
-declare a public.retail_audits; c public.retail_cpar_items; u public.retail_cpar_updates; x jsonb; v jsonb; n integer; pts integer; mx integer; aid uuid; v_reviewer text; v_token text; v_attempt integer; v_closure public.retail_cpar_closures;
+declare a public.retail_audits; c public.retail_cpar_items; u public.retail_cpar_updates; x jsonb; v jsonb; proof jsonb; n integer; pts integer; mx integer; aid uuid; v_reviewer text; v_token text; v_attempt integer; v_closure public.retail_cpar_closures;
 begin
  -- Branch updates remain passwordless. Auditor decisions require a server-validated session.
  if p_action='auditor_login' then
@@ -64,6 +64,10 @@ begin
   pts:=0;mx:=0;
   for x in select value from jsonb_array_elements(v->'items') loop
    if coalesce(x->>'result','') not in ('compliant','action','noncompliant','na') or length(coalesce(x->>'label',''))<5 then raise exception 'Every checkpoint needs a result';end if;
+   if jsonb_typeof(coalesce(x->'evidence','[]'))<>'array' or jsonb_array_length(coalesce(x->'evidence','[]'))>10 then raise exception 'Maximum 10 audit photos per checkpoint';end if;
+   for proof in select value from jsonb_array_elements(coalesce(x->'evidence','[]')) loop
+    if coalesce(p_data#>>'{payload,draft_id}','')='' or coalesce(proof->>'path','') not like 'audit/'||(p_data#>>'{payload,draft_id}')::uuid::text||'/'||(x->>'s')||'/'||(x->>'i')||'/%' or not exists(select 1 from storage.objects where bucket_id='retail-audit-evidence' and name=proof->>'path') then raise exception 'Audit photo must be uploaded to this checkpoint';end if;
+   end loop;
    if x->>'result'<>'na' then mx:=mx+2;pts:=pts+case x->>'result' when 'compliant' then 2 when 'action' then 1 else 0 end;end if;
   end loop;
   insert into public.retail_audits(submission_key,branch,audit_date,auditor,audit_type,score,payload) values ((p_data->>'submission_key')::uuid,trim(p_data->>'branch'),(v#>>'{fields,auditDate}')::date,trim(v#>>'{fields,auditorName}'),p_data->>'audit_type',case when mx>0 then round(pts::numeric/mx*100) else null end,v) returning * into a;
@@ -80,6 +84,15 @@ begin
   end if;
   select jsonb_agg(to_jsonb(i)||jsonb_build_object('updates',coalesce((select jsonb_agg(to_jsonb(h) order by h.created_at) from public.retail_cpar_updates h where h.item_id=i.id),'[]')) order by (split_part(i.item_key,':',1))::integer,(split_part(i.item_key,':',2))::integer) into v from public.retail_cpar_items i where i.audit_id=a.id;
   return to_jsonb(a)||jsonb_build_object('cpar',coalesce(v,'[]'),'final_approval',(select to_jsonb(f) from public.retail_cpar_closures f where f.audit_id=a.id));
+ end if;
+ if p_action='audit_evidence_access' then
+  if aid is not null then
+   if not exists(select 1 from public.retail_audits r cross join lateral jsonb_array_elements(r.payload->'items') it cross join lateral jsonb_array_elements(coalesce(it->'evidence','[]')) e where r.id=aid and e->>'path'=p_data->>'path') then raise exception 'Original audit evidence not found';end if;
+  else
+   if coalesce(p_data->>'draft_id','')='' or coalesce(p_data->>'path','') not like 'audit/'||(p_data->>'draft_id')::uuid::text||'/%' then raise exception 'Invalid draft evidence';end if;
+  end if;
+  if not exists(select 1 from storage.objects where bucket_id='retail-audit-evidence' and name=p_data->>'path') then raise exception 'Photo not found';end if;
+  return '{"success":true}';
  end if;
  if p_action='finalize_audit' then
   select * into a from public.retail_audits where id=aid for update;

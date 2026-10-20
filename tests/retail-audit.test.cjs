@@ -7,7 +7,7 @@ const scripts=[...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/g)].map(m=>
 assert.equal(scripts.length,1);
 new vm.Script(scripts[0],{filename:'retail-audit-v1.html'});
 const modelScript=scripts[0].replace(/init\(\);\s*$/,'')+';this.model={AUDITS,ratingFor};';
-const context={Intl};vm.createContext(context);vm.runInContext(modelScript,context);
+const context={Intl,crypto:require('node:crypto').webcrypto};vm.createContext(context);vm.runInContext(modelScript,context);
 const {AUDITS,ratingFor}=context.model;
 assert.deepEqual(Object.keys(AUDITS),['main','kiosk']);
 assert.equal(AUDITS.main.sections.length,6);
@@ -32,5 +32,5 @@ assert.doesNotMatch(html,/location\.replace\('index.html'\)/);
 const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]).filter(Boolean);
 assert.equal(new Set(ids).size,ids.length);
 const index=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
-assert.match(index,/retail-audit-v1\.html\?v=5/);
+assert.match(index,/retail-audit-v1\.html\?v=6/);
 console.log('PASS: two retail audit types, 75 checkpoints, scoring bands, business metrics, draft persistence, JPEG export, and index integration.');
