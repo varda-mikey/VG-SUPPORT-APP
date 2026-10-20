@@ -1,0 +1,897 @@
+{
+  "version": "2026-10-expanded-fsqa-v1",
+  "source": "Ateneo Food Safety Audit 2026-06-25 - Checklist, Summary and CPAR-JUN",
+  "source_clauses": 41,
+  "sections": [
+    {
+      "key": "A",
+      "name": "FSQA - PERSONNEL, HEALTH AND DISEASE CONTROL",
+      "items": [
+        [
+          "Food handlers complete food safety training and can demonstrate the required knowledge",
+          0
+        ],
+        [
+          "Personal food, drinks, belongings and alcohol are kept out of food zones; staff eat only in designated areas",
+          0
+        ],
+        [
+          "Every deployed food handler has valid health certification and fit-to-work clearance",
+          1
+        ],
+        [
+          "Sick food handlers are excluded from duty and exposed wounds are protected with waterproof dressings",
+          1
+        ]
+      ]
+    },
+    {
+      "key": "B",
+      "name": "FSQA - WATER, FACILITIES, SANITATION AND PEST SERVICES",
+      "items": [
+        [
+          "Water and ice are potable, supported by current test reports and protected from contamination",
+          1
+        ],
+        [
+          "Wash sinks and grease traps are functional, maintained and supported by monitoring records",
+          0
+        ],
+        [
+          "Every required cold-storage unit has a working thermometer; calibration and monitoring tools are available",
+          0
+        ],
+        [
+          "Locker and changing rooms are separated from food storage and free from smoke or chemical odors",
+          0
+        ],
+        [
+          "Idle or unused equipment is identified, tagged and isolated or scheduled for removal",
+          0
+        ],
+        [
+          "Drinking-water dispensers, fountains and filters are cleaned, maintained and monitored",
+          0
+        ],
+        [
+          "Waste is collected, segregated and covered; daily food-waste weight is measured and recorded",
+          0
+        ],
+        [
+          "Handwashing stations are complete, accessible, clearly designated and properly labeled",
+          0
+        ],
+        [
+          "Cleaning implements and chemicals are segregated; sanitizers are mixed and used correctly",
+          0
+        ],
+        [
+          "Pest-control service frequency, monitoring and filed treatment reports meet the approved program",
+          0
+        ],
+        [
+          "Food flow, kitchen and stockroom boundaries, and main/sub-concessionaire areas are physically separated and labeled",
+          0
+        ]
+      ]
+    },
+    {
+      "key": "C",
+      "name": "FSQA - SAFE FOOD HANDLING AND FLOW OF FOOD",
+      "items": [
+        [
+          "Chiller and freezer temperature logs cover every unit and are complete and current",
+          1
+        ],
+        [
+          "Production logs cover every cooked item, production date, start/end time and attained cooking temperature",
+          1
+        ],
+        [
+          "Chopping-board and knife color codes are posted and consistently followed",
+          0
+        ],
+        [
+          "Physical, biological and chemical hazards are controlled, with an implemented allergen-storage plan",
+          1
+        ]
+      ]
+    },
+    {
+      "key": "D",
+      "name": "FSQA - NUTRITION, HEALTH INFORMATION AND CUSTOMER FEEDBACK",
+      "items": [
+        [
+          "Weekly menus provide balanced Go, Grow, Glow choices and are submitted to the campus office on time",
+          0
+        ],
+        [
+          "Iodized salt and fortified ingredients/products are verified; required lists and condiment controls are maintained",
+          0
+        ],
+        [
+          "Required nutrition and health posters are clearly displayed in the cafeteria",
+          0
+        ],
+        [
+          "Customer-feedback channels work, are reviewed weekly and are reported to the required campus offices",
+          0
+        ]
+      ]
+    }
+  ],
+  "coverage": [
+    {
+      "code": "1.1",
+      "reference_risk": "high",
+      "main": [
+        "2:4"
+      ],
+      "kiosk": [
+        "2:3"
+      ],
+      "checks": [
+        "Check clean and trimmed hair, secured female hair, no prohibited facial hair, clean trimmed nails and no polish.",
+        "Check clean uniforms, full hair/ear coverage, socks, closed shoes, no loose jewelry, pins or loose items.",
+        "Check absence of body odor, bad breath, cigarette smell and strong perfume; keep grooming-monitoring records."
+      ],
+      "source_refs": [
+        "Checklist!B13",
+        "Checklist!G13"
+      ]
+    },
+    {
+      "code": "1.2",
+      "reference_risk": "high",
+      "main": [
+        "2:4"
+      ],
+      "kiosk": [
+        "2:3"
+      ],
+      "checks": [
+        "Observe a correct handwashing demonstration, not only an interview.",
+        "Verify handwashing after breaks or restroom use, raw food, dirty dishes, money, garbage and cleaning; follow the campus interval of every 20 minutes of continuous work."
+      ],
+      "source_refs": [
+        "Checklist!B14",
+        "Checklist!G14"
+      ]
+    },
+    {
+      "code": "1.3",
+      "reference_risk": "medium",
+      "main": [
+        "A:0"
+      ],
+      "kiosk": [
+        "A:0"
+      ],
+      "checks": [
+        "Check food-safety training/onboarding attendance and current training records.",
+        "Ask staff to explain and demonstrate basic food safety, including cleaning versus sanitizing."
+      ],
+      "source_refs": [
+        "Checklist!B15",
+        "Checklist!G15"
+      ]
+    },
+    {
+      "code": "1.4",
+      "reference_risk": "low",
+      "main": [
+        "A:1"
+      ],
+      "kiosk": [
+        "A:1"
+      ],
+      "checks": [
+        "Inspect kitchen, stockroom, chillers and dining storage for personal meals, infused-water tumblers, alcoholic drinks and other personal food.",
+        "Allow staff meals only in designated areas; post and enforce no-personal-storage instructions."
+      ],
+      "source_refs": [
+        "Checklist!B16",
+        "Checklist!G16",
+        "CPAR-JUN!B12:E12"
+      ]
+    },
+    {
+      "code": "2.1",
+      "reference_risk": "high",
+      "main": [
+        "A:2"
+      ],
+      "kiosk": [
+        "A:2"
+      ],
+      "checks": [
+        "Match every deployed employee against current health cards/certificates and medical fitness records.",
+        "Track pending or missing health certificates individually; processing evidence does not replace the required completed certificate."
+      ],
+      "source_refs": [
+        "Checklist!B22",
+        "Checklist!G22",
+        "CPAR-JUN!B13:E13"
+      ]
+    },
+    {
+      "code": "2.2",
+      "reference_risk": "high",
+      "main": [
+        "A:3"
+      ],
+      "kiosk": [
+        "A:3"
+      ],
+      "checks": [
+        "Exclude staff with vomiting, diarrhea, jaundice, sore throat with fever, infected skin, ear/eye/nose discharges, COVID-19 or other communicable illness.",
+        "Inspect exposed wounds and ensure waterproof protection and appropriate duty restrictions."
+      ],
+      "source_refs": [
+        "Checklist!B23",
+        "Checklist!G23"
+      ]
+    },
+    {
+      "code": "3.1",
+      "reference_risk": "high",
+      "main": [
+        "B:0"
+      ],
+      "kiosk": [
+        "B:0"
+      ],
+      "checks": [
+        "Check the campus-required monthly water analysis, current microbiological results, sampling dates and pending-result follow-up.",
+        "Verify drinking-water supplier certificates and sound, contamination-free water lines."
+      ],
+      "source_refs": [
+        "Checklist!B29",
+        "Checklist!G29"
+      ]
+    },
+    {
+      "code": "3.2",
+      "reference_risk": "high",
+      "main": [
+        "B:1"
+      ],
+      "kiosk": [
+        "B:1"
+      ],
+      "checks": [
+        "Inspect all wash sinks and grease traps for clogging, backflow, overflowing grease vaults and physical damage.",
+        "Review grease-trap cleaning/maintenance logs and actual cleanliness."
+      ],
+      "source_refs": [
+        "Checklist!B30",
+        "Checklist!G30"
+      ]
+    },
+    {
+      "code": "3.3",
+      "reference_risk": "medium",
+      "main": [
+        "B:2"
+      ],
+      "kiosk": [
+        "B:2"
+      ],
+      "checks": [
+        "Verify sufficient working thermometers for every chiller/freezer and required cooking/holding checks.",
+        "Review calibration method, dates, records and corrective action for missing or inaccurate tools."
+      ],
+      "source_refs": [
+        "Checklist!B31",
+        "Checklist!G31",
+        "CPAR-JUN!B14:E14"
+      ]
+    },
+    {
+      "code": "3.4",
+      "reference_risk": "medium",
+      "main": [
+        "5:1"
+      ],
+      "kiosk": [
+        "4:0"
+      ],
+      "checks": [
+        "Inspect kitchen equipment and utensils for broken or missing parts and hazardous improvised attachments.",
+        "Verify equipment is used for its intended purpose and remains functional and safe."
+      ],
+      "source_refs": [
+        "Checklist!B32",
+        "Checklist!G32"
+      ]
+    },
+    {
+      "code": "3.5",
+      "reference_risk": "medium",
+      "main": [
+        "5:2"
+      ],
+      "kiosk": [
+        "4:1"
+      ],
+      "checks": [
+        "Inspect floors, floor drains and trench drains for sound condition, complete covers, backflow and unsafe ongoing repairs."
+      ],
+      "source_refs": [
+        "Checklist!B33",
+        "Checklist!G33"
+      ]
+    },
+    {
+      "code": "3.6",
+      "reference_risk": "medium",
+      "main": [
+        "5:2"
+      ],
+      "kiosk": [
+        "4:1"
+      ],
+      "checks": [
+        "Inspect dining, service and display tables, cabinets and chairs for damage, unsafe surfaces and poor condition."
+      ],
+      "source_refs": [
+        "Checklist!B34",
+        "Checklist!G34"
+      ]
+    },
+    {
+      "code": "3.7",
+      "reference_risk": "medium",
+      "main": [
+        "5:2"
+      ],
+      "kiosk": [
+        "4:1"
+      ],
+      "checks": [
+        "Inspect walls, ceilings, overheads, exhausts, glass walls, tenant stalls and spit guards for leaks and structural defects.",
+        "Check damaged or loose window screens, permanent screen/frame fastening, and leaks near bussing or tenant areas; record temporary fixes and permanent repair deadlines."
+      ],
+      "source_refs": [
+        "Checklist!B35",
+        "Checklist!G35",
+        "CPAR-JUN!B15:E15"
+      ]
+    },
+    {
+      "code": "3.8",
+      "reference_risk": "medium",
+      "main": [
+        "B:3"
+      ],
+      "kiosk": [
+        "B:3"
+      ],
+      "checks": [
+        "Verify locker rooms are used as changing rooms, organized, physically separated and not used as food stockrooms.",
+        "Check smoke, fabric-conditioner and perfume odors that can contaminate food and food-contact surfaces."
+      ],
+      "source_refs": [
+        "Checklist!B36",
+        "Checklist!G36"
+      ]
+    },
+    {
+      "code": "3.9",
+      "reference_risk": "medium",
+      "main": [
+        "B:4"
+      ],
+      "kiosk": [
+        "B:4"
+      ],
+      "checks": [
+        "Identify unused chillers, temporary sinks and other idle equipment in kitchen/dining areas.",
+        "Require a status tag and designated holding area or documented pullout/removal order."
+      ],
+      "source_refs": [
+        "Checklist!B37",
+        "Checklist!G37"
+      ]
+    },
+    {
+      "code": "3.10",
+      "reference_risk": "low",
+      "main": [
+        "2:6"
+      ],
+      "kiosk": [
+        "B:9"
+      ],
+      "checks": [
+        "Check doors, backdoors, gates and signs are functional, intact and closed when not in use.",
+        "Inspect pest-entry gaps, holes and open access corridors between dishwashing, lockers and stockrooms."
+      ],
+      "source_refs": [
+        "Checklist!B38",
+        "Checklist!G38"
+      ]
+    },
+    {
+      "code": "3.11",
+      "reference_risk": "low",
+      "main": [
+        "5:1"
+      ],
+      "kiosk": [
+        "4:0"
+      ],
+      "checks": [
+        "Check all lights work, have shatterproof protection where needed, and record lux readings against the approved area requirement."
+      ],
+      "source_refs": [
+        "Checklist!B39",
+        "Checklist!G39"
+      ]
+    },
+    {
+      "code": "4.1",
+      "reference_risk": "high",
+      "main": [
+        "B:5"
+      ],
+      "kiosk": [
+        "B:5"
+      ],
+      "checks": [
+        "Check drinking-water sources, dispensers and fountains for cleanliness, scale and function, including hot/cold operation where applicable.",
+        "Review scheduled filter replacements and dispenser cleaning records; check gooseneck faucets and required bubbler settings."
+      ],
+      "source_refs": [
+        "Checklist!B45",
+        "Checklist!G45"
+      ]
+    },
+    {
+      "code": "4.2",
+      "reference_risk": "high",
+      "main": [
+        "B:6"
+      ],
+      "kiosk": [
+        "B:6"
+      ],
+      "checks": [
+        "Check covered bins, segregation, regular garbage removal and absence of accumulation or pest harborage.",
+        "Inspect the complete, organized and frequently cleaned bussing area.",
+        "Verify a designated food-waste weighing scale and a daily food-waste monitoring form."
+      ],
+      "source_refs": [
+        "Checklist!B46",
+        "Checklist!G46"
+      ]
+    },
+    {
+      "code": "4.3",
+      "reference_risk": "medium",
+      "main": [
+        "5:2"
+      ],
+      "kiosk": [
+        "4:1"
+      ],
+      "checks": [
+        "Inspect kitchen, dining and external perimeter cleanliness and frequent dining-table bussing."
+      ],
+      "source_refs": [
+        "Checklist!B47",
+        "Checklist!G47"
+      ]
+    },
+    {
+      "code": "4.4",
+      "reference_risk": "medium",
+      "main": [
+        "B:7"
+      ],
+      "kiosk": [
+        "B:7"
+      ],
+      "checks": [
+        "Check an accessible designated handwashing area at kitchen entrances and within preparation areas for both main and sub-concessionaire personnel.",
+        "Verify working sink/faucet, soap, sanitizer, tissue/hand dryer, fingernail brush where required, labeled soap containers and posted handwashing instructions."
+      ],
+      "source_refs": [
+        "Checklist!B48",
+        "Checklist!G48"
+      ]
+    },
+    {
+      "code": "4.5",
+      "reference_risk": "medium",
+      "main": [
+        "B:8"
+      ],
+      "kiosk": [
+        "B:8"
+      ],
+      "checks": [
+        "Verify complete, serviceable cleaning tools stored away from food in a designated area.",
+        "Check chemical separation, labeled containers and correct sanitizer dilution, preparation and use."
+      ],
+      "source_refs": [
+        "Checklist!B49",
+        "Checklist!G49"
+      ]
+    },
+    {
+      "code": "4.6",
+      "reference_risk": "medium",
+      "main": [
+        "2:5"
+      ],
+      "kiosk": [
+        "2:4"
+      ],
+      "checks": [
+        "Observe Clean As You Go, good housekeeping, and correct storage/condition of cleaning implements.",
+        "Verify updated daily cleaning checklists explicitly cover water/juice dispensers, bussing areas and all concessionaire/tenant shelves."
+      ],
+      "source_refs": [
+        "Checklist!B50",
+        "Checklist!G50"
+      ]
+    },
+    {
+      "code": "5.1",
+      "reference_risk": "high",
+      "main": [
+        "3:0",
+        "3:5"
+      ],
+      "kiosk": [
+        "1:0",
+        "1:6"
+      ],
+      "checks": [
+        "Inspect receiving records for quantity, quality, expiration dates and delivery temperatures, with a current receiving-inspection form.",
+        "Check raw materials and ready-to-eat products for expiry and acceptance/rejection decisions.",
+        "Check safe, stable stacking heights: no bottles/boxes above a safe handling height and no toppled food boxes; provide a stacking-height guide."
+      ],
+      "source_refs": [
+        "Checklist!B56",
+        "Checklist!G56",
+        "CPAR-JUN!B16:E16"
+      ]
+    },
+    {
+      "code": "5.2",
+      "reference_risk": "high",
+      "main": [
+        "3:5",
+        "C:0"
+      ],
+      "kiosk": [
+        "1:6",
+        "C:0"
+      ],
+      "checks": [
+        "Review temperature-monitoring records for every chiller/freezer, including beverage units.",
+        "Inspect gaskets, ice buildup, ceiling drips/leaks, defrosting, sanitation and functional condition.",
+        "Check labels, separation of raw meat and vegetables, and loading levels that allow even cooling; do not fill freezers to the brim."
+      ],
+      "source_refs": [
+        "Checklist!B57",
+        "Checklist!G57",
+        "CPAR-JUN!B17:E17"
+      ]
+    },
+    {
+      "code": "5.3",
+      "reference_risk": "high",
+      "main": [
+        "C:1"
+      ],
+      "kiosk": [
+        "C:1"
+      ],
+      "checks": [
+        "Check production date, viand/item name, cooking start/end time and attained temperature against approved product standards; the source checklist specifies 72 C and above.",
+        "Include all cooked components, including mixed vegetables, hard-boiled eggs and rice later portioned into bowls.",
+        "Cross-check the daily menu, kitchen-to-front dispatch/receiving and supervisory sign-off against the production log."
+      ],
+      "source_refs": [
+        "Checklist!B58",
+        "Checklist!G58",
+        "CPAR-JUN!B18:E18"
+      ]
+    },
+    {
+      "code": "5.4",
+      "reference_risk": "high",
+      "main": [
+        "2:0"
+      ],
+      "kiosk": [
+        "2:1"
+      ],
+      "checks": [
+        "Check functioning bain-marie/food warmers, clean odor-free trays and utensils, actual holding temperatures and display-monitoring records.",
+        "Include every displayed item, including lumpia, banana cue, karioka, hash browns, omelettes, student/athlete meals and snacks on sticks.",
+        "Check hot holding and reheating for pre-portioned bowls and snacks; verify the approved portion-on-order/display process rather than excessive pre-arranged meals."
+      ],
+      "source_refs": [
+        "Checklist!B59",
+        "Checklist!G59",
+        "CPAR-JUN!B19:E19"
+      ]
+    },
+    {
+      "code": "5.5",
+      "reference_risk": "medium",
+      "main": [
+        "3:5"
+      ],
+      "kiosk": [
+        "1:6"
+      ],
+      "checks": [
+        "Keep food and materials off the floor using clean bottom crates, liners or non-corroding/plastic pallets.",
+        "Do not use wooden pallets/platforms in food areas; check safe rice-bin stands and stable stacks."
+      ],
+      "source_refs": [
+        "Checklist!B60",
+        "Checklist!G60",
+        "CPAR-JUN!B20:E20"
+      ]
+    },
+    {
+      "code": "5.6",
+      "reference_risk": "medium",
+      "main": [
+        "C:2"
+      ],
+      "kiosk": [
+        "C:2"
+      ],
+      "checks": [
+        "Check the posted chopping-board and knife color-code guide and observe staff following it during actual preparation."
+      ],
+      "source_refs": [
+        "Checklist!B61",
+        "Checklist!G61"
+      ]
+    },
+    {
+      "code": "5.7",
+      "reference_risk": "medium",
+      "main": [
+        "B:0"
+      ],
+      "kiosk": [
+        "B:0"
+      ],
+      "checks": [
+        "Verify current ice-supplier analysis/certification and hygienic, clean ice chests/coolers.",
+        "Check that ice and handling tools are protected from raw-material cross-contamination."
+      ],
+      "source_refs": [
+        "Checklist!B62",
+        "Checklist!G62"
+      ]
+    },
+    {
+      "code": "5.8",
+      "reference_risk": "high",
+      "main": [
+        "C:3"
+      ],
+      "kiosk": [
+        "C:3"
+      ],
+      "checks": [
+        "Inspect physical hazards: stones, wood chips, broken glass/plastic, pins, needles, blades and other loose sharp objects.",
+        "Inspect biological hazards: molds, mildew, unsafe handling and cross-contamination.",
+        "Control chemical hazards from cleaning, maintenance and pest chemicals, smoke, perfume and fabric conditioner; enforce smoking controls.",
+        "Implement allergen identification, storage segregation/labels and an allergen-management plan."
+      ],
+      "source_refs": [
+        "Checklist!B63",
+        "Checklist!G63",
+        "CPAR-JUN!B21:E21"
+      ]
+    },
+    {
+      "code": "6.1",
+      "reference_risk": "high",
+      "main": [
+        "4:3"
+      ],
+      "kiosk": [
+        "3:4"
+      ],
+      "checks": [
+        "Review food-safety complaint and suspected-outbreak records and reports from campus Health Services.",
+        "Track the source-campus limits of zero major/critical complaints and a maximum of three minor complaints per month; document escalation and action."
+      ],
+      "source_refs": [
+        "Checklist!B69",
+        "Checklist!G69"
+      ]
+    },
+    {
+      "code": "6.2",
+      "reference_risk": "medium",
+      "main": [
+        "4:5"
+      ],
+      "kiosk": [
+        "C:4"
+      ],
+      "checks": [
+        "Verify corrective AND preventive actions, responsible persons and timelines from previous audits.",
+        "Require submitted completion evidence, auditor validation and proof of effective implementation, not only coaching or written plans.",
+        "Identify recurring receiving, cold-storage and display-monitoring issues and escalate overdue/unresolved actions."
+      ],
+      "source_refs": [
+        "Checklist!B70",
+        "Checklist!G70",
+        "CPAR-JUN!B22:E22"
+      ]
+    },
+    {
+      "code": "7.1",
+      "reference_risk": "high",
+      "main": [
+        "2:6"
+      ],
+      "kiosk": [
+        "B:9"
+      ],
+      "checks": [
+        "Inspect kitchen, dining, stockroom and locker-room pest proofing, harborage risks, windows, screens and doors."
+      ],
+      "source_refs": [
+        "Checklist!B76",
+        "Checklist!G76"
+      ]
+    },
+    {
+      "code": "7.2",
+      "reference_risk": "high",
+      "main": [
+        "2:6"
+      ],
+      "kiosk": [
+        "B:9"
+      ],
+      "checks": [
+        "Record pest type, actual count, location and response for cockroaches, flies/flying insects, rodents and other animals; inspect all operating/storage areas."
+      ],
+      "source_refs": [
+        "Checklist!B77",
+        "Checklist!G77"
+      ]
+    },
+    {
+      "code": "7.3",
+      "reference_risk": "medium",
+      "main": [
+        "B:9"
+      ],
+      "kiosk": [
+        "B:9"
+      ],
+      "checks": [
+        "Verify approved pest-control service frequency, latest treatment dates and complete signed service reports in a filed binder.",
+        "Track provider findings and corrective-action completion after each treatment."
+      ],
+      "source_refs": [
+        "Checklist!B78",
+        "Checklist!G78"
+      ]
+    },
+    {
+      "code": "8.1",
+      "reference_risk": "high",
+      "main": [
+        "5:3"
+      ],
+      "kiosk": [
+        "4:2"
+      ],
+      "checks": [
+        "Check available, current business and sanitary permits, BIR/TIN and DTI records, health certificates and lease/owner attestation where applicable.",
+        "Verify expiry dates and visible posting of required permits, especially the sanitary permit."
+      ],
+      "source_refs": [
+        "Checklist!B84",
+        "Checklist!G84"
+      ]
+    },
+    {
+      "code": "9.1",
+      "reference_risk": "high",
+      "main": [
+        "D:0"
+      ],
+      "kiosk": [
+        "D:0"
+      ],
+      "checks": [
+        "Check a balanced weekly menu with vegetables, fruits, protein/meat and carbohydrates following Go, Grow, Glow / Pinggang Pinoy.",
+        "Control excessive fatty/unhealthy viands and submit the weekly menu to the campus/FSQA office before Monday, according to the source-campus requirement."
+      ],
+      "source_refs": [
+        "Checklist!B90",
+        "Checklist!G90"
+      ]
+    },
+    {
+      "code": "9.2",
+      "reference_risk": "high",
+      "main": [
+        "D:1"
+      ],
+      "kiosk": [
+        "D:1"
+      ],
+      "checks": [
+        "Verify iodized salt and the updated lists of fortified raw materials and fortified retail items submitted to FSQA.",
+        "Check required control of MSG, soy sauce, fish sauce and ketchup, with condiments provided on request."
+      ],
+      "source_refs": [
+        "Checklist!B91",
+        "Checklist!G91"
+      ]
+    },
+    {
+      "code": "9.3",
+      "reference_risk": "medium",
+      "main": [
+        "D:2"
+      ],
+      "kiosk": [
+        "D:2"
+      ],
+      "checks": [
+        "Verify visible, current displays of the 10 Nutritional Guidelines for Filipinos, 10 Kumainments and Pinggang Pinoy."
+      ],
+      "source_refs": [
+        "Checklist!B92",
+        "Checklist!G92",
+        "CPAR-JUN!B23:E23"
+      ]
+    },
+    {
+      "code": "9.4",
+      "reference_risk": "medium",
+      "main": [
+        "D:3"
+      ],
+      "kiosk": [
+        "D:3"
+      ],
+      "checks": [
+        "Check a visible and working feedback box or QR channel that customers/students can actually use.",
+        "Verify access to submitted feedback, a weekly review/summary and submission/escalation to the appropriate campus offices, Health Services and FSQA."
+      ],
+      "source_refs": [
+        "Checklist!B93",
+        "Checklist!G93"
+      ]
+    },
+    {
+      "code": "SUMMARY-FLOW",
+      "reference_risk": null,
+      "main": [
+        "B:10"
+      ],
+      "kiosk": [
+        "B:10"
+      ],
+      "checks": [
+        "Inspect the actual flow of food and physical separation of kitchen, stockrooms, lockers and dishwashing routes.",
+        "Clearly label zones used by the main concessionaire and sub-concessionaires; prevent unsegregated access and cross-contamination."
+      ],
+      "source_refs": [
+        "Summary!K26"
+      ]
+    }
+  ]
+}

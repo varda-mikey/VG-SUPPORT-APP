@@ -6,3 +6,5 @@
 .export-actions{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-top:20px;border-top:1px solid var(--line);padding-top:18px}.export-actions small{flex-basis:100%;font-size:11px}
 
 .original-proof-section{border:1px solid #d8e0ec;padding:9px;background:#f5f7fc;border-radius:6px;margin:10px 0}.original-proof-section>small,.proof-side-label{font-size:9px;font-weight:bold;letter-spacing:.04em;margin:0 0 6px;color:#526c90}.original-proof-section .proof-tile{height:80px}.original-proof-section .proof-strip{grid-template-columns:repeat(3,1fr)}
+
+.risk-badge{display:inline-block;font-size:9px;font-weight:bold;border:1px solid #d7dde5;border-radius:5px;padding:3px 7px;margin:5px 0}.risk-low{background:#e8f5ec;color:#286b40}.risk-medium{background:#fff7df;color:#916b13}.risk-high{background:#fff0de;color:#a3540e}.risk-critical{background:#fce6e5;color:#ae2b29;border-color:#e8a8a3}.risk-unset{background:#f0f2f5;color:#697787}.risk-control{display:inline-flex;align-items:center;gap:7px;font-size:10px;margin:0 0 0 12px}.risk-control select{padding:4px 8px;border:1px solid #d4dae3;background:white;border-radius:5px;font-size:11px}

@@ -21,6 +21,10 @@ begin
  perform public.retail_audit_gateway('create_cpar',jsonb_build_object('audit_id',aid),staff_token);
  select count(*) into count_before from public.retail_cpar_items where audit_id=aid;if count_before<>2 then raise exception 'FAIL CPAR filtering / duplicate protection';end if;
  select id into cid from public.retail_cpar_items where audit_id=aid limit 1;
+ update public.retail_cpar_items set finding=finding||'{"section":"FSQA - TEST","fsqa":true}'::jsonb where id=cid;
+ begin perform public.retail_audit_gateway('assess_risk',jsonb_build_object('item_id',cid,'risk_level','high'),null);raise exception 'FAIL unprotected risk assessment';exception when sqlstate '28000' then null;end;
+ perform public.retail_audit_gateway('assess_risk',jsonb_build_object('item_id',cid,'risk_level','high'),audit_token);
+ if (select risk_level from public.retail_cpar_items where id=cid)<>'high' then raise exception 'FAIL FSQA risk assignment';end if;
  rec:=jsonb_build_object('item_id',cid,'request_key',gen_random_uuid(),'actor','Test branch','solution','Daily completion and coaching','remarks','Cover October 21–31','coverage_start','2026-10-21','coverage_end','2026-10-31','due_date','2026-10-31');
  begin perform public.retail_audit_gateway('submitted',rec,staff_token);raise exception 'FAIL proof not required';exception when others then if SQLERRM like 'FAIL%' then raise;end if;end;
  path:=cid::text||'/test-proof.pdf';insert into storage.objects(bucket_id,name) values('retail-audit-evidence',path);
@@ -37,7 +41,7 @@ begin
  perform public.retail_audit_gateway('verified',jsonb_build_object('item_id',cid,'request_key',gen_random_uuid(),'actor','Auditor','remarks','Coverage and output verified','expected_update_id',uid),audit_token);
  if (select status from public.retail_cpar_items where id=cid)<>'verified' then raise exception 'FAIL verify';end if;
  if (select score from public.retail_audits where id=aid)<>97 then raise exception 'FAIL original score changed';end if;
- if (select count(*) from public.retail_cpar_updates where item_id=cid)<>5 then raise exception 'FAIL history lost';end if;
+ if (select count(*) from public.retail_cpar_updates where item_id=cid)<>6 then raise exception 'FAIL history lost';end if;
  begin perform public.retail_audit_gateway('update',rec||jsonb_build_object('request_key',gen_random_uuid()),staff_token);raise exception 'FAIL closed item editable';exception when others then if SQLERRM like 'FAIL%' then raise;end if;end;
  begin perform public.retail_audit_gateway('finalize_audit',jsonb_build_object('audit_id',aid,'comments','Final review'),null);raise exception 'FAIL closure without auditor';exception when sqlstate '28000' then null;end;
  begin perform public.retail_audit_gateway('finalize_audit',jsonb_build_object('audit_id',aid,'comments','Final review'),audit_token);raise exception 'FAIL premature closure';exception when others then if SQLERRM like 'FAIL%' then raise;end if;end;

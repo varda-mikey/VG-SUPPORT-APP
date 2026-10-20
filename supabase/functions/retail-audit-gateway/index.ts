@@ -19,7 +19,7 @@ Deno.serve(async(req:Request)=>{
   }
   const raw=await req.text();if(raw.length>250000)return reply({error:'Request too large'},413);
   const body=JSON.parse(raw),action=body.action,data=body.data||{};
-  if(!['branches','list','submit_audit','get','create_cpar','update','submitted','acknowledged','returned','verified','finalize_audit','auditor_login','auditor_logout','review_access','audit_evidence','evidence'].includes(action))return reply({error:'Unknown operation'},400);
+  if(!['branches','list','submit_audit','get','create_cpar','update','submitted','assess_risk','acknowledged','returned','verified','finalize_audit','auditor_login','auditor_logout','review_access','audit_evidence','evidence'].includes(action))return reply({error:'Unknown operation'},400);
   if(action==='auditor_login'){
    if(typeof data.password!=='string'||data.password.length>200)return reply({error:'Enter the auditor password'},400);
    const ip=req.headers.get('cf-connecting-ip')||req.headers.get('x-forwarded-for')?.split(',')[0]||'unknown';

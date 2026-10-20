@@ -1,3 +1,7 @@
+-- FSQA risk classifications are explicit auditor assessments, separate from the audit score.
+alter table public.retail_cpar_items add column if not exists risk_level text check(risk_level in ('low','medium','high','critical'));
+alter table public.retail_cpar_updates drop constraint if exists retail_cpar_updates_kind_check;
+alter table public.retail_cpar_updates add constraint retail_cpar_updates_kind_check check(kind in ('update','submitted','acknowledged','returned','verified','risk_assessed'));
 -- Auditor review sessions and final CPAR closure; existing branch submissions are preserved.
 create table if not exists app_private.retail_audit_config(key text primary key,value text not null);
 create table if not exists app_private.retail_audit_sessions(token_hash text primary key,auditor_name text not null,expires_at timestamptz not null);
@@ -14,10 +18,11 @@ grant all on public.retail_cpar_closures to service_role;
 alter table public.retail_cpar_items drop constraint if exists retail_cpar_items_status_check;
 alter table public.retail_cpar_items add constraint retail_cpar_items_status_check check(status in ('open','in_progress','submitted','acknowledged','returned','verified'));
 alter table public.retail_cpar_updates drop constraint if exists retail_cpar_updates_kind_check;
-alter table public.retail_cpar_updates add constraint retail_cpar_updates_kind_check check(kind in ('update','submitted','acknowledged','returned','verified'));
+alter table public.retail_cpar_updates add constraint retail_cpar_updates_kind_check check(kind in ('update','submitted','acknowledged','returned','verified','risk_assessed'));
+insert into app_private.retail_audit_config(key,value) values('template_counts:2026-10-expanded-fsqa-v1','{"main":[6,13,8,6,6,6,4,11,4,4],"kiosk":[6,7,6,6,5,4,11,5,4]}') on conflict(key) do update set value=excluded.value;
 create or replace function public.retail_audit_gateway(p_action text,p_data jsonb default '{}',p_token text default null) returns jsonb
 language plpgsql security invoker set search_path='' as $$
-declare a public.retail_audits; c public.retail_cpar_items; u public.retail_cpar_updates; x jsonb; v jsonb; proof jsonb; n integer; pts integer; mx integer; aid uuid; v_reviewer text; v_token text; v_attempt integer; v_closure public.retail_cpar_closures;
+declare a public.retail_audits; c public.retail_cpar_items; u public.retail_cpar_updates; x jsonb; v jsonb; proof jsonb; n integer; template_counts jsonb; pts integer; mx integer; aid uuid; v_reviewer text; v_token text; v_attempt integer; v_closure public.retail_cpar_closures;
 begin
  -- Branch updates remain passwordless. Auditor decisions require a server-validated session.
  if p_action='auditor_login' then
@@ -33,7 +38,7 @@ begin
   delete from app_private.retail_audit_login_limits where window_start<now()-interval '1 day';
   return jsonb_build_object('token',v_token,'name',trim(p_data->>'name'),'expires_at',extract(epoch from now()+interval '4 hours'));
  end if;
- if p_action in ('review_access','auditor_logout','acknowledged','returned','verified','finalize_audit') then
+ if p_action in ('review_access','auditor_logout','assess_risk','acknowledged','returned','verified','finalize_audit') then
   select auditor_name into v_reviewer from app_private.retail_audit_sessions where token_hash=encode(extensions.digest(convert_to(coalesce(p_token,''),'UTF8'),'sha256'),'hex') and expires_at>now();
   if v_reviewer is null then raise exception 'Please enter your auditor name and password' using errcode='28000';end if;
   if p_action='review_access' then return jsonb_build_object('name',v_reviewer);end if;
@@ -57,17 +62,24 @@ begin
  if p_action='submit_audit' then
   select * into a from public.retail_audits where submission_key=(p_data->>'submission_key')::uuid;
   if found then return to_jsonb(a);end if;
-  v:=p_data->'payload'; n:=case when p_data->>'audit_type'='main' then 45 when p_data->>'audit_type'='kiosk' then 30 else 0 end;
+  v:=p_data->'payload';
+  if coalesce(v->>'template_version','')<>'' then
+   select value::jsonb->(p_data->>'audit_type') into template_counts from app_private.retail_audit_config where key='template_counts:'||(v->>'template_version');
+   if template_counts is null then raise exception 'Unsupported audit template version';end if;
+   select sum(value::integer)::integer into n from jsonb_array_elements_text(template_counts) q(value);
+  else n:=case when p_data->>'audit_type'='main' then 45 when p_data->>'audit_type'='kiosk' then 30 else 0 end;end if;
   if n=0 or jsonb_typeof(v->'items') is distinct from 'array' or jsonb_array_length(v->'items')<>n then raise exception 'Complete all audit checks first';end if;
   if length(trim(p_data->>'branch'))=0 or length(trim(v#>>'{fields,auditorName}'))=0 or coalesce(v#>>'{fields,auditorRole}','')='' then raise exception 'Branch and auditor details are required';end if;
   if (select count(distinct (it->>'s')||':'||(it->>'i')) from jsonb_array_elements(v->'items') it)<>n then raise exception 'Duplicate checkpoints';end if;
   pts:=0;mx:=0;
   for x in select value from jsonb_array_elements(v->'items') loop
+   if template_counts is not null and ((x->>'s')::integer<0 or (x->>'s')::integer>=jsonb_array_length(template_counts) or (x->>'i')::integer<0 or (x->>'i')::integer>=coalesce((template_counts->>((x->>'s')::integer))::integer,0)) then raise exception 'Invalid checkpoint for this audit template';end if;
    if coalesce(x->>'result','') not in ('compliant','action','noncompliant','na') or length(coalesce(x->>'label',''))<5 then raise exception 'Every checkpoint needs a result';end if;
    if jsonb_typeof(coalesce(x->'evidence','[]'))<>'array' or jsonb_array_length(coalesce(x->'evidence','[]'))>10 then raise exception 'Maximum 10 audit photos per checkpoint';end if;
    for proof in select value from jsonb_array_elements(coalesce(x->'evidence','[]')) loop
     if coalesce(p_data#>>'{payload,draft_id}','')='' or coalesce(proof->>'path','') not like 'audit/'||(p_data#>>'{payload,draft_id}')::uuid::text||'/'||(x->>'s')||'/'||(x->>'i')||'/%' or not exists(select 1 from storage.objects where bucket_id='retail-audit-evidence' and name=proof->>'path') then raise exception 'Audit photo must be uploaded to this checkpoint';end if;
    end loop;
+   if (coalesce((x->>'fsqa')::boolean,false) or upper(coalesce(x->>'section','')) ~ '(FOOD SAFETY|FSQA)') and x->>'result' in ('action','noncompliant') and coalesce(x->>'risk_level','') not in ('low','medium','high','critical') then raise exception 'Select an FSQA risk level for each FSQA finding';end if;
    if x->>'result'<>'na' then mx:=mx+2;pts:=pts+case x->>'result' when 'compliant' then 2 when 'action' then 1 else 0 end;end if;
   end loop;
   insert into public.retail_audits(submission_key,branch,audit_date,auditor,audit_type,score,payload) values ((p_data->>'submission_key')::uuid,trim(p_data->>'branch'),(v#>>'{fields,auditDate}')::date,trim(v#>>'{fields,auditorName}'),p_data->>'audit_type',case when mx>0 then round(pts::numeric/mx*100) else null end,v) returning * into a;
@@ -79,7 +91,7 @@ begin
   if not found then raise exception 'Audit not found';end if;
   if p_action='create_cpar' then
    for x in select value from jsonb_array_elements(a.payload->'items') where value->>'result' in ('action','noncompliant') loop
-    insert into public.retail_cpar_items(audit_id,item_key,finding) values(a.id,(x->>'s')||':'||(x->>'i'),x) on conflict(audit_id,item_key) do nothing;
+    insert into public.retail_cpar_items(audit_id,item_key,finding,risk_level) values(a.id,(x->>'s')||':'||(x->>'i'),x,case when x->>'risk_level' in ('low','medium','high','critical') then x->>'risk_level' else null end) on conflict(audit_id,item_key) do nothing;
    end loop;
   end if;
   select jsonb_agg(to_jsonb(i)||jsonb_build_object('updates',coalesce((select jsonb_agg(to_jsonb(h) order by h.created_at) from public.retail_cpar_updates h where h.item_id=i.id),'[]')) order by (split_part(i.item_key,':',1))::integer,(split_part(i.item_key,':',2))::integer) into v from public.retail_cpar_items i where i.audit_id=a.id;
@@ -101,8 +113,9 @@ begin
   if found then return to_jsonb(v_closure);end if;
   select count(*) into n from jsonb_array_elements(a.payload->'items') it where it->>'result' in ('action','noncompliant');
   if (select count(*) from public.retail_cpar_items where audit_id=aid and status='verified')<>n or exists(select 1 from public.retail_cpar_items where audit_id=aid and status<>'verified') then raise exception 'Approve every corrective action before final approval';end if;
+  if exists(select 1 from public.retail_cpar_items where audit_id=aid and (coalesce((finding->>'fsqa')::boolean,false) or upper(coalesce(finding->>'section','')) ~ '(FOOD SAFETY|FSQA)') and coalesce(risk_level,finding->>'risk_level','')='') then raise exception 'Assess FSQA risk levels before final approval';end if;
   if length(trim(coalesce(p_data->>'comments','')))=0 then raise exception 'Please enter final audit comments';end if;
-  select jsonb_agg(jsonb_build_object('id',i.id,'finding',i.finding,'status',i.status,'updates',(select jsonb_agg(to_jsonb(h) order by h.created_at) from public.retail_cpar_updates h where h.item_id=i.id)) order by (split_part(i.item_key,':',1))::integer,(split_part(i.item_key,':',2))::integer) into v from public.retail_cpar_items i where i.audit_id=aid;
+  select jsonb_agg(jsonb_build_object('id',i.id,'finding',i.finding,'status',i.status,'risk_level',i.risk_level,'updates',(select jsonb_agg(to_jsonb(h) order by h.created_at) from public.retail_cpar_updates h where h.item_id=i.id)) order by (split_part(i.item_key,':',1))::integer,(split_part(i.item_key,':',2))::integer) into v from public.retail_cpar_items i where i.audit_id=aid;
   insert into public.retail_cpar_closures(audit_id,auditor_name,comments,snapshot) values(aid,v_reviewer,left(p_data->>'comments',6000),jsonb_build_object('original_audit',to_jsonb(a),'cpar',coalesce(v,'[]'))) returning * into v_closure;
   return to_jsonb(v_closure);
  end if;
@@ -113,12 +126,21 @@ begin
   if not exists(select 1 from public.retail_cpar_updates h cross join lateral jsonb_array_elements(h.evidence) e where h.item_id=c.id and e->>'path'=p_data->>'path') then raise exception 'Evidence not found';end if;
   return to_jsonb(c);
  end if;
+ if p_action='assess_risk' then
+  if not (coalesce((c.finding->>'fsqa')::boolean,false) or upper(coalesce(c.finding->>'section','')) ~ '(FOOD SAFETY|FSQA)') then raise exception 'Risk levels apply to the FSQA category';end if;
+  if exists(select 1 from public.retail_cpar_closures where audit_id=c.audit_id) then raise exception 'This CPAR is already closed';end if;
+  if coalesce(p_data->>'risk_level','') not in ('low','medium','high','critical') then raise exception 'Choose Low, Medium, High or Critical';end if;
+  update public.retail_cpar_items set risk_level=p_data->>'risk_level' where id=c.id;
+  insert into public.retail_cpar_updates(item_id,request_key,kind,actor,remarks) values(c.id,gen_random_uuid(),'risk_assessed',v_reviewer,'FSQA risk level: '||upper(p_data->>'risk_level'));
+  return jsonb_build_object('risk_level',p_data->>'risk_level','auditor_name',v_reviewer);
+ end if;
  if p_action in ('update','submitted','acknowledged','returned','verified') then
   select * into u from public.retail_cpar_updates where request_key=(p_data->>'request_key')::uuid;
   if found then return to_jsonb(u);end if;
   if v_reviewer is not null then p_data:=p_data||jsonb_build_object('actor',v_reviewer);end if;
   if length(trim(coalesce(p_data->>'actor','')))=0 then raise exception 'Enter your name';end if;
   if p_action in ('acknowledged','returned','verified') then
+   if p_action='verified' and (coalesce((c.finding->>'fsqa')::boolean,false) or upper(coalesce(c.finding->>'section','')) ~ '(FOOD SAFETY|FSQA)') and coalesce(c.risk_level,c.finding->>'risk_level','')='' then raise exception 'Assess the FSQA risk level before approving this action';end if;
    if c.status not in ('submitted','acknowledged') then raise exception 'Only submitted solutions can be reviewed';end if;
    if coalesce(p_data->>'expected_update_id','') is distinct from (select id::text from public.retail_cpar_updates where item_id=c.id order by created_at desc,id desc limit 1) then raise exception 'This submission changed. Refresh and review the latest evidence.';end if;
    if length(trim(coalesce(p_data->>'remarks','')))=0 then raise exception 'Enter verification remarks';end if;

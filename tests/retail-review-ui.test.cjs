@@ -1,6 +1,6 @@
 const assert=require('node:assert/strict'),fs=require('fs'),vm=require('vm');
 const source=fs.readFileSync('retail-audit-shared.js','utf8');
-assert.ok(!source.includes('SIRMIKEY123'),'Password must never ship to the browser');
+assert.ok(!/password\s*[:=]\s*['"][^'"]{3,}/i.test(source),'No embedded password value in browser code');
 const els=new Map();const get=id=>{if(!els.has(id))els.set(id,{addEventListener(){},innerHTML:'',hidden:true});return els.get(id)};
 const context={Intl,Date,Map,JSON,URLSearchParams,document:{body:{dataset:{dashboard:'true'},insertAdjacentHTML(){}},getElementById:get},sessionStorage:{getItem(){return null}},console};
 vm.createContext(context);vm.runInContext(source.replace(/load\(\);\s*\}\)\(\);\s*$/,'globalThis.ui={renderReviewCard,renderSummary};})();'),context);
