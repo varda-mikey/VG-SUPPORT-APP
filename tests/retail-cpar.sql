@@ -6,12 +6,12 @@ begin
  insert into app_private.retail_audit_sessions values(encode(extensions.digest(convert_to(audit_token,'UTF8'),'sha256'),'hex'),'Test auditor',now()+interval '1 hour');
  begin perform public.retail_audit_gateway('review_access','{}',null);raise exception 'FAIL review without password';exception when sqlstate '28000' then null;end;
  result:=public.retail_audit_gateway('auditor_login','{"name":"Test","password":"invalid","ip":"automated-test"}',null);if result->>'error' is null then raise exception 'FAIL wrong password';end if;
- select jsonb_build_object('fields',jsonb_build_object('auditorName','Automated test','auditorRole','Retail Head','auditDate','2026-10-20'),'items',jsonb_agg(jsonb_build_object('s',0,'i',n,'label','Test checkpoint '||n,'result',case when n=1 then 'noncompliant' when n=2 then 'action' when n=3 then 'na' else 'compliant' end))) into payload from generate_series(1,45) n;
- original_path:='audit/'||draft::text||'/0/1/sample.jpg';insert into storage.objects(bucket_id,name) values('retail-audit-evidence',original_path);
+ select jsonb_build_object('template_version','2026-10-expanded-fsqa-v1','fields',jsonb_build_object('auditorName','Automated test','auditorRole','Retail Head','auditDate','2026-10-20'),'items',jsonb_agg(jsonb_build_object('s',s,'i',i,'label','Test checkpoint '||n,'result',case when n=1 then 'noncompliant' when n=2 then 'action' when n=3 then 'na' else 'compliant' end))) into payload from (select row_number() over(order by s,i) n,s,i from (select ordinality::integer-1 s,value::integer cnt from jsonb_array_elements_text('[6,13,8,6,6,6,4,11,4,4]'::jsonb) with ordinality) sections cross join lateral generate_series(0,cnt-1) i) checkpoints;
+ original_path:='audit/'||draft::text||'/0/0/sample.jpg';insert into storage.objects(bucket_id,name) values('retail-audit-evidence',original_path);
  payload:=payload||jsonb_build_object('draft_id',draft);
  payload:=jsonb_set(payload,'{items,0,evidence}',jsonb_build_array(jsonb_build_object('path',original_path,'name','Auditor investigation.jpg','mime','image/jpeg')));
  req:=gen_random_uuid();rec:=public.retail_audit_gateway('submit_audit',jsonb_build_object('submission_key',req,'branch','TEST ONLY','audit_type','main','payload',payload),audit_token);
- aid:=(rec->>'id')::uuid;if (rec->>'score')::integer<>97 then raise exception 'FAIL score %',rec->>'score';end if;
+ aid:=(rec->>'id')::uuid;if (rec->>'score')::integer<>98 then raise exception 'FAIL score %',rec->>'score';end if;
  result:=public.retail_audit_gateway('submit_audit',jsonb_build_object('submission_key',req),audit_token);if result->>'id'<>rec->>'id' then raise exception 'FAIL duplicate audit';end if;
  perform public.retail_audit_gateway('audit_evidence_access',jsonb_build_object('audit_id',aid,'path',original_path),null);
  begin perform public.retail_audit_gateway('audit_evidence_access',jsonb_build_object('audit_id',aid,'path','not-this-audit.jpg'),null);raise exception 'FAIL unrelated audit photo';exception when others then if SQLERRM like 'FAIL%' then raise;end if;end;
@@ -40,7 +40,7 @@ begin
  rec:=rec||jsonb_build_object('request_key',gen_random_uuid());result:=public.retail_audit_gateway('submitted',rec,staff_token);uid:=(result->>'id')::uuid;
  perform public.retail_audit_gateway('verified',jsonb_build_object('item_id',cid,'request_key',gen_random_uuid(),'actor','Auditor','remarks','Coverage and output verified','expected_update_id',uid),audit_token);
  if (select status from public.retail_cpar_items where id=cid)<>'verified' then raise exception 'FAIL verify';end if;
- if (select score from public.retail_audits where id=aid)<>97 then raise exception 'FAIL original score changed';end if;
+ if (select score from public.retail_audits where id=aid)<>98 then raise exception 'FAIL original score changed';end if;
  if (select count(*) from public.retail_cpar_updates where item_id=cid)<>6 then raise exception 'FAIL history lost';end if;
  begin perform public.retail_audit_gateway('update',rec||jsonb_build_object('request_key',gen_random_uuid()),staff_token);raise exception 'FAIL closed item editable';exception when others then if SQLERRM like 'FAIL%' then raise;end if;end;
  begin perform public.retail_audit_gateway('finalize_audit',jsonb_build_object('audit_id',aid,'comments','Final review'),null);raise exception 'FAIL closure without auditor';exception when sqlstate '28000' then null;end;
@@ -52,7 +52,7 @@ begin
  result:=public.retail_audit_gateway('submitted',rec,null);uid:=(result->>'id')::uuid;
  perform public.retail_audit_gateway('verified',jsonb_build_object('item_id',cid,'request_key',gen_random_uuid(),'remarks','Proof checked','expected_update_id',uid),audit_token);
  result:=public.retail_audit_gateway('finalize_audit',jsonb_build_object('audit_id',aid,'comments','All actions checked and approved'),audit_token);
- if result->>'auditor_name'<>'Test auditor' or result#>>'{snapshot,original_audit,score}'<>'97' or jsonb_array_length(result#>'{snapshot,cpar}')<>2 then raise exception 'FAIL closure snapshot';end if;
+ if result->>'auditor_name'<>'Test auditor' or result#>>'{snapshot,original_audit,score}'<>'98' or jsonb_array_length(result#>'{snapshot,cpar}')<>2 then raise exception 'FAIL closure snapshot';end if;
  perform public.retail_audit_gateway('auditor_logout','{}',audit_token);
  begin perform public.retail_audit_gateway('review_access','{}',audit_token);raise exception 'FAIL logout';exception when sqlstate '28000' then null;end;
  if has_table_privilege('anon','public.retail_audits','SELECT') or has_function_privilege('anon','public.retail_audit_gateway(text,jsonb,text)','EXECUTE') then raise exception 'FAIL anonymous access';end if;

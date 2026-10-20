@@ -20,6 +20,16 @@ alter table public.retail_cpar_items add constraint retail_cpar_items_status_che
 alter table public.retail_cpar_updates drop constraint if exists retail_cpar_updates_kind_check;
 alter table public.retail_cpar_updates add constraint retail_cpar_updates_kind_check check(kind in ('update','submitted','acknowledged','returned','verified','risk_assessed'));
 insert into app_private.retail_audit_config(key,value) values('template_counts:2026-10-expanded-fsqa-v1','{"main":[6,13,8,6,6,6,4,11,4,4],"kiosk":[6,7,6,6,5,4,11,5,4]}') on conflict(key) do update set value=excluded.value;
+-- Coverage is separate from the immutable recorded percentage.
+create or replace function public.retail_audit_coverage(r public.retail_audits) returns jsonb language sql stable security invoker set search_path='' as $$
+ select jsonb_build_object('required',case r.audit_type when 'main' then 68 else 54 end,
+ 'assessed',(select count(*) from jsonb_array_elements(r.payload->'items') x where x->>'result' in ('compliant','action','noncompliant','na')),
+ 'complete',jsonb_array_length(r.payload->'items')=case r.audit_type when 'main' then 68 else 54 end and not exists(select 1 from jsonb_array_elements(r.payload->'items') x where coalesce(x->>'result','') not in ('compliant','action','noncompliant','na')),
+ 'revised_by',(select id from public.retail_audits child where child.payload->>'revision_of'=r.id::text order by created_at desc limit 1));
+$$;
+revoke all on function public.retail_audit_coverage(public.retail_audits) from public,anon,authenticated;
+grant execute on function public.retail_audit_coverage(public.retail_audits) to service_role;
+
 create or replace function public.retail_audit_gateway(p_action text,p_data jsonb default '{}',p_token text default null) returns jsonb
 language plpgsql security invoker set search_path='' as $$
 declare a public.retail_audits; c public.retail_cpar_items; u public.retail_cpar_updates; x jsonb; v jsonb; proof jsonb; n integer; template_counts jsonb; pts integer; mx integer; aid uuid; v_reviewer text; v_token text; v_attempt integer; v_closure public.retail_cpar_closures;
@@ -49,7 +59,7 @@ begin
  end if;
  if p_action='list' then
   select jsonb_agg(to_jsonb(q) order by q.audit_date desc,q.created_at desc) into v from (
-   select audit_row.id,audit_row.branch,audit_row.audit_date,audit_row.auditor,audit_row.audit_type,audit_row.score,audit_row.created_at,
+   select public.retail_audit_coverage(audit_row) as coverage,audit_row.id,audit_row.branch,audit_row.audit_date,audit_row.auditor,audit_row.audit_type,audit_row.score,audit_row.created_at,
     (select count(*) from jsonb_array_elements(audit_row.payload->'items') it where it->>'result' in ('action','noncompliant')) as actions,
     (select count(*) from public.retail_cpar_items i where i.audit_id=audit_row.id) as cpar_created,
     (select count(*) from public.retail_cpar_items i where i.audit_id=audit_row.id and i.status='verified') as verified,
@@ -63,6 +73,14 @@ begin
   select * into a from public.retail_audits where submission_key=(p_data->>'submission_key')::uuid;
   if found then return to_jsonb(a);end if;
   v:=p_data->'payload';
+  if coalesce(v->>'revision_of','')<>'' then
+   select * into a from public.retail_audits where id=(v->>'revision_of')::uuid for update;
+   if not found then raise exception 'Original audit not found';end if;
+   if a.branch is distinct from trim(p_data->>'branch') or a.audit_type is distinct from p_data->>'audit_type' or a.audit_date is distinct from (v#>>'{fields,auditDate}')::date then raise exception 'A revision must keep the same branch, inspection date and audit type';end if;
+   if exists(select 1 from public.retail_cpar_closures where audit_id=a.id) then raise exception 'Closed audits cannot be revised; start a new inspection';end if;
+   if exists(select 1 from public.retail_audits where payload->>'revision_of'=a.id::text) then raise exception 'This audit already has a completed revision';end if;
+   if coalesce(v->>'template_version','')<>'2026-10-expanded-fsqa-v1' then raise exception 'Complete the expanded audit template';end if;
+  end if;
   if coalesce(v->>'template_version','')<>'' then
    select value::jsonb->(p_data->>'audit_type') into template_counts from app_private.retail_audit_config where key='template_counts:'||(v->>'template_version');
    if template_counts is null then raise exception 'Unsupported audit template version';end if;
@@ -95,7 +113,7 @@ begin
    end loop;
   end if;
   select jsonb_agg(to_jsonb(i)||jsonb_build_object('updates',coalesce((select jsonb_agg(to_jsonb(h) order by h.created_at) from public.retail_cpar_updates h where h.item_id=i.id),'[]')) order by (split_part(i.item_key,':',1))::integer,(split_part(i.item_key,':',2))::integer) into v from public.retail_cpar_items i where i.audit_id=a.id;
-  return to_jsonb(a)||jsonb_build_object('cpar',coalesce(v,'[]'),'final_approval',(select to_jsonb(f) from public.retail_cpar_closures f where f.audit_id=a.id));
+  return to_jsonb(a)||jsonb_build_object('coverage',public.retail_audit_coverage(a),'cpar',coalesce(v,'[]'),'final_approval',(select to_jsonb(f) from public.retail_cpar_closures f where f.audit_id=a.id));
  end if;
  if p_action='audit_evidence_access' then
   if aid is not null then
@@ -111,6 +129,8 @@ begin
   if not found then raise exception 'Audit not found';end if;
   select * into v_closure from public.retail_cpar_closures where audit_id=aid;
   if found then return to_jsonb(v_closure);end if;
+  if not (public.retail_audit_coverage(a)->>'complete')::boolean then raise exception 'Complete all expanded audit checks before final approval';end if;
+  if coalesce(public.retail_audit_coverage(a)->>'revised_by','')<>'' then raise exception 'Use the completed audit revision for final approval';end if;
   select count(*) into n from jsonb_array_elements(a.payload->'items') it where it->>'result' in ('action','noncompliant');
   if (select count(*) from public.retail_cpar_items where audit_id=aid and status='verified')<>n or exists(select 1 from public.retail_cpar_items where audit_id=aid and status<>'verified') then raise exception 'Approve every corrective action before final approval';end if;
   if exists(select 1 from public.retail_cpar_items where audit_id=aid and (coalesce((finding->>'fsqa')::boolean,false) or upper(coalesce(finding->>'section','')) ~ '(FOOD SAFETY|FSQA)') and coalesce(risk_level,finding->>'risk_level','')='') then raise exception 'Assess FSQA risk levels before final approval';end if;
