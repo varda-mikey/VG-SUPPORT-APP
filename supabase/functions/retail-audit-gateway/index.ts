@@ -9,8 +9,8 @@ Deno.serve(async(req:Request)=>{
  try{
   if(Number(req.headers.get('content-length'))>15*1024*1024)return reply({error:'Request too large'},413);
   if(req.headers.get('content-type')?.startsWith('multipart/form-data')){
-   const form=await req.formData(), token=String(form.get('token')||''), item_id=String(form.get('item_id')||''),file=form.get('file');
-   await server('/rest/v1/rpc/retail_audit_gateway',{p_action:'access_item',p_token:token,p_data:{item_id}});
+   const form=await req.formData(), item_id=String(form.get('item_id')||''),file=form.get('file');
+   await server('/rest/v1/rpc/retail_audit_gateway',{p_action:'access_item',p_data:{item_id}});
    if(!(file instanceof File)||file.size===0||file.size>10485760||!['image/jpeg','image/png','image/webp','application/pdf'].includes(file.type))return reply({error:'Use JPG, PNG, WebP or PDF, up to 10 MB.'},400);
    const path=item_id+'/'+crypto.randomUUID()+({ 'image/jpeg':'.jpg','image/png':'.png','image/webp':'.webp','application/pdf':'.pdf'}[file.type]||'');
    await server('/storage/v1/object/retail-audit-evidence/'+path,file,{apikey:key,Authorization:'Bearer '+key,'Content-Type':file.type,'x-upsert':'false'});
@@ -18,21 +18,12 @@ Deno.serve(async(req:Request)=>{
   }
   const raw=await req.text();if(raw.length>250000)return reply({error:'Request too large'},413);
   const body=JSON.parse(raw),action=body.action,data=body.data||{};
-  if(action==='login'){
-   if(!['creator','purchaser'].includes(data.role)||typeof body.password!=='string'||body.password.length>200)return reply({error:'Enter access details'},400);
-   const ip=req.headers.get('cf-connecting-ip')||req.headers.get('x-forwarded-for')?.split(',')[0]||'unknown';
-   const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(ip));
-   const ipHash=Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,'0')).join('');
-   return reply(await server('/rest/v1/rpc/pr_gateway',{p_action:'login',p_data:{role:data.role},p_password:body.password,p_ip:ipHash}));
-  }
-  if(!['logout','session','branches','list','submit_audit','get','create_cpar','update','submitted','returned','verified','evidence'].includes(action))return reply({error:'Unknown operation'},400);
-  if(typeof body.token!=='string'||!/^[a-f0-9]{64}$/.test(body.token))return reply({error:'Connect to shared records first'},401);
-  if(action==='logout')return reply(await server('/rest/v1/rpc/pr_gateway',{p_action:'logout',p_token:body.token}));
+  if(!['branches','list','submit_audit','get','create_cpar','update','submitted','returned','verified','evidence'].includes(action))return reply({error:'Unknown operation'},400);
   if(action==='evidence'){
-   await server('/rest/v1/rpc/retail_audit_gateway',{p_action:'evidence_access',p_token:body.token,p_data:data});
+   await server('/rest/v1/rpc/retail_audit_gateway',{p_action:'evidence_access',p_data:data});
    const r=await server('/storage/v1/object/sign/retail-audit-evidence/'+data.path,{expiresIn:300});
    return reply({url:base+'/storage/v1'+r.signedURL});
   }
-  return reply(await server('/rest/v1/rpc/retail_audit_gateway',{p_action:action,p_token:body.token,p_data:data}));
+  return reply(await server('/rest/v1/rpc/retail_audit_gateway',{p_action:action,p_data:data}));
  }catch(e){return reply({error:e instanceof Error?e.message:'Unable to complete request'},400)}
 });

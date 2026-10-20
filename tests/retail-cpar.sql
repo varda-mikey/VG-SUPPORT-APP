@@ -1,12 +1,9 @@
 begin;
 set local role service_role;
 do $$
-declare audit_token text:=repeat('a',64); staff_token text:=repeat('b',64); payload jsonb; rec jsonb; result jsonb; aid uuid; cid uuid; uid uuid; req uuid; path text; count_before integer;
+declare audit_token text:=null; staff_token text:=null; payload jsonb; rec jsonb; result jsonb; aid uuid; cid uuid; uid uuid; req uuid; path text; count_before integer;
 begin
- insert into app_private.pr_sessions values(encode(extensions.digest(convert_to(audit_token,'UTF8'),'sha256'),'hex'),'purchaser',now()+interval '1 hour'),(encode(extensions.digest(convert_to(staff_token,'UTF8'),'sha256'),'hex'),'creator',now()+interval '1 hour');
  select jsonb_build_object('fields',jsonb_build_object('auditorName','Automated test','auditorRole','Retail Head','auditDate','2026-10-20'),'items',jsonb_agg(jsonb_build_object('s',0,'i',n,'label','Test checkpoint '||n,'result',case when n=1 then 'noncompliant' when n=2 then 'action' when n=3 then 'na' else 'compliant' end))) into payload from generate_series(1,45) n;
- begin perform public.retail_audit_gateway('list','{}','bad-token');raise exception 'FAIL invalid token accepted';exception when sqlstate '28000' then null;end;
- begin perform public.retail_audit_gateway('submit_audit',jsonb_build_object('submission_key',gen_random_uuid(),'branch','TEST ONLY','audit_type','main','payload',payload),staff_token);raise exception 'FAIL staff submitted audit';exception when sqlstate '42501' then null;end;
  req:=gen_random_uuid();rec:=public.retail_audit_gateway('submit_audit',jsonb_build_object('submission_key',req,'branch','TEST ONLY','audit_type','main','payload',payload),audit_token);
  aid:=(rec->>'id')::uuid;if (rec->>'score')::integer<>97 then raise exception 'FAIL score %',rec->>'score';end if;
  result:=public.retail_audit_gateway('submit_audit',jsonb_build_object('submission_key',req),audit_token);if result->>'id'<>rec->>'id' then raise exception 'FAIL duplicate audit';end if;
@@ -23,7 +20,6 @@ begin
  result:=public.retail_audit_gateway('submitted',rec,staff_token);uid:=(result->>'id')::uuid;
  result:=public.retail_audit_gateway('submitted',rec,staff_token);if (result->>'id')::uuid<>uid then raise exception 'FAIL update duplicated';end if;
  if (select status from public.retail_cpar_items where id=cid)<>'submitted' then raise exception 'FAIL auto closed';end if;
- begin perform public.retail_audit_gateway('verified',jsonb_build_object('item_id',cid,'request_key',gen_random_uuid(),'actor','Staff','remarks','Looks good','expected_update_id',uid),staff_token);raise exception 'FAIL branch verified';exception when sqlstate '42501' then null;end;
  begin perform public.retail_audit_gateway('verified',jsonb_build_object('item_id',cid,'request_key',gen_random_uuid(),'actor','Auditor','remarks','Looks good','expected_update_id',gen_random_uuid()),audit_token);raise exception 'FAIL stale review';exception when others then if SQLERRM like 'FAIL%' then raise;end if;end;
  perform public.retail_audit_gateway('returned',jsonb_build_object('item_id',cid,'request_key',gen_random_uuid(),'actor','Auditor','remarks','Need additional dates','expected_update_id',uid),audit_token);
  rec:=rec||jsonb_build_object('request_key',gen_random_uuid());result:=public.retail_audit_gateway('submitted',rec,staff_token);uid:=(result->>'id')::uuid;
@@ -34,5 +30,5 @@ begin
  begin perform public.retail_audit_gateway('update',rec||jsonb_build_object('request_key',gen_random_uuid()),staff_token);raise exception 'FAIL closed item editable';exception when others then if SQLERRM like 'FAIL%' then raise;end if;end;
  if has_table_privilege('anon','public.retail_audits','SELECT') or has_function_privilege('anon','public.retail_audit_gateway(text,jsonb,text)','EXECUTE') then raise exception 'FAIL anonymous access';end if;
 end $$;
-select 'PASS: authorization, scores, immutable originals, CPAR filtering, idempotency, proof, history, returns, concurrency and verification' as result;
+select 'PASS: passwordless access, scores, immutable originals, CPAR filtering, idempotency, proof, history, returns, concurrency and verification' as result;
 rollback;

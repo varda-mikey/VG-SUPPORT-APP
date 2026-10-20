@@ -30,11 +30,9 @@ grant all on public.retail_audits,public.retail_cpar_items,public.retail_cpar_up
 insert into storage.buckets(id,name,public,file_size_limit,allowed_mime_types) values ('retail-audit-evidence','retail-audit-evidence',false,10485760,array['image/jpeg','image/png','image/webp','application/pdf']) on conflict(id) do nothing;
 create or replace function public.retail_audit_gateway(p_action text,p_data jsonb default '{}',p_token text default null) returns jsonb
 language plpgsql security invoker set search_path='' as $$
-declare v_role text; a public.retail_audits; c public.retail_cpar_items; u public.retail_cpar_updates; x jsonb; v jsonb; n integer; pts integer; mx integer; aid uuid;
+declare a public.retail_audits; c public.retail_cpar_items; u public.retail_cpar_updates; x jsonb; v jsonb; n integer; pts integer; mx integer; aid uuid;
 begin
- select role into v_role from app_private.pr_sessions where token_hash=encode(extensions.digest(convert_to(coalesce(p_token,''),'UTF8'),'sha256'),'hex') and expires_at>now();
- if v_role is null then raise exception 'Session expired. Connect to shared records.' using errcode='28000';end if;
- if p_action='session' then return jsonb_build_object('role',v_role);end if;
+ -- Passwordless audit workflow requested by management. Direct table access remains revoked.
  if p_action='branches' then
   select jsonb_agg(name order by name) into v from (select name from public.pr_branches where active union select branch from public.retail_audits) q;return coalesce(v,'[]');
  end if;
@@ -50,7 +48,6 @@ begin
   ) q;return coalesce(v,'[]');
  end if;
  if p_action='submit_audit' then
-  if v_role<>'purchaser' then raise exception 'Auditor access required to submit an audit' using errcode='42501';end if;
   select * into a from public.retail_audits where submission_key=(p_data->>'submission_key')::uuid;
   if found then return to_jsonb(a);end if;
   v:=p_data->'payload'; n:=case when p_data->>'audit_type'='main' then 45 when p_data->>'audit_type'='kiosk' then 30 else 0 end;
@@ -89,7 +86,6 @@ begin
   if found then return to_jsonb(u);end if;
   if length(trim(coalesce(p_data->>'actor','')))=0 then raise exception 'Enter your name';end if;
   if p_action in ('returned','verified') then
-   if v_role<>'purchaser' then raise exception 'Auditor verification access required' using errcode='42501';end if;
    if c.status<>'submitted' then raise exception 'Only submitted solutions can be reviewed';end if;
    if coalesce(p_data->>'expected_update_id','') is distinct from (select id::text from public.retail_cpar_updates where item_id=c.id order by created_at desc,id desc limit 1) then raise exception 'This submission changed. Refresh and review the latest evidence.';end if;
    if length(trim(coalesce(p_data->>'remarks','')))=0 then raise exception 'Enter verification remarks';end if;
