@@ -141,7 +141,7 @@ button{
 
     <div class="card"><div class="icon">🍽️</div><h2>Catering Form Maker</h2><p>Create catering service requests, automatic costing and analysis, editable previews, school themes, signatures, and print/PDF-ready forms.</p><button onclick="openSystem('catering','Catering Form Maker')">Open Catering Form Maker</button></div>
 
-    <div class="card"><div class="icon">📋</div><h2>VARDA GROUP RETAIL AUDIT</h2><p>Main Canteen and Kiosk audits with monthly sales, daily average, leftovers, compliance scoring, corrective actions, print and JPEG summary.</p><button onclick="openSystem('retail-audit','VARDA GROUP RETAIL AUDIT')">Open Retail Audit</button></div>
+    <div class="card"><div class="icon">📋</div><h2>VARDA GROUP RETAIL AUDIT</h2><p>Main Canteen and Kiosk audits with monthly sales, daily average, leftovers, compliance scoring, corrective actions, print and JPEG summary.</p><button onclick="openSystem('retail-audit','VARDA GROUP RETAIL AUDIT')">Open Retail Audit</button><button onclick="openSystem('retail-cpar','AUDIT & CPAR DASHBOARD')">Audit & CPAR Dashboard</button></div>
     <div class="card"><div class="icon">⚖️</div><h2>Varda Policy & V-Points</h2><p>Find the matching VARDA ACT policy and points, create Incident Reports and NTEs, or securely view employee policy acknowledgments by branch.</p><div class="cardActions"><button onclick="openSystem('policy','Varda Policy & V-Points')">Open Policy Finder</button><button class="viewAcknowledgments" onclick="window.open('https://varda-mikey.github.io/VARDA-POLICY/?admin=1','_blank','noopener,noreferrer')">View All Acknowledgments</button></div></div>
     <div class="card"><div class="icon">📊</div><h2>Employee Appraisal</h2><p>Shared live position weights across every device, automatic 100% balancing, job-description summary, criterion remarks, performance impact, merit guidance, and a three-page executive printout.</p><button onclick="openSystem('appraisal','Employee Appraisal')">Open Employee Appraisal</button></div>
 
@@ -207,7 +207,8 @@ function openSystem(key,title){
   else if(key==='utility') frame.src='utility-v2.html?v=2';
   else if(key==='schedule') frame.src='schedule-v2.html?v=2';
   else if(key==='catering') frame.src='catering-v1.html?v=3';
-  else if(key==='retail-audit') frame.src='retail-audit-v1.html?v=2';
+  else if(key==='retail-cpar') frame.src='retail-audit-dashboard.html?v=1';
+  else if(key==='retail-audit') frame.src='retail-audit-v1.html?v=3';
   else if(key==='policy') frame.src='policy-v1.html?v=3';
   else if(key==='appraisal') frame.src='appraisal-v1.html?v=4';
   else if(key==='voucher') frame.src='voucher-v7.html?v=1';
