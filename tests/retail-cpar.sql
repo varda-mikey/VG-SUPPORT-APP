@@ -1,8 +1,11 @@
 begin;
 set local role service_role;
 do $$
-declare audit_token text:=null; staff_token text:=null; payload jsonb; rec jsonb; result jsonb; aid uuid; cid uuid; uid uuid; req uuid; path text; count_before integer;
+declare audit_token text:=repeat('c',64); staff_token text:=null; payload jsonb; rec jsonb; result jsonb; aid uuid; cid uuid; uid uuid; req uuid; path text; count_before integer;
 begin
+ insert into app_private.retail_audit_sessions values(encode(extensions.digest(convert_to(audit_token,'UTF8'),'sha256'),'hex'),'Test auditor',now()+interval '1 hour');
+ begin perform public.retail_audit_gateway('review_access','{}',null);raise exception 'FAIL review without password';exception when sqlstate '28000' then null;end;
+ result:=public.retail_audit_gateway('auditor_login','{"name":"Test","password":"invalid","ip":"automated-test"}',null);if result->>'error' is null then raise exception 'FAIL wrong password';end if;
  select jsonb_build_object('fields',jsonb_build_object('auditorName','Automated test','auditorRole','Retail Head','auditDate','2026-10-20'),'items',jsonb_agg(jsonb_build_object('s',0,'i',n,'label','Test checkpoint '||n,'result',case when n=1 then 'noncompliant' when n=2 then 'action' when n=3 then 'na' else 'compliant' end))) into payload from generate_series(1,45) n;
  req:=gen_random_uuid();rec:=public.retail_audit_gateway('submit_audit',jsonb_build_object('submission_key',req,'branch','TEST ONLY','audit_type','main','payload',payload),audit_token);
  aid:=(rec->>'id')::uuid;if (rec->>'score')::integer<>97 then raise exception 'FAIL score %',rec->>'score';end if;
@@ -21,14 +24,29 @@ begin
  result:=public.retail_audit_gateway('submitted',rec,staff_token);if (result->>'id')::uuid<>uid then raise exception 'FAIL update duplicated';end if;
  if (select status from public.retail_cpar_items where id=cid)<>'submitted' then raise exception 'FAIL auto closed';end if;
  begin perform public.retail_audit_gateway('verified',jsonb_build_object('item_id',cid,'request_key',gen_random_uuid(),'actor','Auditor','remarks','Looks good','expected_update_id',gen_random_uuid()),audit_token);raise exception 'FAIL stale review';exception when others then if SQLERRM like 'FAIL%' then raise;end if;end;
+ result:=public.retail_audit_gateway('acknowledged',jsonb_build_object('item_id',cid,'request_key',gen_random_uuid(),'actor','Spoof name','remarks','Received for assessment','expected_update_id',uid),audit_token);uid:=(result->>'id')::uuid;
+ if result->>'actor'<>'Test auditor' then raise exception 'FAIL spoof reviewer name';end if;
+ if (select status from public.retail_cpar_items where id=cid)<>'acknowledged' then raise exception 'FAIL acknowledgement';end if;
  perform public.retail_audit_gateway('returned',jsonb_build_object('item_id',cid,'request_key',gen_random_uuid(),'actor','Auditor','remarks','Need additional dates','expected_update_id',uid),audit_token);
  rec:=rec||jsonb_build_object('request_key',gen_random_uuid());result:=public.retail_audit_gateway('submitted',rec,staff_token);uid:=(result->>'id')::uuid;
  perform public.retail_audit_gateway('verified',jsonb_build_object('item_id',cid,'request_key',gen_random_uuid(),'actor','Auditor','remarks','Coverage and output verified','expected_update_id',uid),audit_token);
  if (select status from public.retail_cpar_items where id=cid)<>'verified' then raise exception 'FAIL verify';end if;
  if (select score from public.retail_audits where id=aid)<>97 then raise exception 'FAIL original score changed';end if;
- if (select count(*) from public.retail_cpar_updates where item_id=cid)<>4 then raise exception 'FAIL history lost';end if;
+ if (select count(*) from public.retail_cpar_updates where item_id=cid)<>5 then raise exception 'FAIL history lost';end if;
  begin perform public.retail_audit_gateway('update',rec||jsonb_build_object('request_key',gen_random_uuid()),staff_token);raise exception 'FAIL closed item editable';exception when others then if SQLERRM like 'FAIL%' then raise;end if;end;
+ begin perform public.retail_audit_gateway('finalize_audit',jsonb_build_object('audit_id',aid,'comments','Final review'),null);raise exception 'FAIL closure without auditor';exception when sqlstate '28000' then null;end;
+ begin perform public.retail_audit_gateway('finalize_audit',jsonb_build_object('audit_id',aid,'comments','Final review'),audit_token);raise exception 'FAIL premature closure';exception when others then if SQLERRM like 'FAIL%' then raise;end if;end;
+ select id into cid from public.retail_cpar_items where audit_id=aid and status<>'verified';
+ rec:=rec||jsonb_build_object('item_id',cid,'request_key',gen_random_uuid());
+ path:=cid::text||'/test-proof.pdf';insert into storage.objects(bucket_id,name) values('retail-audit-evidence',path);
+ rec:=rec||jsonb_build_object('evidence',jsonb_build_array(jsonb_build_object('path',path,'name','test-proof.pdf')));
+ result:=public.retail_audit_gateway('submitted',rec,null);uid:=(result->>'id')::uuid;
+ perform public.retail_audit_gateway('verified',jsonb_build_object('item_id',cid,'request_key',gen_random_uuid(),'remarks','Proof checked','expected_update_id',uid),audit_token);
+ result:=public.retail_audit_gateway('finalize_audit',jsonb_build_object('audit_id',aid,'comments','All actions checked and approved'),audit_token);
+ if result->>'auditor_name'<>'Test auditor' or result#>>'{snapshot,original_audit,score}'<>'97' or jsonb_array_length(result#>'{snapshot,cpar}')<>2 then raise exception 'FAIL closure snapshot';end if;
+ perform public.retail_audit_gateway('auditor_logout','{}',audit_token);
+ begin perform public.retail_audit_gateway('review_access','{}',audit_token);raise exception 'FAIL logout';exception when sqlstate '28000' then null;end;
  if has_table_privilege('anon','public.retail_audits','SELECT') or has_function_privilege('anon','public.retail_audit_gateway(text,jsonb,text)','EXECUTE') then raise exception 'FAIL anonymous access';end if;
 end $$;
-select 'PASS: passwordless access, scores, immutable originals, CPAR filtering, idempotency, proof, history, returns, concurrency and verification' as result;
+select 'PASS: protected auditor sessions, acknowledgment, reviewer identity, final closure snapshots, scores, immutable originals, CPAR filtering, idempotency, proof, history, returns, concurrency and verification' as result;
 rollback;

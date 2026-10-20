@@ -1,0 +1,17 @@
+const assert=require('node:assert/strict'),fs=require('fs'),vm=require('vm');
+const source=fs.readFileSync('retail-audit-shared.js','utf8');
+assert.ok(!source.includes('SIRMIKEY123'),'Password must never ship to the browser');
+const els=new Map();const get=id=>{if(!els.has(id))els.set(id,{addEventListener(){},innerHTML:'',hidden:true});return els.get(id)};
+const context={Intl,Date,Map,JSON,URLSearchParams,document:{body:{dataset:{dashboard:'true'},insertAdjacentHTML(){}},getElementById:get},sessionStorage:{getItem(){return null}},console};
+vm.createContext(context);vm.runInContext(source.replace(/load\(\);\s*\}\)\(\);\s*$/,'globalThis.ui={renderReviewCard,renderSummary};})();'),context);
+const c={id:'test-item',status:'submitted',finding:{label:'Ingredient form <check>',remark:'Daily records needed'},updates:[{id:'u1',item_id:'test-item',kind:'submitted',actor:'Branch <name>',solution:'Complete daily forms',remarks:'Covered dates',coverage_start:'2026-10-21',coverage_end:'2026-10-31',created_at:'2026-10-31T10:00:00Z',evidence:[{path:'test-item/a.jpg',name:'Day 1.jpg'},{path:'test-item/b.png',name:'Day 2.png'},{path:'test-item/c.pdf',name:'Summary.pdf'},{path:'test-item/d.jpg',name:'Day 3.jpg'}]}]};
+let html=context.ui.renderReviewCard(c,5);
+assert.match(html,/<span>5\.<\/span>/);assert.match(html,/Ingredient form &lt;check&gt;/);assert.match(html,/Branch &lt;name&gt;/);
+assert.equal((html.match(/class="proof-tile"/g)||[]).length,3);assert.match(html,/View all 4 proofs/);assert.match(html,/data-proof-index="2"/);
+for(const decision of ['acknowledged','returned','verified'])assert.match(html,new RegExp('data-review="'+decision+'"'));
+c.status='open';html=context.ui.renderReviewCard(c,1);assert.doesNotMatch(html,/data-review="verified"/);
+c.status='verified';c.updates.push({kind:'verified',actor:'Auditor A',remarks:'Proof accepted',created_at:'2026-11-01T01:00:00Z'});html=context.ui.renderReviewCard(c,1);assert.match(html,/APPROVED ACTION \/ EVIDENCE/);assert.match(html,/Proof accepted/);
+const a={score:74,audit_date:'2026-10-20',auditor:'Original auditor',cpar:[c],final_approval:{auditor_name:'Auditor A',approved_at:'2026-11-01T01:00:00Z',comments:'All proof checked'}};
+html=context.ui.renderSummary(a,1,1);for(const text of ['ORIGINAL AUDIT','CPAR SUBMISSIONS','FINAL AUDITOR APPROVAL','APPROVED & CLOSED','All proof checked','Back to branch audits'])assert.ok(html.includes(text));
+assert.ok(source.includes('await call(\'review_access\')'));assert.ok(source.includes('type="password"'));assert.ok(source.includes('YOU ARE ON AUDITOR VIEW'));
+console.log('PASS: auditor access gate, sequential titles, three picture previews, zoom/gallery navigation, decisions, safe text and final approval summary.');
