@@ -10,6 +10,8 @@ begin
  req:=gen_random_uuid();rec:=public.retail_audit_gateway('submit_audit',jsonb_build_object('submission_key',req,'branch','TEST ONLY','audit_type','main','payload',payload),audit_token);
  aid:=(rec->>'id')::uuid;if (rec->>'score')::integer<>97 then raise exception 'FAIL score %',rec->>'score';end if;
  result:=public.retail_audit_gateway('submit_audit',jsonb_build_object('submission_key',req),audit_token);if result->>'id'<>rec->>'id' then raise exception 'FAIL duplicate audit';end if;
+ perform public.retail_audit_gateway('branches','{}',staff_token);
+ perform public.retail_audit_gateway('list','{}',staff_token);
  perform public.retail_audit_gateway('create_cpar',jsonb_build_object('audit_id',aid),staff_token);
  perform public.retail_audit_gateway('create_cpar',jsonb_build_object('audit_id',aid),staff_token);
  select count(*) into count_before from public.retail_cpar_items where audit_id=aid;if count_before<>2 then raise exception 'FAIL CPAR filtering / duplicate protection';end if;

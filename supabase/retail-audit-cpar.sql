@@ -40,13 +40,13 @@ begin
  end if;
  if p_action='list' then
   select jsonb_agg(to_jsonb(q) order by q.audit_date desc,q.created_at desc) into v from (
-   select a.id,a.branch,a.audit_date,a.auditor,a.audit_type,a.score,a.created_at,
-    (select count(*) from jsonb_array_elements(a.payload->'items') it where it->>'result' in ('action','noncompliant')) as actions,
-    (select count(*) from public.retail_cpar_items i where i.audit_id=a.id) as cpar_created,
-    (select count(*) from public.retail_cpar_items i where i.audit_id=a.id and i.status='verified') as verified,
-    (select count(*) from public.retail_cpar_items i where i.audit_id=a.id and i.status='submitted') as submitted,
-    (select count(*) from jsonb_array_elements(a.payload->'items') it where it->>'result'='na') as na
-   from public.retail_audits a where coalesce(p_data->>'branch','')='' or a.branch=p_data->>'branch'
+   select audit_row.id,audit_row.branch,audit_row.audit_date,audit_row.auditor,audit_row.audit_type,audit_row.score,audit_row.created_at,
+    (select count(*) from jsonb_array_elements(audit_row.payload->'items') it where it->>'result' in ('action','noncompliant')) as actions,
+    (select count(*) from public.retail_cpar_items i where i.audit_id=audit_row.id) as cpar_created,
+    (select count(*) from public.retail_cpar_items i where i.audit_id=audit_row.id and i.status='verified') as verified,
+    (select count(*) from public.retail_cpar_items i where i.audit_id=audit_row.id and i.status='submitted') as submitted,
+    (select count(*) from jsonb_array_elements(audit_row.payload->'items') it where it->>'result'='na') as na
+   from public.retail_audits audit_row where coalesce(p_data->>'branch','')='' or audit_row.branch=p_data->>'branch'
   ) q;return coalesce(v,'[]');
  end if;
  if p_action='submit_audit' then
