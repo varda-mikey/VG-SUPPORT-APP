@@ -32,5 +32,5 @@ assert.doesNotMatch(html,/location\.replace\('index.html'\)/);
 const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]).filter(Boolean);
 assert.equal(new Set(ids).size,ids.length);
 const index=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
-assert.match(index,/retail-audit-v1\.html\?v=8/);
+assert.match(index,/retail-audit-v1\.html\?v=9/);
 console.log('PASS: two retail audit types, 122 checkpoints covering original controls and expanded FSQA, scoring bands, business metrics, draft persistence, JPEG export, and index integration.');
