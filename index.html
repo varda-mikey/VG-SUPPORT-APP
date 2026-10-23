@@ -117,7 +117,7 @@ button{
   </div>
 
   <div class="menuGrid">
-    <div class="card"><div class="icon">📊</div><h2>Branch Planner</h2><p>Project month-end sales, recommended staffing and labor cost from running sales. Set editable sales divisors, payroll assumptions and labor KPI targets across branches.</p><button onclick="openSystem('branch-planner','Branch Planner')">Open Branch Planner</button></div>
+    <div class="card"><div class="icon">📊</div><h2>Branch Planner</h2><p>Compare recommended and actual staffing costs. Enter sales and pay for each branch, then preview or save a report.</p><button onclick="openSystem('branch-planner','Branch Planner')">Open Branch Planner</button></div>
     <div class="card"><div class="icon">🗓️💳</div><h2>Monthly Payables Reminder Creator</h2><p>Track suppliers, monthly bills, partial payments, balances and due dates. Create printable reports and back up your records.</p><button onclick="openSystem('monthly-payables','Monthly Payables Reminder Creator')">Open Monthly Payables</button></div>
     <div class="card" id="kapirataAdminTile"><div class="icon">🏀🏴‍☠️</div><h2>Kapirata / Pirates Admin</h2><p>Review challenge videos, receipt records, and available or claimed discount vouchers.</p><a class="adminTileLink" href="https://varda-mikey.github.io/Kapirata-Basketball-Challenge/admin.html" target="_blank" rel="noopener noreferrer">Open Pirates Admin</a></div>
     <div class="card"><div class="icon">📝</div><h2>Purchase Request / Order</h2><p>Automatic PR numbers, shared branch folders, inventory-based requests, optional daily or weekly PAR, and downloadable PDF records.</p><button onclick="openSystem('purchase-request','Purchase Request / Order')">Open Manual / Automatic PO</button></div>
@@ -205,7 +205,7 @@ function openSystem(key,title){
   frame.removeAttribute('srcdoc');
   if(key==='monthly-payables') frame.src='monthly-payables-v1.html?v=7';
   else if(key==='pinggang-pinoy') frame.src='pinggang-pinoy-v1.html?v=4';
-  else if(key==='branch-planner') frame.src='branch-planner-v1.html?v=4';
+  else if(key==='branch-planner') frame.src='branch-planner-v1.html?v=5';
   else if(key==='supplier-order') frame.src='supplier-order-v1.html?v=4';
   else if(key==='purchase-request') frame.src='purchase-request-v1.html?v=7';
   else if(key==='utility') frame.src='utility-v2.html?v=3';
