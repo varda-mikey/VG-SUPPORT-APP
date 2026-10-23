@@ -1,0 +1,12 @@
+const test=require('node:test'),assert=require('node:assert/strict');
+const N=require('../pinggang-nutrition.js');
+const catalog=require('../menu-catalog.json');
+test('half cup uses existing rice master calories',()=>{const r=N.match(catalog,'White Rice');assert.equal(r.menu,'Steamed Rice');assert.equal(N.calculate(r,.5,'cup').kcal,100);});
+test('grams require actual reference weight, never inferred from a cup',()=>{const r=N.match(catalog,'Ginisang Repolyo');assert.throws(()=>N.calculate(r,70,'g'),/gram weight/);assert.equal(N.calculate(r,70,'g',140).kcal,59);});
+test('pork adobo scales by nutritionist supplied weight',()=>{const r=N.match(catalog,'Pork Adobo');assert.equal(N.calculate(r,80,'g',120).kcal,148);});
+test('unknown honey butter chicken is never matched to a different recipe',()=>{assert.equal(N.match(catalog,'Honey Butter Chicken'),null);});
+test('ampalaya alias follows existing master including egg allergen',()=>{const r=N.match(catalog,'Ginisang Ampalaya');assert.equal(r.menu,'Ampalaya Guisado');assert.equal(N.calculate(r,.5,'cup').allergens,'Egg');});
+test('CSV import preserves quoted allergens and zero calorie records',()=>{const r=N.validate(N.parseCSV('Menu,Serving,Calories,Allergens\r\n"Sample, dish",100 g,0,"Soy, Wheat"'));assert.equal(r[0].menu,'Sample, dish');assert.equal(r[0].allergens,'Soy, Wheat');assert.equal(N.calculate(r[0],50,'g').kcal,0);});
+test('empty allergen is flagged for review; explicit None stays None',()=>{assert.equal(N.calculate({calories:'100',serving:'1 cup',allergens:''},1,'cup').allergens,'Review');assert.equal(N.calculate({calories:'100',serving:'1 cup',allergens:'None'},1,'cup').allergens,'None');});
+test('invalid input cannot replace master',()=>{assert.throws(()=>N.validate([{menu:'Item',calories:''}]));assert.throws(()=>N.calculate({calories:100,serving:'1 cup'},0,'cup'));});
+test('mixed fraction serving amounts',()=>{assert.deepEqual(N.serving('1 1/2 cup'),{amount:1.5,unit:'cup'});assert.deepEqual(N.serving('1/2 cup'),{amount:.5,unit:'cup'});});
