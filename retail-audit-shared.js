@@ -6,10 +6,20 @@ let auditorSession=null;try{auditorSession=JSON.parse(sessionStorage.getItem('vg
 const proofCache=new Map();
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const aliases={'Ateneo 2GONZ':'Ateneo de Manila — 2GONZ','DLSL Food Park':'De La Salle Lipa — Food Park','Mapua Davao Food Hall':'Mapua Davao — Food Hall','LPU Main Batangas':'LPU Main — Batangas','LPU Lima Maritime':'LPU Lima — Maritime','PUP Manila':'PUP Manila — Varda Main','St. Jude – Varda Fresh Restaurant':'St. Jude Manila — Varda Fresh'};
-async function call(action,data={}){const r=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,data,token:auditorSession?.token})});const d=await r.json();if(!r.ok||d.error)throw Error(d.error||'Please try again.');return d;}
-function message(text,error=false){const el=byId('feedback');if(el){el.hidden=false;el.className='feedback '+(error?'error':'success');el.textContent=text;el.scrollIntoView({block:'nearest'});}else alert(text)}
+async function call(action,data={}){const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),30000);try{const r=await fetch(endpoint,{method:'POST',signal:controller.signal,headers:{'Content-Type':'application/json'},body:JSON.stringify({action,data,token:auditorSession?.token})});let d;try{d=await r.json()}catch(e){throw Error('The server returned an unreadable response. Your entries are still here. Please try again.')}if(!r.ok||d.error)throw Error(d.error||'Please try again.');return d;}catch(e){if(e.name==='AbortError')throw Error('The connection took too long. Your entries are still here. Please try again.');if(e instanceof TypeError)throw Error('Could not connect. Check your internet connection and try again. Your entries are still here.');throw e}finally{clearTimeout(timer)}}
+// Use page controls: embedded browsers may suppress native confirm/alert pop-ups.
+function confirmAuditSubmission(){return new Promise(resolve=>{
+ const previous=document.activeElement,overlay=document.createElement('div');overlay.style.cssText='position:fixed;inset:0;z-index:10000;background:#0008;display:flex;align-items:center;justify-content:center;padding:16px';
+ overlay.innerHTML='<section role="dialog" aria-modal="true" aria-labelledby="submitAuditTitle" style="background:white;color:#20242a;border-radius:16px;padding:24px;max-width:420px;width:100%;box-sizing:border-box"><h2 id="submitAuditTitle">Submit this audit?</h2><p>Your completed audit will be saved online in the Audit &amp; CPAR Dashboard.</p><div style="display:flex;gap:12px;flex-wrap:wrap"><button type="button" class="btn secondary" data-cancel>Keep editing</button><button type="button" class="btn gold" data-confirm>Confirm submission</button></div></section>';
+ const finish=value=>{document.removeEventListener('keydown',onKey);overlay.remove();previous?.focus();resolve(value)};
+ const cancel=overlay.querySelector('[data-cancel]'),submit=overlay.querySelector('[data-confirm]');
+ function onKey(e){if(e.key==='Escape'){e.preventDefault();finish(false)}if(e.key==='Tab'){e.preventDefault();(document.activeElement===cancel?submit:cancel).focus()}}
+ cancel.onclick=()=>finish(false);submit.onclick=()=>finish(true);document.addEventListener('keydown',onKey);document.body.appendChild(overlay);cancel.focus();
+})}
+function message(text,error=false){const el=byId('feedback');if(el){el.hidden=false;el.className='feedback '+(error?'error':'success');el.textContent=text;el.scrollIntoView({block:'nearest'});}}
 async function guarded(fn,button){const label=button?.textContent;if(button){button.disabled=true;button.textContent='Please wait…'}try{await fn()}catch(e){message(e.message,true)}finally{if(button){button.disabled=false;button.textContent=label}}}
 if(!document.body.dataset.dashboard){
+ document.querySelector('.topbar').insertAdjacentHTML('afterend','<p id="feedback" class="feedback" role="status" aria-live="polite" hidden style="margin:12px 16px;padding:16px;border:2px solid #741426;border-radius:10px;background:#fff7e5;color:#561020;white-space:pre-wrap"></p>');
  document.querySelector('.actions').insertAdjacentHTML('afterbegin','<a class="btn" href="retail-audit-dashboard.html?v=7">Audit & CPAR Dashboard</a><button class="btn gold" id="submitSharedAudit">SUBMIT AUDIT</button>');
  document.body.insertAdjacentHTML('beforeend','<input id="auditPhotoInput" type="file" accept="image/jpeg,image/png,image/webp" multiple hidden><dialog id="auditPhotoViewer" class="original-photo-dialog"></dialog>');
  let photoCheck='';
@@ -39,7 +49,8 @@ if(!document.body.dataset.dashboard){
   const d=scoreData();if(d.answered!==d.total)throw Error('Please finish all '+d.total+' audit checks first.');
   if(!branchName()||!byId('auditDate').value||!byId('auditorName').value.trim()||!byId('auditorRole').value)throw Error('Please complete the branch, date, auditor name and position.');
   const missingRisk=flatItems().find(i=>(i.fsqa||/FOOD SAFETY|FSQA/.test(i.section))&&['action','noncompliant'].includes(selector('result',i.s,i.i).value)&&!selector('riskInput',i.s,i.i)?.value);if(missingRisk)throw Error('Please select the FSQA risk level for: '+missingRisk.label);
-  if(!confirm('Submit this completed audit to the branch dashboard?'))return;
+  saveDraft(false);
+  if(!await confirmAuditSubmission())return;
   const payload=collect();payload.items=payload.items.map(x=>({...x,...flatItems().find(i=>i.s===x.s&&i.i===x.i)}));
   const signature=JSON.stringify({branch:branchName(),auditType,payload});
   let submission_key=submissionKeys.get(signature);if(!submission_key){submission_key=crypto.randomUUID();submissionKeys.set(signature,submission_key)}
