@@ -26,6 +26,20 @@ async function build(a,loadProof,auditOnly=false,reviewAll=false,compact=false){
  function text(value,{size=9,bold=false,color=[38,49,62],space=3,indent=0}={}){doc.setFont('helvetica',bold?'bold':'normal');doc.setFontSize(size);doc.setTextColor(...color);const lines=doc.splitTextToSize(clean(value)||'-',width-indent);for(const line of lines){room(size*.4+1);doc.text(line,margin+indent,y);y+=size*.4+1}y+=space;doc.setTextColor(38,49,62)}
  function section(title){room(23);y+=4;text(title,{size:12,bold:true,color:[116,20,38],space:3});doc.setDrawColor(222,226,232);doc.line(margin,y-1,194,y-1);y+=4}
  function entry(title,value){text(title+': '+(value||'-'),{size:9,space:1})}
+ async function inlinePhotos(files,topic){
+  if(!compact)return;
+  const photos=(files||[]).map(f=>assets.get(f.path)).filter(asset=>asset&&!/application\/pdf/.test(asset.mime)&&! /\.pdf$/i.test(asset.file.path));
+  for(let start=0;start<photos.length;start+=3){
+   if(y+74>bottom){page();text(topic+' - photos continued',{size:9,bold:true});}
+   const top=y;
+   for(let col=0;col<Math.min(3,photos.length-start);col++){
+    const asset=photos[start+col],x=margin+col*61;let bytes=asset.bytes,format=asset.mime==='image/png'?'PNG':'JPEG';if(asset.mime==='image/webp'){bytes=await webpToPng(bytes);format='PNG'}
+    try{const props=doc.getImageProperties(bytes),ratio=Math.min(50.8/props.width,50.8/props.height),w=props.width*ratio,h=props.height*ratio;doc.setDrawColor(220);doc.rect(x,top,50.8,50.8);doc.addImage(bytes,format,x+(50.8-w)/2,top+(50.8-h)/2,w,h,undefined,'FAST');doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(38,49,62);doc.text(doc.splitTextToSize(clean(asset.file.name),54).slice(0,3),x,top+55);}catch(e){throw Error('This proof could not be added to the PDF: '+asset.file.name)}
+   }
+   y=top+72;
+  }
+ }
+
  text(auditOnly?'SUBMITTED AUDIT REPORT':reviewAll?'AUDIT & CPAR REVIEW REPORT':'FINAL AUDIT & CPAR REPORT',{size:19,bold:true});text(original.branch,{size:13,bold:true});entry('Audit date',original.audit_date);entry('Original auditor',original.auditor);entry('Audit reference',p.fields.auditRef||original.id);entry('Original audit score',original.score==null?'No percentage grade':original.score+'%');
  if(auditOnly){entry('Report status',a.coverage?.complete===false?'PROVISIONAL - incomplete expanded audit':'Submitted audit');if(a.payload.revision_of)entry('Revision of',a.payload.revision_of);if(a.payload.edited_by)entry('Revised by',a.payload.edited_by+' | '+when(a.payload.edited_at));text('This is the submitted inspection report. CPAR approval is recorded separately.',{size:9});}
  if(!auditOnly){
@@ -43,12 +57,12 @@ async function build(a,loadProof,auditOnly=false,reviewAll=false,compact=false){
 
  section('ORIGINAL AUDIT CHECKLIST');
  let auditSection='';
- for(let i=0;i<p.items.length;i++){const check=p.items[i];if(check.section&&check.section!==auditSection){auditSection=check.section;section(auditSection)}room(20);text((i+1)+'. '+check.label+' ['+label(check.result)+']',{bold:true,space:1});if(check.source_clauses?.length)entry('Source clauses',check.source_clauses.join(', '));if(check.risk_level)entry('FSQA risk level',check.risk_level.toUpperCase());if(check.remark)text('Finding / remarks: '+check.remark,{size:8,space:1,indent:4});if(check.owner||check.due)text('Responsible: '+(check.owner||'-')+' | Target: '+(check.due||'-'),{size:8,space:3,indent:4});for(let j=0;j<(check.evidence||[]).length;j++){const f=check.evidence[j],ref='Original audit checkpoint '+(i+1)+' / Proof '+(j+1);text('Original auditor proof: '+f.name,{size:8,space:1,indent:3});if(!assets.has(f.path)){const asset=await compactPhoto(await loadProof(original.id,{...f,original:true}),compact?720:1200);if(!asset?.bytes?.byteLength)throw Error('Unable to load original audit proof: '+f.name);assets.set(f.path,{...asset,file:f,ref,actor:original.auditor,coverage:original.audit_date});}}}
+ for(let i=0;i<p.items.length;i++){const check=p.items[i];if(check.section&&check.section!==auditSection){auditSection=check.section;section(auditSection)}room(20);text((i+1)+'. '+check.label+' ['+label(check.result)+']',{bold:true,space:1});if(check.source_clauses?.length)entry('Source clauses',check.source_clauses.join(', '));if(check.risk_level)entry('FSQA risk level',check.risk_level.toUpperCase());if(check.remark)text('Finding / remarks: '+check.remark,{size:8,space:1,indent:4});if(check.owner||check.due)text('Responsible: '+(check.owner||'-')+' | Target: '+(check.due||'-'),{size:8,space:3,indent:4});for(let j=0;j<(check.evidence||[]).length;j++){const f=check.evidence[j],ref='Original audit checkpoint '+(i+1)+' / Proof '+(j+1);text('Original auditor proof: '+f.name,{size:8,space:1,indent:3});if(!assets.has(f.path)){const asset=await compactPhoto(await loadProof(original.id,{...f,original:true}),compact?720:1200);if(!asset?.bytes?.byteLength)throw Error('Unable to load original audit proof: '+f.name);assets.set(f.path,{...asset,file:f,ref,actor:original.auditor,coverage:original.audit_date});}}await inlinePhotos(check.evidence,(i+1)+'. '+check.label);}
  if(!auditOnly){
  section('2. CPAR SUBMISSIONS & AUDITOR DECISIONS');
  for(let i=0;i<items.length;i++){const c=items[i];room(25);text((i+1)+'. '+c.finding.label,{size:11,bold:true});entry('Original finding',c.finding.remark||label(c.finding.result));entry('Final action status',label(c.status));if(c.finding.fsqa||/FOOD SAFETY|FSQA/i.test(c.finding.section||''))entry('FSQA risk level',(c.risk_level||c.finding.risk_level||'Not assessed').toUpperCase());
   for(const u of c.updates||[]){room(19);text(label(u.kind)+' | '+u.actor+' | '+when(u.created_at),{size:9,bold:true,space:1});if(u.solution)entry('Solution',u.solution);if(u.coverage_start)entry('Date coverage',u.coverage_start+' to '+u.coverage_end+' | Target: '+(u.due_date||'-'));if(u.remarks)entry('Comments / remarks',u.remarks);
-   for(let j=0;j<(u.evidence||[]).length;j++){const f=u.evidence[j],ref='Action '+(i+1)+' / '+label(u.kind)+' / Proof '+(j+1);text('Proof: '+f.name+' ['+ref+']',{size:8,space:1,indent:3});if(!assets.has(f.path)){const asset=await compactPhoto(await loadProof(c.id,f),compact?720:1200);if(!asset?.bytes?.byteLength)throw Error('Unable to load proof: '+f.name);assets.set(f.path,{...asset,file:f,ref,actor:u.actor,coverage:u.coverage_start+' to '+u.coverage_end});}}
+   for(let j=0;j<(u.evidence||[]).length;j++){const f=u.evidence[j],ref='Action '+(i+1)+' / '+label(u.kind)+' / Proof '+(j+1);text('Proof: '+f.name+' ['+ref+']',{size:8,space:1,indent:3});if(!assets.has(f.path)){const asset=await compactPhoto(await loadProof(c.id,f),compact?720:1200);if(!asset?.bytes?.byteLength)throw Error('Unable to load proof: '+f.name);assets.set(f.path,{...asset,file:f,ref,actor:u.actor,coverage:u.coverage_start+' to '+u.coverage_end});}}await inlinePhotos(u.evidence,'Action '+(i+1)+' - '+label(u.kind));
    y+=3;
   }
  }
@@ -58,16 +72,9 @@ async function build(a,loadProof,auditOnly=false,reviewAll=false,compact=false){
  }
  if(assets.size)section('SUPPORTING PROOF INDEX');let proofNo=0;
  for(const [path,asset] of assets){proofNo++;entry('Evidence '+proofNo,asset.file.name+' | '+asset.ref);asset.number=proofNo;if(asset.mime==='application/pdf'||/\.pdf$/i.test(path))pdfProofs.push(asset);}
- let tile=0,tileY=0;
  for(const asset of assets.values()){
   if(pdfProofs.includes(asset))continue;
-  if(compact){
-   if(tile%9===0){page();text('PHOTO EVIDENCE - COMPACT REVIEW',{size:13,bold:true});tileY=y;}
-   const col=tile%3,row=Math.floor((tile%9)/3),x=margin+col*61,top=tileY+row*76;
-   let bytes=asset.bytes,format=asset.mime==='image/png'?'PNG':'JPEG';if(asset.mime==='image/webp'){bytes=await webpToPng(bytes);format='PNG'}
-   try{const props=doc.getImageProperties(bytes),ratio=Math.min(50.8/props.width,50.8/props.height),w=props.width*ratio,h=props.height*ratio;doc.setDrawColor(220);doc.rect(x,top,50.8,50.8);doc.addImage(bytes,format,x+(50.8-w)/2,top+(50.8-h)/2,w,h,undefined,'FAST');doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(38,49,62);const caption=doc.splitTextToSize(clean('Evidence '+asset.number+' | '+asset.ref+' | '+asset.file.name),54).slice(0,5);doc.text(caption,x,top+55);tile++;}catch(e){throw Error('This proof could not be added to the PDF: '+asset.file.name)}
-   continue;
-  }
+  if(compact)continue;
   page();text('SUPPORTING PROOF '+asset.number,{size:13,bold:true});entry('File',asset.file.name);entry('Reference',asset.ref);entry('Submitted by',asset.actor);entry('Coverage',asset.coverage);
   let bytes=asset.bytes,format=asset.mime==='image/png'?'PNG':'JPEG';
   if(asset.mime==='image/webp'){bytes=await webpToPng(bytes);format='PNG';}
