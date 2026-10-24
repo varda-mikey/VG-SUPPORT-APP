@@ -13,26 +13,28 @@ async function compactPhoto(asset){
  return {...asset,bytes:new Uint8Array(await blob.arrayBuffer()),mime:'image/jpeg'};
  }finally{URL.revokeObjectURL(url)}
 }
-async function build(a,loadProof,auditOnly=false){
+async function build(a,loadProof,auditOnly=false,reviewAll=false){
  const closure=a.final_approval;
- if(!auditOnly&&!closure?.snapshot)throw Error('The auditor must stamp final approval before saving or printing the closed CPAR.');
+ if(!auditOnly&&!reviewAll&&!closure?.snapshot)throw Error('The auditor must stamp final approval before saving or printing the closed CPAR.');
  if(!window.jspdf?.jsPDF||!window.PDFLib)throw Error('The PDF tools are still loading. Please refresh and try again.');
- const original=auditOnly?a:closure.snapshot.original_audit,items=auditOnly?[]:closure.snapshot.cpar||[],p=original.payload;
+ const original=auditOnly||reviewAll?a:closure.snapshot.original_audit,items=auditOnly?[]:reviewAll?a.cpar||[]:closure.snapshot.cpar||[],p=original.payload;
  const doc=new window.jspdf.jsPDF({unit:'mm',format:'a4',compress:true});let y=22;const margin=16,width=178,bottom=277,pdfProofs=[],assets=new Map();
- const heading=()=>{doc.setFillColor(116,20,38);doc.rect(0,0,210,12,'F');doc.setTextColor(255);doc.setFont('helvetica','bold');doc.setFontSize(9);doc.text(auditOnly?'VARDA GROUP | RETAIL AUDIT REPORT':'VARDA GROUP | RETAIL AUDIT & CLOSED CPAR',margin,8);doc.setTextColor(38,49,62)};
+ const heading=()=>{doc.setFillColor(116,20,38);doc.rect(0,0,210,12,'F');doc.setTextColor(255);doc.setFont('helvetica','bold');doc.setFontSize(9);doc.text(auditOnly?'VARDA GROUP | RETAIL AUDIT REPORT':reviewAll?'VARDA GROUP | AUDIT & CPAR REVIEW':'VARDA GROUP | RETAIL AUDIT & CLOSED CPAR',margin,8);doc.setTextColor(38,49,62)};
  heading();
  function page(){const font=doc.getFont(),size=doc.getFontSize(),color=doc.getTextColor();doc.addPage();heading();doc.setFont(font.fontName,font.fontStyle);doc.setFontSize(size);doc.setTextColor(color);y=22}
  function room(height){if(y+height>bottom)page()}
  function text(value,{size=9,bold=false,color=[38,49,62],space=3,indent=0}={}){doc.setFont('helvetica',bold?'bold':'normal');doc.setFontSize(size);doc.setTextColor(...color);const lines=doc.splitTextToSize(clean(value)||'-',width-indent);for(const line of lines){room(size*.4+1);doc.text(line,margin+indent,y);y+=size*.4+1}y+=space;doc.setTextColor(38,49,62)}
  function section(title){room(23);y+=4;text(title,{size:12,bold:true,color:[116,20,38],space:3});doc.setDrawColor(222,226,232);doc.line(margin,y-1,194,y-1);y+=4}
  function entry(title,value){text(title+': '+(value||'-'),{size:9,space:1})}
- text(auditOnly?'SUBMITTED AUDIT REPORT':'FINAL AUDIT & CPAR REPORT',{size:19,bold:true});text(original.branch,{size:13,bold:true});entry('Audit date',original.audit_date);entry('Original auditor',original.auditor);entry('Audit reference',p.fields.auditRef||original.id);entry('Original audit score',original.score==null?'No percentage grade':original.score+'%');
+ text(auditOnly?'SUBMITTED AUDIT REPORT':reviewAll?'AUDIT & CPAR REVIEW REPORT':'FINAL AUDIT & CPAR REPORT',{size:19,bold:true});text(original.branch,{size:13,bold:true});entry('Audit date',original.audit_date);entry('Original auditor',original.auditor);entry('Audit reference',p.fields.auditRef||original.id);entry('Original audit score',original.score==null?'No percentage grade':original.score+'%');
  if(auditOnly){entry('Report status',a.coverage?.complete===false?'PROVISIONAL - incomplete expanded audit':'Submitted audit');if(a.payload.revision_of)entry('Revision of',a.payload.revision_of);if(a.payload.edited_by)entry('Revised by',a.payload.edited_by+' | '+when(a.payload.edited_at));text('This is the submitted inspection report. CPAR approval is recorded separately.',{size:9});}
  if(!auditOnly){
+ if(closure){
  room(35);doc.setFillColor(236,247,240);doc.setDrawColor(62,127,85);doc.roundedRect(margin,y,width,29,2,2,'FD');y+=8;text('APPROVED & CLOSED',{size:15,bold:true,color:[36,103,65],indent:5,space:1});text('Approved by '+closure.auditor_name+' | '+when(closure.approved_at),{size:9,indent:5});y+=4;
  entry('Final auditor comments',closure.comments);
+ }else{entry('Approval status','PENDING - review copy, not final approval');}
  const submitted=items.flatMap(c=>c.updates||[]).filter(u=>u.kind==='submitted');
- section('SUMMARY');entry('Corrective actions',items.length+' identified | '+items.filter(c=>c.status==='verified').length+' approved');entry('CPAR submissions',submitted.length);text('This report preserves the original audit, all recorded corrective action updates, supporting proof and final auditor approval. The original score is not changed by CPAR closure.',{size:9});
+ section('SUMMARY');entry('Corrective actions',items.length+' identified | '+items.filter(c=>c.status==='verified').length+' approved');entry('CPAR submissions',submitted.length);text('This report includes the audit, recorded corrective action updates and supporting proof. Approval is shown only when recorded. CPAR actions do not change the inspection score.',{size:9});
  }
  section(auditOnly?'AUDIT DETAILS':'1. ORIGINAL AUDIT');
  const infoLabels={branchHead:'Branch leader',reportMonth:'Sales reporting month',monthSales:'Monthly sales (PHP)',operatingDays:'Operating days',dailyTarget:'Daily sales target (PHP)',productionValue:'Food / product available value (PHP)',leftoverValue:'Leftover value (PHP)',foodCostPercent:'Food cost %',inventoryVariance:'Inventory variance (PHP)',strengths:'Good practices',priorityActions:'Priority corrective actions',executiveSummary:'Auditor summary',branchResponse:'Branch leader response',followUpDate:'Follow-up audit date',finalRecommendation:'Recommendation'};
@@ -50,7 +52,9 @@ async function build(a,loadProof,auditOnly=false){
    y+=3;
   }
  }
+ if(closure){
  section('3. FINAL AUDITOR APPROVAL');entry('Final status','APPROVED & CLOSED');entry('Approved by',closure.auditor_name);entry('Approval date / time',when(closure.approved_at));entry('Final comments',closure.comments);text('All corrective actions in this closure record were approved before the final CPAR stamp was issued.',{size:9});
+ }
  }
  if(assets.size)section('SUPPORTING PROOF INDEX');let proofNo=0;
  for(const [path,asset] of assets){proofNo++;entry('Evidence '+proofNo,asset.file.name+' | '+asset.ref);asset.number=proofNo;if(asset.mime==='application/pdf'||/\.pdf$/i.test(path))pdfProofs.push(asset);}
@@ -62,13 +66,13 @@ async function build(a,loadProof,auditOnly=false){
   try{const props=doc.getImageProperties(bytes),maxW=178,maxH=bottom-y-8,ratio=Math.min(maxW/props.width,maxH/props.height),w=props.width*ratio,h=props.height*ratio;doc.addImage(bytes,format,margin+(maxW-w)/2,y,w,h,undefined,'FAST');y+=h+5;}catch(e){throw Error('This proof could not be added to the PDF: '+asset.file.name);}
  }
  const reportPages=doc.getNumberOfPages();
- for(let i=1;i<=reportPages;i++){doc.setPage(i);doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(110);doc.text(clean(original.branch)+(auditOnly?' | Audit report | Report page ':' | Closed CPAR | Report page ')+i+' of '+reportPages,margin,289);}
+ for(let i=1;i<=reportPages;i++){doc.setPage(i);doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(110);doc.text(clean(original.branch)+(auditOnly?' | Audit report | Report page ':reviewAll?' | Review copy | Report page ':' | Closed CPAR | Report page ')+i+' of '+reportPages,margin,289);}
  let bytes=new Uint8Array(doc.output('arraybuffer'));
  if(pdfProofs.length){const {PDFDocument,StandardFonts,rgb}=window.PDFLib,merged=await PDFDocument.load(bytes),font=await merged.embedFont(StandardFonts.Helvetica);for(const asset of pdfProofs){let proof;try{proof=await PDFDocument.load(asset.bytes)}catch(e){throw Error('Unable to include PDF proof '+asset.file.name+'. Check whether the original PDF is password-protected or damaged.');}const cover=merged.addPage([595.28,841.89]);cover.drawText('SUPPORTING PDF PROOF '+asset.number,{x:45,y:780,size:15,font,color:rgb(.45,.08,.15)});const lines=[asset.file.name,asset.ref,'Submitted by: '+asset.actor,'Coverage: '+asset.coverage,'The following '+proof.getPageCount()+' page(s) are the submitted PDF proof.'];let ty=740;for(const line of lines){const wrapped=clean(line).match(/.{1,82}/g)||['-'];for(const text of wrapped){cover.drawText(text,{x:45,y:ty,size:10,font});ty-=17}ty-=8}for(const copied of await merged.copyPages(proof,proof.getPageIndices()))merged.addPage(copied);}bytes=await merged.save();}
- const filename=(auditOnly?'VARDA-Audit-Report-':'VARDA-Closed-CPAR-')+clean(original.branch).replace(/[^A-Za-z0-9]+/g,'-')+'-'+original.audit_date+'.pdf';return {bytes,filename};
+ const filename=(auditOnly?'VARDA-Audit-Report-':reviewAll?'VARDA-Audit-CPAR-Review-':'VARDA-Closed-CPAR-')+clean(original.branch).replace(/[^A-Za-z0-9]+/g,'-')+'-'+original.audit_date+'.pdf';return {bytes,filename};
 }
 async function webpToPng(bytes){const url=URL.createObjectURL(new Blob([bytes],{type:'image/webp'}));try{const img=new Image();await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=reject;img.src=url});const canvas=document.createElement('canvas');canvas.width=img.naturalWidth;canvas.height=img.naturalHeight;canvas.getContext('2d').drawImage(img,0,0);return canvas.toDataURL('image/png')}finally{URL.revokeObjectURL(url)}}
-async function save(a,loader,auditOnly=false){const out=await build(a,loader,auditOnly),url=URL.createObjectURL(new Blob([out.bytes],{type:'application/pdf'})),link=document.createElement('a');link.href=url;link.download=out.filename;link.click();setTimeout(()=>URL.revokeObjectURL(url),60000)}
+async function save(a,loader,auditOnly=false,reviewAll=false){const out=await build(a,loader,auditOnly,reviewAll),url=URL.createObjectURL(new Blob([out.bytes],{type:'application/pdf'})),link=document.createElement('a');link.href=url;link.download=out.filename;link.click();setTimeout(()=>URL.revokeObjectURL(url),60000)}
 async function print(a,loader){const target=window.open('','_blank');if(!target)throw Error('Please allow the report window to open, then click Print again.');target.document.title='Preparing closed CPAR';target.document.body.textContent='Preparing the full closed CPAR report and proof…';try{const out=await build(a,loader),url=URL.createObjectURL(new Blob([out.bytes],{type:'application/pdf'}));target.addEventListener('load',()=>{try{target.focus();target.print()}catch(e){}},{once:true});target.location.href=url;setTimeout(()=>URL.revokeObjectURL(url),600000)}catch(e){target.close();throw e}}
-window.VardaCparExport={saveQuickAudit:(a)=>save({...a,payload:{...a.payload,fields:{...a.payload.fields,executiveSummary:(a.payload.fields.executiveSummary||'')+'\nCompact copy: photos are available in the online report.'},items:a.payload.items.map(item=>({...item,evidence:[]}))}},null,true),build,save,print,buildAudit:(a,loader)=>build(a,loader,true),saveAudit:(a,loader)=>save(a,loader,true)};
+window.VardaCparExport={buildReview:(a,loader)=>build(a,loader,false,true),saveReview:(a,loader)=>save(a,loader,false,true),saveQuickAudit:(a)=>save({...a,payload:{...a.payload,fields:{...a.payload.fields,executiveSummary:(a.payload.fields.executiveSummary||'')+'\nCompact copy: photos are available in the online report.'},items:a.payload.items.map(item=>({...item,evidence:[]}))}},null,true),build,save,print,buildAudit:(a,loader)=>build(a,loader,true),saveAudit:(a,loader)=>save(a,loader,true)};
 })();
