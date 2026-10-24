@@ -4,16 +4,16 @@ const clean=v=>String(v??'').replace(/₱/g,'PHP ').replace(/[–—→]/g,' - '
 const label=s=>({action:'Needs action',noncompliant:'Non-compliant',compliant:'Compliant',na:'N/A',update:'Progress update',submitted:'CPAR submission',acknowledged:'Acknowledged',returned:'Needs additional action',verified:'Approved action / evidence',risk_assessed:'FSQA risk assessed'})[s]||clean(s);
 const when=d=>d?new Date(d).toLocaleString('en-PH',{timeZone:'Asia/Manila'}):'Not recorded';
 // Reduce phone photos before embedding them; leave PDF attachments intact.
-async function compactPhoto(asset){
+async function compactPhoto(asset,maxEdge=1200){
  if(!/^image\//.test(asset.mime)||typeof Image==='undefined')return asset;
  const url=URL.createObjectURL(new Blob([asset.bytes],{type:asset.mime}));
  try{const img=new Image();await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=reject;img.src=url});
- const ratio=Math.min(1,1200/Math.max(img.naturalWidth,img.naturalHeight)),canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(img.naturalWidth*ratio));canvas.height=Math.max(1,Math.round(img.naturalHeight*ratio));const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(img,0,0,canvas.width,canvas.height);
+ const ratio=Math.min(1,maxEdge/Math.max(img.naturalWidth,img.naturalHeight)),canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(img.naturalWidth*ratio));canvas.height=Math.max(1,Math.round(img.naturalHeight*ratio));const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(img,0,0,canvas.width,canvas.height);
  const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',.65));if(!blob||blob.size>=asset.bytes.byteLength)return asset;
  return {...asset,bytes:new Uint8Array(await blob.arrayBuffer()),mime:'image/jpeg'};
  }finally{URL.revokeObjectURL(url)}
 }
-async function build(a,loadProof,auditOnly=false,reviewAll=false){
+async function build(a,loadProof,auditOnly=false,reviewAll=false,compact=false){
  const closure=a.final_approval;
  if(!auditOnly&&!reviewAll&&!closure?.snapshot)throw Error('The auditor must stamp final approval before saving or printing the closed CPAR.');
  if(!window.jspdf?.jsPDF||!window.PDFLib)throw Error('The PDF tools are still loading. Please refresh and try again.');
@@ -43,12 +43,12 @@ async function build(a,loadProof,auditOnly=false,reviewAll=false){
 
  section('ORIGINAL AUDIT CHECKLIST');
  let auditSection='';
- for(let i=0;i<p.items.length;i++){const check=p.items[i];if(check.section&&check.section!==auditSection){auditSection=check.section;section(auditSection)}room(20);text((i+1)+'. '+check.label+' ['+label(check.result)+']',{bold:true,space:1});if(check.source_clauses?.length)entry('Source clauses',check.source_clauses.join(', '));if(check.risk_level)entry('FSQA risk level',check.risk_level.toUpperCase());if(check.remark)text('Finding / remarks: '+check.remark,{size:8,space:1,indent:4});if(check.owner||check.due)text('Responsible: '+(check.owner||'-')+' | Target: '+(check.due||'-'),{size:8,space:3,indent:4});for(let j=0;j<(check.evidence||[]).length;j++){const f=check.evidence[j],ref='Original audit checkpoint '+(i+1)+' / Proof '+(j+1);text('Original auditor proof: '+f.name,{size:8,space:1,indent:3});if(!assets.has(f.path)){const asset=await compactPhoto(await loadProof(original.id,{...f,original:true}));if(!asset?.bytes?.byteLength)throw Error('Unable to load original audit proof: '+f.name);assets.set(f.path,{...asset,file:f,ref,actor:original.auditor,coverage:original.audit_date});}}}
+ for(let i=0;i<p.items.length;i++){const check=p.items[i];if(check.section&&check.section!==auditSection){auditSection=check.section;section(auditSection)}room(20);text((i+1)+'. '+check.label+' ['+label(check.result)+']',{bold:true,space:1});if(check.source_clauses?.length)entry('Source clauses',check.source_clauses.join(', '));if(check.risk_level)entry('FSQA risk level',check.risk_level.toUpperCase());if(check.remark)text('Finding / remarks: '+check.remark,{size:8,space:1,indent:4});if(check.owner||check.due)text('Responsible: '+(check.owner||'-')+' | Target: '+(check.due||'-'),{size:8,space:3,indent:4});for(let j=0;j<(check.evidence||[]).length;j++){const f=check.evidence[j],ref='Original audit checkpoint '+(i+1)+' / Proof '+(j+1);text('Original auditor proof: '+f.name,{size:8,space:1,indent:3});if(!assets.has(f.path)){const asset=await compactPhoto(await loadProof(original.id,{...f,original:true}),compact?720:1200);if(!asset?.bytes?.byteLength)throw Error('Unable to load original audit proof: '+f.name);assets.set(f.path,{...asset,file:f,ref,actor:original.auditor,coverage:original.audit_date});}}}
  if(!auditOnly){
  section('2. CPAR SUBMISSIONS & AUDITOR DECISIONS');
  for(let i=0;i<items.length;i++){const c=items[i];room(25);text((i+1)+'. '+c.finding.label,{size:11,bold:true});entry('Original finding',c.finding.remark||label(c.finding.result));entry('Final action status',label(c.status));if(c.finding.fsqa||/FOOD SAFETY|FSQA/i.test(c.finding.section||''))entry('FSQA risk level',(c.risk_level||c.finding.risk_level||'Not assessed').toUpperCase());
   for(const u of c.updates||[]){room(19);text(label(u.kind)+' | '+u.actor+' | '+when(u.created_at),{size:9,bold:true,space:1});if(u.solution)entry('Solution',u.solution);if(u.coverage_start)entry('Date coverage',u.coverage_start+' to '+u.coverage_end+' | Target: '+(u.due_date||'-'));if(u.remarks)entry('Comments / remarks',u.remarks);
-   for(let j=0;j<(u.evidence||[]).length;j++){const f=u.evidence[j],ref='Action '+(i+1)+' / '+label(u.kind)+' / Proof '+(j+1);text('Proof: '+f.name+' ['+ref+']',{size:8,space:1,indent:3});if(!assets.has(f.path)){const asset=await compactPhoto(await loadProof(c.id,f));if(!asset?.bytes?.byteLength)throw Error('Unable to load proof: '+f.name);assets.set(f.path,{...asset,file:f,ref,actor:u.actor,coverage:u.coverage_start+' to '+u.coverage_end});}}
+   for(let j=0;j<(u.evidence||[]).length;j++){const f=u.evidence[j],ref='Action '+(i+1)+' / '+label(u.kind)+' / Proof '+(j+1);text('Proof: '+f.name+' ['+ref+']',{size:8,space:1,indent:3});if(!assets.has(f.path)){const asset=await compactPhoto(await loadProof(c.id,f),compact?720:1200);if(!asset?.bytes?.byteLength)throw Error('Unable to load proof: '+f.name);assets.set(f.path,{...asset,file:f,ref,actor:u.actor,coverage:u.coverage_start+' to '+u.coverage_end});}}
    y+=3;
   }
  }
@@ -58,8 +58,16 @@ async function build(a,loadProof,auditOnly=false,reviewAll=false){
  }
  if(assets.size)section('SUPPORTING PROOF INDEX');let proofNo=0;
  for(const [path,asset] of assets){proofNo++;entry('Evidence '+proofNo,asset.file.name+' | '+asset.ref);asset.number=proofNo;if(asset.mime==='application/pdf'||/\.pdf$/i.test(path))pdfProofs.push(asset);}
+ let tile=0,tileY=0;
  for(const asset of assets.values()){
   if(pdfProofs.includes(asset))continue;
+  if(compact){
+   if(tile%9===0){page();text('PHOTO EVIDENCE - COMPACT REVIEW',{size:13,bold:true});tileY=y;}
+   const col=tile%3,row=Math.floor((tile%9)/3),x=margin+col*61,top=tileY+row*76;
+   let bytes=asset.bytes,format=asset.mime==='image/png'?'PNG':'JPEG';if(asset.mime==='image/webp'){bytes=await webpToPng(bytes);format='PNG'}
+   try{const props=doc.getImageProperties(bytes),ratio=Math.min(50.8/props.width,50.8/props.height),w=props.width*ratio,h=props.height*ratio;doc.setDrawColor(220);doc.rect(x,top,50.8,50.8);doc.addImage(bytes,format,x+(50.8-w)/2,top+(50.8-h)/2,w,h,undefined,'FAST');doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(38,49,62);const caption=doc.splitTextToSize(clean('Evidence '+asset.number+' | '+asset.ref+' | '+asset.file.name),54).slice(0,5);doc.text(caption,x,top+55);tile++;}catch(e){throw Error('This proof could not be added to the PDF: '+asset.file.name)}
+   continue;
+  }
   page();text('SUPPORTING PROOF '+asset.number,{size:13,bold:true});entry('File',asset.file.name);entry('Reference',asset.ref);entry('Submitted by',asset.actor);entry('Coverage',asset.coverage);
   let bytes=asset.bytes,format=asset.mime==='image/png'?'PNG':'JPEG';
   if(asset.mime==='image/webp'){bytes=await webpToPng(bytes);format='PNG';}
@@ -72,7 +80,7 @@ async function build(a,loadProof,auditOnly=false,reviewAll=false){
  const filename=(auditOnly?'VARDA-Audit-Report-':reviewAll?'VARDA-Audit-CPAR-Review-':'VARDA-Closed-CPAR-')+clean(original.branch).replace(/[^A-Za-z0-9]+/g,'-')+'-'+original.audit_date+'.pdf';return {bytes,filename};
 }
 async function webpToPng(bytes){const url=URL.createObjectURL(new Blob([bytes],{type:'image/webp'}));try{const img=new Image();await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=reject;img.src=url});const canvas=document.createElement('canvas');canvas.width=img.naturalWidth;canvas.height=img.naturalHeight;canvas.getContext('2d').drawImage(img,0,0);return canvas.toDataURL('image/png')}finally{URL.revokeObjectURL(url)}}
-async function save(a,loader,auditOnly=false,reviewAll=false){const out=await build(a,loader,auditOnly,reviewAll),url=URL.createObjectURL(new Blob([out.bytes],{type:'application/pdf'})),link=document.createElement('a');link.href=url;link.download=out.filename;link.click();setTimeout(()=>URL.revokeObjectURL(url),60000)}
+async function save(a,loader,auditOnly=false,reviewAll=false,compact=false){const out=await build(a,loader,auditOnly,reviewAll,compact),url=URL.createObjectURL(new Blob([out.bytes],{type:'application/pdf'})),link=document.createElement('a');link.href=url;link.download=out.filename;link.click();setTimeout(()=>URL.revokeObjectURL(url),60000)}
 async function print(a,loader){const target=window.open('','_blank');if(!target)throw Error('Please allow the report window to open, then click Print again.');target.document.title='Preparing closed CPAR';target.document.body.textContent='Preparing the full closed CPAR report and proof…';try{const out=await build(a,loader),url=URL.createObjectURL(new Blob([out.bytes],{type:'application/pdf'}));target.addEventListener('load',()=>{try{target.focus();target.print()}catch(e){}},{once:true});target.location.href=url;setTimeout(()=>URL.revokeObjectURL(url),600000)}catch(e){target.close();throw e}}
-window.VardaCparExport={buildReview:(a,loader)=>build(a,loader,false,true),saveReview:(a,loader)=>save(a,loader,false,true),saveQuickAudit:(a)=>save({...a,payload:{...a.payload,fields:{...a.payload.fields,executiveSummary:(a.payload.fields.executiveSummary||'')+'\nCompact copy: photos are available in the online report.'},items:a.payload.items.map(item=>({...item,evidence:[]}))}},null,true),build,save,print,buildAudit:(a,loader)=>build(a,loader,true),saveAudit:(a,loader)=>save(a,loader,true)};
+window.VardaCparExport={buildReview:(a,loader)=>build(a,loader,false,true),saveReview:(a,loader)=>save(a,loader,false,true),buildQuickAudit:(a,loader)=>build(a,loader,false,true,true),saveQuickAudit:(a,loader)=>save(a,loader,false,true,true),build,save,print,buildAudit:(a,loader)=>build(a,loader,true),saveAudit:(a,loader)=>save(a,loader,true)};
 })();
