@@ -48,7 +48,7 @@ begin
   delete from app_private.retail_audit_login_limits where window_start<now()-interval '1 day';
   return jsonb_build_object('token',v_token,'name',trim(p_data->>'name'),'expires_at',extract(epoch from now()+interval '4 hours'));
  end if;
- if p_action in ('review_access','auditor_logout','assess_risk','acknowledged','returned','verified','finalize_audit') then
+ if p_action in ('review_access','auditor_logout','assess_risk','acknowledged','returned','verified','finalize_audit') or (p_action='submit_audit' and coalesce(p_data#>>'{payload,revision_of}','')<>'') then
   select auditor_name into v_reviewer from app_private.retail_audit_sessions where token_hash=encode(extensions.digest(convert_to(coalesce(p_token,''),'UTF8'),'sha256'),'hex') and expires_at>now();
   if v_reviewer is null then raise exception 'Please enter your auditor name and password' using errcode='28000';end if;
   if p_action='review_access' then return jsonb_build_object('name',v_reviewer);end if;
@@ -80,6 +80,7 @@ begin
    if exists(select 1 from public.retail_cpar_closures where audit_id=a.id) then raise exception 'Closed audits cannot be revised; start a new inspection';end if;
    if exists(select 1 from public.retail_audits where payload->>'revision_of'=a.id::text) then raise exception 'This audit already has a completed revision';end if;
    if coalesce(v->>'template_version','')<>'2026-10-expanded-fsqa-v1' then raise exception 'Complete the expanded audit template';end if;
+   v:=v||jsonb_build_object('edited_by',v_reviewer,'edited_at',clock_timestamp());
   end if;
   if coalesce(v->>'template_version','')<>'' then
    select value::jsonb->(p_data->>'audit_type') into template_counts from app_private.retail_audit_config where key='template_counts:'||(v->>'template_version');

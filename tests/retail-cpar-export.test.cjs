@@ -9,9 +9,16 @@ global.window={jspdf:require('../vendor/jspdf-3.0.4.min.js'),PDFLib:require('../
  const items=[{id:'qa-item',finding:original.payload.items[0],status:'verified',updates:[submission,{kind:'acknowledged',actor:'QA Reviewer',remarks:'Received and checked.',created_at:'2026-10-31T05:00:00Z'},{kind:'verified',actor:'QA Reviewer',remarks:'All records and evidence accepted.',created_at:'2026-10-31T06:00:00Z'}]},{id:'qa-item-2',finding:original.payload.items[1],status:'verified',updates:[{...submission,id:'qa-submit-2',evidence:[]},{kind:'verified',actor:'QA Reviewer',remarks:'Second action approved.',created_at:'2026-10-31T06:00:00Z'}]}];
  const closed={final_approval:{auditor_name:'QA Reviewer',approved_at:'2026-10-31T07:00:00Z',comments:'All corrective actions and submitted proof are satisfactory. Closed for this audit.',snapshot:{original_audit:original,cpar:items}}};
  await assert.rejects(()=>window.VardaCparExport.build({},async()=>{}),/stamp final approval/);
+ const before=JSON.stringify(original);let auditLoads=0;
+ const auditOutput=await window.VardaCparExport.buildAudit({...original,coverage:{complete:false}},async(item,file)=>{auditLoads++;assert.equal(item,original.id);assert.equal(file.original,true);return{bytes:new Uint8Array(png),mime:'image/png'}});
+ assert.match(auditOutput.filename,/VARDA-Audit-Report/);assert.equal(auditLoads,1);assert.equal(JSON.stringify(original),before);
+ const auditPdf=await window.PDFLib.PDFDocument.load(auditOutput.bytes);assert.ok(auditPdf.getPageCount()>1);
+ const auditOut=path.join(__dirname,'..','tmp','pdfs','submitted-audit-qa.pdf');fs.mkdirSync(path.dirname(auditOut),{recursive:true});fs.writeFileSync(auditOut,auditOutput.bytes);
+ await assert.rejects(()=>window.VardaCparExport.buildAudit(original,async()=>{throw Error('Audit photo unavailable')}),/Audit photo unavailable/);
+
  let loads=0;const output=await window.VardaCparExport.build(closed,async(item,file)=>{loads++;return{bytes:file.mime==='application/pdf'?pdfBytes:new Uint8Array(png),mime:file.mime}});
  assert.equal(loads,3);assert.match(output.filename,/Closed-CPAR/);const pdf=await window.PDFLib.PDFDocument.load(output.bytes);assert.ok(pdf.getPageCount()>=6);assert.equal(pdf.getPages().at(-1).getWidth(),595.28);
  const out=path.join(__dirname,'..','tmp','pdfs','closed-cpar-qa.pdf');fs.mkdirSync(path.dirname(out),{recursive:true});fs.writeFileSync(out,output.bytes);
  await assert.rejects(()=>window.VardaCparExport.build(closed,async()=>{throw Error('Proof unavailable')}),/Proof unavailable/);
- console.log('PASS: closed-only PDF export, original audit, all decisions, embedded image proof, merged two-page PDF proof and no silent missing attachments. Pages: '+pdf.getPageCount());
+ console.log('PASS: submitted audit PDF before approval with original photos, no mutation or missing photos; closed-only CPAR PDF export, original audit, all decisions, embedded image proof, merged two-page PDF proof and no silent missing attachments. Pages: '+pdf.getPageCount());
 })().catch(e=>{console.error(e);process.exitCode=1});

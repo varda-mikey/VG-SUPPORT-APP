@@ -4,14 +4,14 @@ async function main(){
  let overlay,active,confirmCalls=0;
  const buttons={};for(const key of ['[data-cancel]','[data-confirm]'])buttons[key]={focus(){active=this}};
  const document={get activeElement(){return active},createElement(){return {style:{},querySelector:key=>buttons[key],remove(){overlay=null}}},addEventListener(){},removeEventListener(){},body:{appendChild(el){overlay=el}}};
- const ctx={document,confirm(){confirmCalls++;return false},Promise};vm.createContext(ctx);
+ const ctx={document,confirm(){confirmCalls++;return false},Promise,esc:v=>v};vm.createContext(ctx);
  vm.runInContext(source.slice(source.indexOf('function confirmAuditSubmission'),source.indexOf('\nfunction message')),ctx);
  let pending=ctx.confirmAuditSubmission();assert.ok(overlay);buttons['[data-cancel]'].onclick();assert.equal(await pending,false);assert.equal(overlay,null);
  pending=ctx.confirmAuditSubmission();buttons['[data-confirm]'].onclick();assert.equal(await pending,true);assert.equal(confirmCalls,0);
  let requests=[],saved=0,allow=true,fail=false;
  const fields={submitSharedAudit:{},auditDate:{value:'2026-10-24'},auditorName:{value:'Test auditor'},auditorRole:{value:'Auditor'}};
  const payload={draft_id:'draft',items:[{s:0,i:0,result:'compliant'}]};
- const state={byId:id=>fields[id],guarded:async fn=>fn(),scoreData:()=>({answered:1,total:1}),branchName:()=> 'Test branch',flatItems:()=>[{s:0,i:0,label:'Test checkpoint',section:'Operations'}],selector:()=>({value:'compliant'}),saveDraft:()=>saved++,confirmAuditSubmission:async()=>allow,collect:()=>structuredClone(payload),submissionKeys:new Map(),auditType:'main',aliases:{},crypto:require('node:crypto').webcrypto,location:{},call:async(action,data)=>{requests.push({action,data});if(fail)throw Error('Connection lost');return {id:'saved-audit'}}};
+ const state={byId:id=>fields[id],guarded:async fn=>fn(),scoreData:()=>({answered:1,total:1}),branchName:()=> 'Test branch',flatItems:()=>[{s:0,i:0,label:'Test checkpoint',section:'Operations'}],selector:()=>({value:'compliant'}),saveDraft:()=>saved++,confirmAuditSubmission:async()=>allow,collect:()=>structuredClone(payload),submissionKeys:new Map(),auditType:'main',revisionOf:null,aliases:{},crypto:require('node:crypto').webcrypto,location:{},call:async(action,data)=>{requests.push({action,data});if(fail)throw Error('Connection lost');return {id:'saved-audit'}}};
  vm.createContext(state);const start=source.indexOf(" byId('submitSharedAudit').onclick=");vm.runInContext(source.slice(start,source.indexOf('\n return;',start)),state);
  const submit=()=>fields.submitSharedAudit.onclick({currentTarget:fields.submitSharedAudit});
  allow=false;await submit();assert.equal(requests.length,0);assert.equal(saved,1);
