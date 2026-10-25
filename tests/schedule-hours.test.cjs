@@ -1,0 +1,15 @@
+const {test}=require('node:test');
+const assert=require('node:assert/strict');
+const fs=require('node:fs'),vm=require('node:vm');
+const html=fs.readFileSync(require('node:path').join(__dirname,'../schedule-v2.html'),'utf8');
+const script=html.match(/<script>\s*(const DAYS[\s\S]*?)<\/script>/)[1];
+const context=vm.createContext({crypto:require('node:crypto'),Date,console});
+vm.runInContext(script.slice(0,script.indexOf("$('applyEditor').onclick"))+'\n'+script.slice(script.indexOf('function estimate('),script.indexOf('function renderPay('))+'\nthis.calc={parseDay,weekly,normalize,clock,timeMinutes,estimate};',context);
+const {parseDay,weekly,normalize,clock,timeMinutes,estimate}=context.calc;
+test('five compressed days deduct breaks and total exactly 48 hours',()=>{const day={segments:[{start:'08:00',end:'18:36'}],breakMinutes:60};assert.equal(parseDay(day).minutes,576);assert.equal(weekly({shifts:[day,day,day,day,day,{off:true},{off:true}]}).minutes,2880)});
+test('legacy regular shifts retain six days and deduct one hour',()=>{const s=normalize({shifts:Array(6).fill('8:00 AM - 5:00 PM')});assert.equal(s.shifts.length,7);assert.equal(weekly(s).minutes,2880);assert.equal(s.shifts[0],'8:00 AM - 5:00 PM')});
+test('overnight and split shifts calculate only worked time',()=>{assert.equal(parseDay({segments:[{start:'22:00',end:'07:00'}],breakMinutes:60}).minutes,480);assert.equal(parseDay({segments:[{start:'08:00',end:'12:00'},{start:'16:00',end:'20:00'}],breakMinutes:0}).minutes,480)});
+test('split shifts after midnight retain chronological order',()=>{assert.equal(parseDay({segments:[{start:'22:00',end:'02:00'},{start:'03:00',end:'07:00'}],breakMinutes:0}).minutes,480)});
+test('invalid and overlapping times cannot produce a payable estimate',()=>{for(const d of [{segments:[{start:'08:00',end:'08:00'}],breakMinutes:0},{segments:[{start:'08:00',end:'12:00'},{start:'11:00',end:'15:00'}],breakMinutes:0},{segments:[{start:'08:00',end:'09:00'}],breakMinutes:60},'99:00 - 12:00']){assert.ok(parseDay(d).error);assert.equal(estimate({shifts:[d]}, {amount:600,type:'daily',hours:8}),null)}});
+test('daily and hourly rates agree, missing rates remain unset',()=>{const s={shifts:Array(6).fill('8:00 AM - 5:00 PM')};assert.equal(estimate(s,{type:'daily',amount:600,hours:8}),3600);assert.equal(estimate(s,{type:'hourly',amount:75}),3600);assert.equal(estimate(s,{type:'daily',amount:'',hours:8}),null);assert.equal(estimate(s,{type:'daily',amount:600,hours:0}),null)});
+test('minute distribution completes indivisible weekly targets',()=>{for(const days of [5,6,7]){const total=2880,base=Math.floor(total/days),extra=total%days;let count=0;for(let i=0;i<days;i++){const n=base+(i<extra?1:0);count+=parseDay({segments:[{start:'08:00',end:clock(480+n+60)}],breakMinutes:60}).minutes}assert.equal(count,total)}});
