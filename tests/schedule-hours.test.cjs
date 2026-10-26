@@ -4,8 +4,8 @@ const fs=require('node:fs'),vm=require('node:vm');
 const html=fs.readFileSync(require('node:path').join(__dirname,'../schedule-v2.html'),'utf8');
 const script=html.match(/<script>\s*(const DAYS[\s\S]*?)<\/script>/)[1];
 const context=vm.createContext({crypto:require('node:crypto'),Date,console});
-vm.runInContext(script.slice(0,script.indexOf("$('applyEditor').onclick"))+'\n'+script.slice(script.indexOf('function estimate('),script.indexOf('function renderPay('))+'\nthis.calc={parseDay,weekly,normalize,clock,timeMinutes,estimate,dayAllocation,automaticDay,refreshAutomatic,readSnapshot,laborReportModel};',context);
-const {parseDay,weekly,normalize,clock,timeMinutes,estimate,dayAllocation,automaticDay,refreshAutomatic,readSnapshot,laborReportModel}=context.calc;
+vm.runInContext(script.slice(0,script.indexOf("$('applyEditor').onclick"))+'\n'+script.slice(script.indexOf('function estimate('),script.indexOf('function renderPay('))+'\nthis.calc={parseDay,weekly,normalize,clock,timeMinutes,estimate,dayAllocation,automaticDay,refreshAutomatic,readSnapshot,laborReportModel,rosterRows,mergeRoster};',context);
+const {parseDay,weekly,normalize,clock,timeMinutes,estimate,dayAllocation,automaticDay,refreshAutomatic,readSnapshot,laborReportModel,rosterRows,mergeRoster}=context.calc;
 test('five compressed days deduct breaks and total exactly 48 hours',()=>{const day={segments:[{start:'08:00',end:'18:36'}],breakMinutes:60};assert.equal(parseDay(day).minutes,576);assert.equal(weekly({shifts:[day,day,day,day,day,{off:true},{off:true}]}).minutes,2880)});
 test('legacy regular shifts retain six days and deduct one hour',()=>{const s=normalize({shifts:Array(6).fill('8:00 AM - 5:00 PM')});assert.equal(s.shifts.length,7);assert.equal(weekly(s).minutes,2880);assert.equal(s.shifts[0],'8:00 AM - 5:00 PM')});
 test('overnight and split shifts calculate only worked time',()=>{assert.equal(parseDay({segments:[{start:'22:00',end:'07:00'}],breakMinutes:60}).minutes,480);assert.equal(parseDay({segments:[{start:'08:00',end:'12:00'},{start:'16:00',end:'20:00'}],breakMinutes:0}).minutes,480)});
@@ -24,3 +24,28 @@ test('incomplete rates never appear as a complete zero-cost OPEX report',()=>{co
 test('OT labor is reconciled across daily and weekly report totals',()=>{const a=normalize({id:'a',shifts:Array(6).fill('08:00 - 17:00')});a.shifts[0]='08:00 - 18:00';const m=laborReportModel([a],{a:{amount:600,type:'daily',hours:8,otFactor:1.25}});assert.equal(m.labor,3693.75);assert.equal(m.daily.reduce((n,d)=>n+d.labor,0),m.labor);assert.equal(m.rows[0].otMinutes,60)});
 test('report rejects an open-day divisor smaller than the actual schedule',()=>{const a=normalize({id:'a',shifts:Array(6).fill('08:00 - 17:00')});const m=laborReportModel([a],{a:{amount:600,type:'daily',hours:8}},{openDays:5});assert.equal(m.ready,false);assert.equal(m.averageLabor,null);assert.equal(m.averageOpex,null);assert.match(m.errors.join(' '),/Open days/)});
 test('staff with no working shifts do not inflate sales targets or missing-rate counts',()=>{const a=normalize({id:'a',shifts:['08:00 - 17:00']}),b=normalize({id:'b',shifts:Array(7).fill('OFF')});const m=laborReportModel([a,b],{a:{amount:600,type:'daily',hours:8}});assert.equal(m.ready,true);assert.equal(m.staffCount,1);assert.equal(m.rosterCount,2);assert.equal(m.weeklyBreakEven,3500);assert.equal(m.weeklyProfit,5000);assert.equal(m.labor,600)});
+
+
+test('staff import handles names only, Excel columns, duplicates and branch filtering',()=>{
+ const p=rosterRows([['Name','Position','Branch'],['Ana','Cook','LPU Davao'],[' ANA ','Cashier','lpu davao'],['Other','Server','LPU Lima'],['Ben','','']], 'LPU Davao');
+ assert.equal(p.people.length,2);assert.equal(p.skipped,2);assert.equal(p.people[1].position,'Staff');
+ assert.equal(rosterRows([['Name Only']], 'Main').people[0].name,'Name Only');
+ assert.throws(()=>rosterRows([['Ana']],''),/Choose Branch/);
+ assert.throws(()=>rosterRows([['Name','Position'],['','Cook']], 'Main'),/Missing name/);
+});
+test('staff imports preserve existing staff identities, manual shifts and rates links',()=>{
+ const old=normalize({id:'existing',name:'Ana',position:'Cook',shifts:['08:00 - 18:00']});
+ const merged=mergeRoster([old],[{name:' ANA ',position:'Cashier'},{name:'Ben',position:'Server'}]);
+ assert.equal(merged.added,1);assert.equal(merged.skipped,1);assert.equal(merged.staff[0],old);
+ assert.equal(merged.staff[0].position,'Cook');assert.equal(merged.staff[0].shifts[0],'08:00 - 18:00');
+ assert.equal(weekly(merged.staff[1]).minutes,0);
+ assert.throws(()=>mergeRoster(Array.from({length:300},(_,i)=>({name:String(i)})),[{name:'New',position:'Staff'}]),/300/);
+});
+test('downloaded staff workbooks round-trip names, positions and branch as text',()=>{
+ const XLSX=require('../vendor/xlsx-0.18.5.min.js'),book=XLSX.utils.book_new();
+ const data=[['Name','Position','Branch'],['José Dela Cruz','Cook','LPU Davao'],['=Example','Server','LPU Davao']];
+ XLSX.utils.book_append_sheet(book,XLSX.utils.aoa_to_sheet(data),'Staff');
+ const bytes=XLSX.write(book,{type:'buffer',bookType:'xlsx'}),copy=XLSX.read(bytes,{type:'buffer'});
+ const rows=XLSX.utils.sheet_to_json(copy.Sheets.Staff,{header:1,defval:'',raw:false});
+ assert.deepEqual(rows,data);assert.equal(rosterRows(rows,'LPU Davao').people.length,2);assert.equal(copy.Sheets.Staff.A3.f,undefined);
+});
