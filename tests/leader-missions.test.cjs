@@ -1,0 +1,12 @@
+const {test}=require('node:test'),assert=require('node:assert/strict'),C=require('../leader-missions-calc.js');
+const now='2026-10-27T10:00:00Z',a={id:'a',name:'AJ',area:'South'},b={id:'b',name:'Bea',area:'Davao'};
+function row(id,status,due,submitted,leader=a,kind='daily'){return {id,status,due_at:due,submitted_at:submitted,leader,mission:{id:'m'+id,leader_id:leader.id,title:'Task '+id,kind}}}
+const list=[row('1','approved','2026-10-27T09:00:00Z','2026-10-27T08:00:00Z'),row('2','submitted','2026-10-27T09:00:00Z','2026-10-27T09:30:00Z'),row('3','pending','2026-10-27T09:00:00Z',null),row('4','pending','2026-10-28T09:00:00Z',null,b,'special'),row('5','returned','2026-10-27T09:00:00Z',null,b)];
+test('Manila date switches at UTC 16:00',()=>{assert.equal(C.day('2026-10-27T16:00:00Z'),'2026-10-28');assert.equal(C.day('2026-10-27T15:59:00Z'),'2026-10-27')});
+test('performance excludes upcoming, counts returned as incomplete and keeps approvals separate',()=>{assert.deepEqual(C.summarize(list,now),{assigned:5,due:4,completed:2,approved:1,overdue:2,waiting:1,stuck:0,upcoming:1,ontime:1,completion:50,onTimeRate:50})});
+test('future completed missions do not inflate rate',()=>{const r=C.summarize([row('f','submitted','2026-10-28T09:00:00Z',now)],now);assert.equal(r.completion,null);assert.equal(r.completed,0);assert.equal(r.upcoming,1)});
+test('no due missions returns no score',()=>{assert.equal(C.summarize([],now).completion,null);assert.equal(C.summarize([],now).onTimeRate,null)});
+test('person, area, type, status and search filters compose',()=>{assert.equal(C.filter(list,{leader:'a',status:'overdue',now}).length,1);assert.equal(C.filter(list,{area:'Davao',kind:'special',now}).length,1);assert.equal(C.filter(list,{search:'task 2',now}).length,1)});
+test('submitted and approved late tasks stay in review/done, not overdue',()=>{assert.equal(C.status(list[1],now),'submitted');assert.equal(C.status(list[0],now),'approved')});
+test('AJ 10 daily missions with 8 completed gives 80%',()=>{const r=Array.from({length:10},(_,i)=>row('aj'+i,i<8?'submitted':'pending','2026-10-27T09:00:00Z',i<8?'2026-10-27T08:00:00Z':null));r.push(row('special','pending','2026-10-30T09:00:00Z',null,a,'special'));const s=C.summarize(r,now);assert.equal(s.completion,80);assert.equal(s.upcoming,1);assert.equal(s.overdue,2);assert.match(C.analysis(s),/8 of 10/)});
+test('deleted/unmatched missions cannot leak orphan checks into reports',()=>{assert.equal(C.rows({missions:[],leaders:[a],checks:[{mission_id:'missing'}]}).length,0)});
