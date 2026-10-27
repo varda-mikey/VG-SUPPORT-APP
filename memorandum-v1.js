@@ -2,6 +2,7 @@
 (() => {
 const $=id=>document.getElementById(id), fields=['date','branch','to','from','subject','effectivity','body','signatory','position','fontSize','lineHeight'];
 const DRAFT='vg-memorandum-draft-v1', DB='vg-memorandum-v1';
+let paintFrame;
 let db, current={id:null,number:'',updatedAt:null,signature:''}, dirty=false, timer, busy=false;
 const today=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Manila',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
 function blank(){return {id:null,number:'',updatedAt:null,date:today(),branch:'All branches',to:'',from:'National Retail Head',subject:'',effectivity:'Immediately',body:'',signatory:'MIKEY EDMAR RIZABAL CASUNCAD',position:'National Retail Head',fontSize:'11',lineHeight:'1.4',signature:''};}
@@ -19,7 +20,10 @@ function render(){
  const font=['10','11','12'].includes(d.fontSize)?d.fontSize:'11', leading=['1.25','1.4','1.6'].includes(d.lineHeight)?d.lineHeight:'1.4';
  $('paper').style.fontSize=font+'pt';$('paper').style.lineHeight=leading;document.documentElement.style.setProperty('--memo-font',font+'pt');document.documentElement.style.setProperty('--memo-leading',leading);
  $('saveState').textContent=dirty?'Unsaved changes':d.number?'Saved memo':'New draft';
+ cancelAnimationFrame(paintFrame);paintFrame=requestAnimationFrame(()=>paintPage(data()).catch(e=>message(e.message,true)));
 }
+async function paintPage(d){const result=await window.VGMemoPage.paint($('memoCanvas'),d);if(result){$('fitStatus').textContent='One A4 page · '+result.fontPoints.toFixed(1)+' pt text'+(result.fitted?' · Automatically fitted':'');if(result.fontPoints<8)$('fitStatus').textContent+=' — Text is small; shorten the message for easier reading.';$('fitStatus').classList.toggle('fitWarning',result.fontPoints<8);}return result;}
+async function prepareOutput(){if(!await save())return false;cancelAnimationFrame(paintFrame);try{let result=await paintPage(data());if(!result)result=await paintPage(data());if(!result)throw new Error('Preview changed. Please try again.');return true;}catch(e){message(e.message,true);return false;}}
 function remember(){try{localStorage.setItem(DRAFT,JSON.stringify(data()));}catch{message('Draft could not be kept in this browser. Save the memo and download a backup.',true);}}
 function changed(){dirty=true;render();clearTimeout(timer);timer=setTimeout(remember,300);}
 function openDb(){return new Promise((resolve,reject)=>{const req=indexedDB.open(DB,1);req.onupgradeneeded=()=>{const d=req.result;const memos=d.createObjectStore('memos',{keyPath:'id'});memos.createIndex('number','number',{unique:true});d.createObjectStore('counters',{keyPath:'year'});};req.onerror=()=>reject(req.error);req.onsuccess=()=>resolve(req.result);req.onblocked=()=>message('Close other Memorandum Maker tabs, then reload.',true);});}
@@ -49,7 +53,8 @@ async function restore(file){if(!file)return;try{if(file.size>25000000)throw new
 $('memoForm').addEventListener('submit',e=>{e.preventDefault();save();});$('save').onclick=save;
 $('memoForm').addEventListener('input',e=>{if(fields.includes(e.target.id))changed();});
 $('new').onclick=()=>{if(canLeave()){setForm(blank());remember();message('New memo ready. Number will be assigned when saved.');window.scrollTo({top:0,behavior:'smooth'});}};
-$('print').onclick=async()=>{if(await save()){document.title=current.number+' - '+$('subject').value;window.print();}};
+$('print').onclick=async()=>{if(await prepareOutput()){document.title=current.number+' - '+$('subject').value;window.print();}};
+$('jpeg').onclick=async()=>{const button=$('jpeg');button.disabled=true;try{if(!await prepareOutput())return;const blob=await new Promise((resolve,reject)=>$('memoCanvas').toBlob(b=>b?resolve(b):reject(new Error('Image could not be created.')),'image/jpeg',.96));const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=current.number+'.jpg';a.click();setTimeout(()=>URL.revokeObjectURL(url),10000);message('Downloaded '+current.number+'.jpg — one A4 page.');}catch(e){message('JPEG export failed: '+e.message,true);}finally{button.disabled=false;}};
 $('focusPreview').onclick=()=>{document.body.classList.add('clean');$('exitPreview').hidden=false;window.scrollTo(0,0);};$('exitPreview').onclick=()=>{document.body.classList.remove('clean');$('exitPreview').hidden=true;};
 $('search').oninput=()=>list().catch(e=>message(e.message,true));$('backup').onclick=backup;$('restore').onchange=e=>restore(e.target.files[0]);
 $('signatureUpload').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{if(!['image/png','image/jpeg','image/webp'].includes(f.type)||f.size>2000000)throw new Error('Use a PNG, JPG or WebP image below 2 MB.');const img=new Image(),url=URL.createObjectURL(f);try{await new Promise((res,rej)=>{img.onload=res;img.onerror=rej;img.src=url;});const canvas=document.createElement('canvas'),scale=Math.min(1,800/img.naturalWidth,300/img.naturalHeight);canvas.width=Math.max(1,Math.round(img.naturalWidth*scale));canvas.height=Math.max(1,Math.round(img.naturalHeight*scale));canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);current.signature=canvas.toDataURL('image/png');changed();}finally{URL.revokeObjectURL(url);}}catch{message('Signature could not be loaded. Use a valid PNG, JPG or WebP image below 2 MB.',true);}finally{e.target.value='';}};
@@ -58,3 +63,4 @@ window.addEventListener('beforeunload',e=>{clearTimeout(timer);remember();if(dir
 window.addEventListener('focus',()=>{if(db)list().catch(()=>{});});
 (async()=>{setForm(blank());try{db=await openDb();const draft=JSON.parse(localStorage.getItem(DRAFT)||'null');if(draft&&fields.every(k=>typeof draft[k]==='string')&&(!draft.signature||/^data:image\/(png|jpeg|webp);base64,/.test(draft.signature))){setForm(draft);const stored=draft.id?await getMemo(draft.id):null;dirty=!stored||[...fields,'signature'].some(k=>stored[k]!==draft[k]);render();message(dirty?'Your previous draft has been restored. Click Save memo to keep changes in the register.':'Opened saved memo '+draft.number+'.');}await list();}catch(e){message('Browser storage is unavailable. Memos cannot be saved here. Please allow site storage and reload. '+e.message,true);}})();
 })();
+
