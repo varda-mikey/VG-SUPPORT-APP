@@ -117,6 +117,8 @@ button{
   </div>
 
   <div class="menuGrid">
+    <div class="card"><div class="icon">📄</div><h2>Memorandum Maker</h2><p>Create Varda memorandums with automatic memo numbers, saved records, signatures, and A4 print / PDF. Back up and restore your memo register.</p><button onclick="openSystem('memorandum','Memorandum Maker')">Open Memorandum Maker</button></div>
+
     <div class="card"><div class="icon">📊</div><h2>Branch Planner</h2><p>Compare recommended and actual staffing costs. Enter sales and pay for each branch, then preview or save a report.</p><button onclick="openSystem('branch-planner','Branch Planner')">Open Branch Planner</button></div>
     <div class="card"><div class="icon">🗓️💳</div><h2>Monthly Payables Reminder Creator</h2><p>Track suppliers, monthly bills, partial payments, balances and due dates. Create printable reports and back up your records.</p><button onclick="openSystem('monthly-payables','Monthly Payables Reminder Creator')">Open Monthly Payables</button></div>
     <div class="card" id="kapirataAdminTile"><div class="icon">🏀🏴‍☠️</div><h2>Kapirata / Pirates Admin</h2><p>Review challenge videos, receipt records, and available or claimed discount vouchers.</p><a class="adminTileLink" href="https://varda-mikey.github.io/Kapirata-Basketball-Challenge/admin.html" target="_blank" rel="noopener noreferrer">Open Pirates Admin</a></div>
@@ -203,7 +205,8 @@ function openSystem(key,title){
   const frame=document.getElementById('toolFrame');
   frame.removeAttribute('src');
   frame.removeAttribute('srcdoc');
-  if(key==='monthly-payables') frame.src='monthly-payables-v1.html?v=7';
+  if(key==='memorandum') frame.src='memorandum-v1.html?v=1';
+  else if(key==='monthly-payables') frame.src='monthly-payables-v1.html?v=7';
   else if(key==='pinggang-pinoy') frame.src='pinggang-pinoy-v1.html?v=4';
   else if(key==='branch-planner') frame.src='branch-planner-v1.html?v=5';
   else if(key==='supplier-order') frame.src='supplier-order-v1.html?v=4';
