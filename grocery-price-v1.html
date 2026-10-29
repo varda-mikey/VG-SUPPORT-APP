@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Grocery Price Tag Maker | Varda</title>
+<style>
+*{box-sizing:border-box}body{font-family:Arial,Helvetica,sans-serif;background:#f3f4f6;color:#18212f;margin:0}
+header{background:#121827;color:white;padding:18px 24px;border-bottom:5px solid #d6a127}
+header h1{margin:0;font-size:24px}header p{margin:5px 0 0;color:#d5d9e2;font-size:13px}
+main{max-width:1100px;margin:20px auto;padding:0 16px;display:grid;grid-template-columns:minmax(260px,360px) 1fr;gap:18px}
+.panel{background:white;border:1px solid #e5e7eb;border-radius:15px;padding:20px;box-shadow:0 3px 15px #0000000b}
+label{display:block;margin:16px 0 7px;font-weight:700;font-size:14px}input{width:100%;border:2px solid #d1d5db;border-radius:10px;padding:13px;font-size:18px}input:focus{outline:2px solid #d6a127}
+button{border:0;background:#ad1c25;color:white;border-radius:9px;padding:12px 16px;font-size:14px;font-weight:bold;cursor:pointer}
+button.secondary{background:#283449}button.light{background:#f3f4f6;color:#18212f;border:1px solid #ccd2db}
+.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:17px}
+.note{font-size:12px;color:#687180;line-height:1.5;margin-top:14px}
+.previewWrap{display:grid;place-items:center;min-height:270px;background:#e6e8eb;border-radius:12px;padding:22px}
+.tag{background:#fff;border:2px solid #141414;width:320px;height:205px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:13px 12px;overflow:hidden}
+.tagName{font-weight:900;text-transform:uppercase;font-size:23px;line-height:1.05;max-height:69px;overflow:hidden;overflow-wrap:anywhere}
+.tagPrice{font-weight:1000;color:#111;font-size:80px;line-height:1.02;white-space:nowrap;letter-spacing:-3px}
+.tagPrice .peso{font-size:.53em;vertical-align:16%;letter-spacing:0;margin-right:3px}
+.tagPrice.small{font-size:58px}
+h2{margin:0 0 15px;font-size:18px}
+@media(max-width:720px){main{grid-template-columns:1fr}.tag{width:290px;height:186px}.tagPrice{font-size:70px}}
+@page{size:A4 portrait;margin:10mm}
+@media print{header,.editor,.previewTitle,.note,.actions{display:none!important}body{background:#fff}main{display:block;margin:0;padding:0;max-width:none}.panel{padding:0;border:0;box-shadow:none}.previewWrap{background:white;display:block;padding:0;min-height:0}.tag{width:90mm;height:57mm;page-break-inside:avoid;border:1px solid black;margin:0}}
+</style></head><body>
+<header><h1>🏷️ Grocery Price Tag Maker</h1><p>Simple grocery tags • product name and price only</p></header>
+<main>
+<section class="panel editor"><h2>Enter Product Details</h2>
+<label for="product">Product Name</label><input id="product" maxlength="90" placeholder="e.g. Lucky Me Pancit Canton" autocomplete="off">
+<label for="price">Price (₱)</label><input id="price" type="number" step="0.01" min="0" placeholder="e.g. 18.00">
+<div class="actions"><button id="jpeg">Save as JPEG</button><button id="print" class="secondary">Print Price Tag</button><button id="clear" class="light">Clear</button></div>
+<p class="note">The preview updates automatically. Only the product name and large price appear on the printed tag. No calories, allergens, or other fields.</p>
+</section>
+<section class="panel"><h2 class="previewTitle">Live Preview</h2><div class="previewWrap">
+<div class="tag" id="tag"><div class="tagName" id="tagName">PRODUCT NAME</div><div class="tagPrice" id="tagPrice"><span class="peso">₱</span><span id="amount">0.00</span></div></div>
+</div></section></main>
+<script>
+const product=document.getElementById('product'),price=document.getElementById('price'),nameEl=document.getElementById('tagName'),amount=document.getElementById('amount'),priceEl=document.getElementById('tagPrice');
+function priceText(){const n=Number(price.value);return price.value!==''&&Number.isFinite(n)&&n>=0?n.toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2}):'0.00'}
+function render(){nameEl.textContent=product.value.trim()||'PRODUCT NAME';amount.textContent=priceText();priceEl.classList.toggle('small',priceText().length>7);nameEl.style.fontSize=product.value.length>45?'17px':product.value.length>26?'20px':'23px'}
+product.addEventListener('input',render);price.addEventListener('input',render);
+document.getElementById('clear').onclick=()=>{product.value='';price.value='';render();product.focus()};
+document.getElementById('print').onclick=()=>window.print();
+document.getElementById('jpeg').onclick=()=>{
+const canvas=document.createElement('canvas');canvas.width=1200;canvas.height=760;const ctx=canvas.getContext('2d');
+ctx.fillStyle='#fff';ctx.fillRect(0,0,1200,760);ctx.strokeStyle='#111';ctx.lineWidth=7;ctx.strokeRect(5,5,1190,750);
+const txt=(product.value.trim()||'PRODUCT NAME').toUpperCase();ctx.fillStyle='#111';ctx.textAlign='center';ctx.textBaseline='middle';
+let size=txt.length>45?58:txt.length>26?72:87;ctx.font='900 '+size+'px Arial';
+const words=txt.split(/\s+/);const lines=[];let line='';
+for(const word of words){const t=line?line+' '+word:word;if(ctx.measureText(t).width>1060&&line){lines.push(line);line=word}else line=t}if(line)lines.push(line);
+while(lines.length>3&&size>30){size-=5;ctx.font='900 '+size+'px Arial';lines.length=0;line='';for(const word of words){const t=line?line+' '+word:word;if(ctx.measureText(t).width>1080&&line){lines.push(line);line=word}else line=t}if(line)lines.push(line)}
+const shown=lines.slice(0,3);shown.forEach((l,i)=>ctx.fillText(l,600,180+(i-(shown.length-1)/2)*(size*1.12)));
+const full='₱'+priceText();let ps=300;ctx.font='900 '+ps+'px Arial';while(ctx.measureText(full).width>1080&&ps>105){ps-=8;ctx.font='900 '+ps+'px Arial'}ctx.fillText(full,600,515);
+canvas.toBlob(blob=>{if(!blob)return;const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='grocery-price-'+(product.value.trim().replace(/[^a-z0-9]+/gi,'-').slice(0,32)||'tag')+'.jpg';a.click();setTimeout(()=>URL.revokeObjectURL(url),1500)},'image/jpeg',.9)
+};
+render();
+</script></body></html>
