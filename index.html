@@ -84,6 +84,19 @@ button{
 @media(max-width:1180px){.menuGrid{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:800px){.menuGrid{grid-template-columns:1fr}}
 @media print{.toolTop,.mainHeader,.loginOverlay{display:none!important}.toolShell{display:block;height:auto}.toolFrame{height:100vh}}
+
+/* Categorized VG dashboard */
+.toolDirectory{margin:18px 0;background:#fff;padding:18px;border-radius:18px;border:1px solid #e5e7eb}
+.toolDirectory h2{margin:0 0 9px;font-size:18px}
+.toolDirectory input{width:100%;padding:13px;border-radius:11px;border:1px solid #cbd5e1;font-size:14px}
+.categoryPills{display:flex;gap:8px;overflow-x:auto;padding:12px 0 4px}
+.categoryPills button{flex-shrink:0;background:#eef0f5;color:#273244;font-size:12px}
+.categoryPills button.selected{background:#111827;color:#fff}
+.categorySection{margin-top:26px}
+.categorySection h2{font-size:21px;margin:0 0 6px}
+.categorySection>p{margin:0 0 14px;color:#667085;font-size:13px}
+.categorySection .menuGrid{margin-top:0}
+@media(max-width:800px){.toolDirectory{padding:13px}.categorySection{margin-top:20px}}
 </style>
 </head>
 <body class="locked">
@@ -117,6 +130,7 @@ button{
   </div>
 
   <div class="menuGrid">
+    <div class="card"><div class="icon">🥙</div><h2>Supremo Ordering System</h2><p>Separate supplier-cost ordering for pita bread, shawarma ground meat, sauces, cumin and powders. Search 143 choices, edit costs, calculate orders, print and export CSV.</p><a class="adminTileLink" href="supremo-ordering.html">Open Supremo Ordering</a></div>
     <div class="card"><div class="icon">💰</div><h2>CAPEX &amp; OPEX Ledger</h2><p>Monitor capital, approved budgets, cash releases, spending, receipts and branch financial status. Export JPEG and Excel-compatible reports.</p><a class="adminTileLink" href="capex-opex-ledger.html">Open Finance Ledger</a></div>
 
     <div class="card"><div class="icon">📄</div><h2>Memorandum Maker</h2><p>Create Varda memorandums with automatic memo numbers, saved records, signatures, and A4 print / PDF. Back up and restore your memo register.</p><button onclick="openSystem('memorandum','Memorandum Maker')">Open Memorandum Maker</button></div>
@@ -259,6 +273,42 @@ function openChristmasPriceTag(){
   frame.removeAttribute('srcdoc');
   frame.src='christmas-price-v1.html?v=2';
 }
+</script>
+
+<script>
+(function(){
+const grid=document.querySelector('.main > .menuGrid');
+if(!grid)return;
+const defs=[
+["Financial & Budget","Capital, OPEX, cash, staffing costs, procurement and financial planning."],
+["Ordering & Inventory","Supplier orders, product costs and purchase requests."],
+["Billing & Collection","Utility billing, statements, receivables and payables."],
+["Graphics & Display","Price tags, visual materials, certificates, IDs and TV screens."],
+["Marketing & Promotions","Campaign materials, vouchers, challenges and promotions."],
+["Operations & Food Safety","Schedules, menus, food safety, catering, audit and team tasks."],
+["Human Resources & Administration","Policies, appraisal, memos and organizational documents."]
+];
+const mapping={
+"CAPEX & OPEX Ledger":0,"Branch Planner":0,"Budget, Purchase & Reimbursement":0,
+"Supplier Ordering":1,"Supremo Ordering System":1,"Purchase Request / Order":1,
+"Monthly Payables Reminder Creator":2,"Utility Billing & SOA":2,"Business Document Suite":2,
+"Grocery Price Tag Maker":3,"Price Tag Maker":3,"Pinggang Pinoy Tag Maker":3,"Christmas Price Tag Maker":3,"Athlete Price Tag":3,"FSQA Tag Maker":3,"Varda ID Maker":3,"Card Maker":3,"C.E.R.A.P. Certificate Maker":3,"Varda TV System":3,
+"Kapirata / Pirates Admin":4,"Voucher Maker":4,"Welcome Employee Poster Creator":4,
+"Leader Daily Output Checklist":5,"Generals & Missions":5,"Staff Schedule Maker":5,"Weekly Menu Cycle":5,"Catering Form Maker":5,"VARDA GROUP RETAIL AUDIT":5,"Varda Group Catering Form":5,
+"Memorandum Maker":6,"Organizational Chart Maker":6,"Varda Policy & V-Points":6,"Employee Appraisal":6
+};
+const cards=[...grid.children].filter(el=>el.classList.contains("card"));
+const directory=document.createElement("div");directory.className="toolDirectory";
+directory.innerHTML='<h2>Find VG Support Tools</h2><input type="search" id="toolSearch" placeholder="Search module names or functions…" aria-label="Search VG tools"><div class="categoryPills" id="toolPills"></div>';
+grid.parentNode.insertBefore(directory,grid);
+const host=document.createElement("div");host.id="categoryHost";grid.parentNode.insertBefore(host,grid);grid.remove();
+const sections=defs.map(([name,desc],i)=>{const sec=document.createElement("section");sec.className="categorySection";sec.dataset.category=i;sec.innerHTML='<h2></h2><p></p><div class="menuGrid"></div>';sec.querySelector("h2").textContent=name;sec.querySelector("p").textContent=desc;host.appendChild(sec);return sec});
+cards.forEach(card=>{const title=card.querySelector("h2")?.textContent.trim()||"";const category=mapping[title]??5;card.dataset.category=category;card.dataset.search=card.textContent.toLowerCase();sections[category].querySelector(".menuGrid").appendChild(card)});
+let active="all";const pills=document.getElementById("toolPills");
+[["all","All tools"],...defs.map(([name],i)=>[String(i),name])].forEach(([id,name])=>{const b=document.createElement("button");b.textContent=name;b.dataset.filter=id;b.addEventListener("click",()=>{active=id;filter()});pills.appendChild(b)});
+function filter(){const term=document.getElementById("toolSearch").value.toLowerCase().trim();cards.forEach(c=>{c.hidden=!!(term&&!c.dataset.search.includes(term))||(active!=="all"&&c.dataset.category!==active)});sections.forEach((sec,i)=>{sec.hidden=(active!=="all"&&active!==String(i))||![...sec.querySelectorAll(".card")].some(c=>!c.hidden)});pills.querySelectorAll("button").forEach(b=>b.classList.toggle("selected",b.dataset.filter===active))}
+document.getElementById("toolSearch").addEventListener("input",filter);filter();
+})();
 </script>
 </body>
 </html>
