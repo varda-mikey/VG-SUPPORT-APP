@@ -73,8 +73,8 @@ function wireTasks(isHead){document.querySelectorAll((isHead?'#tasks':'#myTasks'
  }
  picker.addEventListener('click',()=>{card.querySelector('.result').textContent='Choose a photo or video from your device.';});
  picker.onchange=()=>{selectedPreview();card.querySelector('.result').textContent=picker.files.length?'Photo selected — tap Upload selected files.':'No photo selected. Choose a file to begin.';};upload.disabled=true;
- card.querySelector('.save').onclick=()=>perform(card,async()=>{await api('entry_save',{day:workDay,leader_id:isHead?selected:undefined,task_id:tid,status:select.value,note:card.querySelector('.note').value});await load(true);say('Checklist saved successfully.')});
- upload.onclick=()=>perform(card,async()=>{
+ card.querySelector('.save').onclick=()=>perform(card,async()=>{if(picker.files.length)await uploadSelected();await api('entry_save',{day:workDay,leader_id:isHead?selected:undefined,task_id:tid,status:select.value,note:card.querySelector('.note').value});await load(true);say('Checklist saved successfully.')});
+ async function uploadSelected(){
   const files=[...picker.files];if(!files.length)throw Error('Select a photo or video first.');
   const leaderId=isHead?selected:undefined;let count=0;
   for(let original of files){
@@ -106,7 +106,8 @@ function wireTasks(isHead){document.querySelectorAll((isHead?'#tasks':'#myTasks'
   if(!visible)throw Error('Upload completed but photo did not appear in saved evidence. Please retry or report this message.');
   if(isHead)renderHead();else renderLeader();
   say('✓ '+count+' attachment(s) saved and visible on both dashboards.');
- });
+ }
+ upload.onclick=()=>perform(card,uploadSelected);
 })}
 
 async function perform(card,fn){let buttons=card.querySelectorAll('button'),msg=card.querySelector('.result');buttons.forEach(b=>b.disabled=true);msg.textContent='Processing…';try{await fn();msg.textContent='✓ Completed';msg.style.color='#146b3a'}catch(e){msg.textContent='⚠ Upload/save failed: '+e.message;msg.style.color='#a02020';const global=$(mode==='head'?'message':'myMessage');if(global)global.textContent=msg.textContent;}finally{buttons.forEach(b=>b.disabled=false)}}
