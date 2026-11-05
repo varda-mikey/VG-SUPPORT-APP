@@ -92,12 +92,39 @@ button.main,.person.selected{background:var(--brand);color:white}
  #leaderView .taskEvidence .savedGallery{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media print{header,.leaderSteps,#leaderProgress{display:none!important}}
+
+/* Approved daily report popup — phone-friendly, no changes to existing PDF print */
+.approvedBackdrop{position:fixed;inset:0;background:rgba(22,22,28,.67);z-index:9999;display:flex;justify-content:center;align-items:center;padding:12px}
+.approvedDialog{background:white;width:min(620px,100%);max-height:94dvh;overflow:auto;border-radius:20px;padding:20px;box-shadow:0 20px 60px #0004}
+.approvedDialog h2{margin:8px 0;font-size:23px;color:#74282e}
+.approvedDialog p{line-height:1.55;color:#5a606a}
+.approvedStatus{display:inline-flex;align-items:center;padding:8px 12px;border-radius:20px;background:#dff4e7;color:#17663c;font-weight:800}
+.approvedActions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:15px 0}
+.approvedActions button{min-height:51px;font-size:15px}
+.approvedActions .download{background:#17683f;color:#fff}
+.approvedPreview{display:block;width:100%;max-height:48vh;object-fit:contain;background:#f5f5f7;border:1px solid #e6e6e9;border-radius:10px}
+.approvedClose{width:100%;background:#f3f3f6;color:#363940;min-height:48px}
+.approvedReportAgain{width:100%;margin:10px 0 0;background:#e7f3ec;color:#17683f;border:1px solid #d0e5d9}
+@media(max-width:440px){.approvedDialog{padding:16px;border-radius:16px}.approvedActions{grid-template-columns:1fr}.approvedDialog h2{font-size:21px}}
+@media print{.approvedBackdrop,.approvedReportAgain{display:none!important}}
 </style></head><body><header><small>NATIONAL RETAIL HEAD • VARDA GROUP</small><h1>LEADER TASK CHECKLIST</h1><div class="headnav"><a href="index.html">← VG Support Home</a><span id="sessionTitle">Shared daily output monitoring</span><button id="signout" class="hide">Sign out</button></div></header>
 <main><section id="headLogin" class="login panel"><h2>National Retail Head</h2><p class="muted">Sign in with your existing Generals & Missions / Retail Audit head password.</p><form id="loginForm"><label>Head password <input id="password" type="password" autocomplete="current-password" required style="width:100%;display:block;margin:8px 0"></label><button class="main" type="submit">Open checking board</button></form><p id="loginError" class="pending"></p></section>
 <section id="headView" class="hide"><div class="toolbar"><div class="actions"><label>Evaluation date<input id="day" type="date"></label><label>Region<select id="region"><option value="">All regions</option></select></label><button id="refresh">↻ Refresh</button><span class="syncBadge" id="syncBadge">● Live sync</span></div><div class="actions"><button id="manageToggle">⚙ Edit Task List</button><button id="individualReport" class="main">Print Leader A4</button><button id="jpegLeaderReport" class="main" title="Download one-page JPEG report with photos and comments">📷 Save 1-Page JPEG</button><button id="allReport">All Leaders Daily Summary A4</button><button id="monthReport">Monthly Summary A4</button></div></div>
 <div class="layout"><aside class="panel"><div class="heading"><h2>Leaders</h2><button id="addLeader" class="main">+ Add</button></div><p class="muted">Select a leader to review outputs. Copy their private personal link for phone submissions.</p><div class="people" id="people"></div><button id="editLeader" style="margin-top:10px">Edit selected leader</button><button id="rotate" style="margin-top:10px">Reset personal link</button></aside><section class="panel"><div class="heading"><div><h2 id="leaderName">Select leader</h2><div id="leaderMeta" class="muted"></div></div><button id="copyLink" class="main">Copy personal link</button></div><div id="stats" class="kpis"></div><div id="tasks" class="tasks"><p class="muted">Select a leader.</p></div><div id="historyPanel" class="history"><div class="heading"><h3>Saved reports by date</h3><button id="historyRefresh">Load History</button></div><div class="archiveControls"><label>Year<select id="archiveYear"></select></label><label>Month<select id="archiveMonth"></select></label><button id="archiveToday">Today</button><button id="deleteReportDay" class="danger">Delete Selected Day</button></div><p class="muted">Saved automatically by Year → Month → Date. Select any date to view its report and attached proof.</p><div id="archiveSummary" class="archiveSummary"></div><div id="historyDays" class="calendarDays"></div><p class="muted">Green = submitted, yellow = partial, red = no daily report, faded = future. Deletion is permanent and reserved for the National Retail Head.</p></div><p id="message" role="status"></p></section></div>
 <section id="manage" class="panel manage hide"><div class="heading"><h2>Customize selected leader's checklist</h2><button id="addTask" class="main">+ Add output task</button></div><p class="muted">Add, edit or remove duties for the selected leader only. Other leaders' forms do not change. Earlier submissions stay in their records.</p><div id="taskEditor"></div><button id="closeManage">Done editing</button></section></section>
-<section id="leaderView" class="hide"><div class="panel leaderBanner"><small>MY PERSONAL DAILY DASHBOARD</small><h2 id="myName"></h2><p class="muted" id="myMeta"></p><div class="toolbar"><label>Work date<input id="myDay" type="date"></label><button id="myToday">Today / New Daily Checklist</button><button id="myRefresh">↻ Refresh</button></div><div class="leaderSteps"><span>① Piliin ang task status</span><span>② Lagay ng picture at remarks</span><span>③ Pindutin ang green SUBMIT button</span></div><p class="hint">📱 Simple lang: Piliin ang <b>✓ Done — Submit</b> kung natapos ang task, maglagay ng picture ng actual work, at pindutin ang <b>SUBMIT & SAVE</b>. Automatic na makikita ng Head ang report. Maaaring mag-upload ng higit sa isang photo.</p><div id="leaderProgress" aria-live="polite"></div><p class="syncBadge" id="leaderSync">● Live sync</p></div><div id="myTasks" class="tasks"></div><p id="myMessage" role="status"></p></section>
+<section id="leaderView" class="hide"><div class="panel leaderBanner"><small>MY PERSONAL DAILY DASHBOARD</small><h2 id="myName"></h2><p class="muted" id="myMeta"></p><div class="toolbar"><label>Work date<input id="myDay" type="date"></label><button id="myToday">Today / New Daily Checklist</button><button id="myRefresh">↻ Refresh</button></div><div class="leaderSteps"><span>① Piliin ang task status</span><span>② Lagay ng picture at remarks</span><span>③ Pindutin ang green SUBMIT button</span></div><p class="hint">📱 Simple lang: Piliin ang <b>✓ Done — Submit</b> kung natapos ang task, maglagay ng picture ng actual work, at pindutin ang <b>SUBMIT & SAVE</b>. Automatic na makikita ng Head ang report. Maaaring mag-upload ng higit sa isang photo.</p><div id="leaderProgress" aria-live="polite"></div><button type="button" id="approvedOpenAgain" class="approvedReportAgain hide">✓ View 100% Completed Daily Report</button><p class="syncBadge" id="leaderSync">● Live sync</p></div><div id="myTasks" class="tasks"></div><p id="myMessage" role="status"></p></section>
+<div id="approvedPopup" class="approvedBackdrop hide" role="presentation">
+  <div class="approvedDialog" role="dialog" aria-modal="true" aria-labelledby="approvedTitle">
+    <div class="approvedStatus">✓ HEAD REVIEW COMPLETE · 100%</div>
+    <h2 id="approvedTitle">Your daily report is complete!</h2>
+    <p id="approvedDetails">Your Head has marked all tasks complete. View or download your one-page report with all photos and comments.</p>
+    <div class="approvedActions"><button type="button" id="approvedView" class="main">👁 View JPEG Report</button><button type="button" id="approvedDownload" class="download">⬇ Download JPEG</button></div>
+    <p id="approvedMessage" role="status" class="muted"></p>
+    <img id="approvedImage" class="approvedPreview hide" alt="One-page daily output report preview">
+    <button type="button" id="approvedClose" class="approvedClose">Close · Continue Editing Checklist</button>
+    <p class="muted">You can still edit and submit today's tasks. If the Head changes a grade, your report status will update.</p>
+  </div>
+</div>
 <section id="report" class="report"></section><footer class="screenOnly">Shared over Supabase • Private file storage • Leader link functions as a password: share only with the assigned person. Uploads: photos are resized automatically; video compression depends on browser support and large videos may need trimming. The checking board refreshes every 12 seconds.</footer></main>
 <script>
 (()=>{'use strict';
@@ -247,7 +274,7 @@ $('deleteReportDay').onclick=async()=>{
  if(prompt('Type DELETE to confirm permanent deletion:')!=='DELETE')return say('Deletion cancelled.');
  try{const result=await api('report_delete_day',{leader_id:selected,day});await load(true);await renderHistory();say('Deleted '+result.deleted+' saved task records for '+leader.name+' on '+day+'.')}catch(e){say('Deletion failed: '+e.message)}
 };
-function renderLeader(){let l=data.leaders[0];if(!l){$('myName').textContent='Access unavailable';return;}$('myName').textContent=l.name;$('myMeta').textContent=l.position+' • '+l.area+' • '+$('myDay').value;const tasks=leaderTasks(l.id),done=tasks.filter(t=>entry(l.id,t.id,taskDay(t,$('myDay').value)).leader_status==='submitted').length;$('leaderProgress').innerHTML='<b>'+done+' of '+tasks.length+' tasks submitted</b> · '+(done===tasks.length?'✓ Completed for selected date':'Tap each task below, attach proof, then submit.');$('myTasks').innerHTML=tasks.map((t,i)=>{const v=entry(l.id,t.id,taskDay(t,$('myDay').value));return taskCard(t,v,false).replace('<article class="task"','<article class="task"').replace('<div class="taskHeading"><h3>','<div class="taskHeading"><h3>'+(i+1)+'. ').replace('</h3></div><div class="taskContent">','</h3></div><div class="taskState '+enc(v.leader_status||'pending')+'">'+enc(v.leader_status==='submitted'?'✓ Submitted':v.leader_status==='working'?'In progress':'Not yet submitted')+'</div><div class="taskContent">')}).join('')||'<p>No active tasks.</p>';wireTasks(false)}
+function renderLeader(){let l=data.leaders[0];if(!l){$('myName').textContent='Access unavailable';return;}$('myName').textContent=l.name;$('myMeta').textContent=l.position+' • '+l.area+' • '+$('myDay').value;const tasks=leaderTasks(l.id),done=tasks.filter(t=>entry(l.id,t.id,taskDay(t,$('myDay').value)).leader_status==='submitted').length;$('leaderProgress').innerHTML='<b>'+done+' of '+tasks.length+' tasks submitted</b> · '+(done===tasks.length?'✓ Completed for selected date':'Tap each task below, attach proof, then submit.');$('myTasks').innerHTML=tasks.map((t,i)=>{const v=entry(l.id,t.id,taskDay(t,$('myDay').value));return taskCard(t,v,false).replace('<article class="task"','<article class="task"').replace('<div class="taskHeading"><h3>','<div class="taskHeading"><h3>'+(i+1)+'. ').replace('</h3></div><div class="taskContent">','</h3></div><div class="taskState '+enc(v.leader_status||'pending')+'">'+enc(v.leader_status==='submitted'?'✓ Submitted':v.leader_status==='working'?'In progress':'Not yet submitted')+'</div><div class="taskContent">')}).join('')||'<p>No active tasks.</p>';wireTasks(false);approvalState()}
 $('refresh').onclick=()=>load();$('myRefresh').onclick=()=>load();$('day').onchange=()=>load();$('myDay').onchange=()=>load();$('myToday').onclick=()=>{if(hasUnsavedChanges()&&!confirm('Discard unuploaded files and open today?'))return;$('myDay').value=today();load()};$('region').onchange=()=>renderHead();
 $('copyLink').onclick=async()=>{let l=data.leaders.find(x=>x.id===selected);if(!l)return;try{await navigator.clipboard.writeText(link(l));say('Personal link copied for '+l.name)}catch{prompt('Copy this link:',link(l))}};
 $('addLeader').onclick=async()=>{let name=prompt('Leader name:');if(!name?.trim())return;let position=prompt('Position:')||'',area=prompt('Region or branch:')||'';try{let d=await api('leader_save',{name:name.trim(),position,area});selected=d.leader.id;await load(true);say('Leader created. Copy their personal link below their name.')}catch(e){say(e.message)}};
@@ -308,12 +335,8 @@ function canvasPhoto(ctx,img,x,y,w,h){
  const ratio=Math.min(w/img.width,h/img.height),rw=img.width*ratio,rh=img.height*ratio;
  ctx.drawImage(img,x+(w-rw)/2,y+(h-rh)/2,rw,rh);
 }
-async function saveLeaderJpeg(){
- const button=$('jpegLeaderReport'),l=data.leaders.find(x=>x.id===selected),day=$('day').value;
- if(!l){say('Select a leader before exporting JPEG.');return}
+async function buildLeaderJpegBlob(l,day){
  const records=leaderTasks(l.id).map(task=>({task,record:entry(l.id,task.id,taskDay(task,day))}));
- button.disabled=true;button.textContent='Preparing JPEG…';say('Preparing ALL photos and complete remarks for the one-page JPEG…');
- try{
   // Gather every image for every task, not merely the first photo.
   const imageFiles=records.map(x=>data.files.filter(f=>f.entry_id===x.record.id&&f.mime?.startsWith('image/')));
   const loaded=await Promise.all(imageFiles.flat().map(async file=>({file,img:await jpegPhoto(file.url)})));
@@ -406,13 +429,89 @@ async function saveLeaderJpeg(){
   c.textAlign='right';c.fillText('All '+imageFiles.reduce((n,fs)=>n+fs.length,0)+' photos included  •  Original evidence saved online',W-margin,1715);c.textAlign='left';
   const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',.9));
   if(!blob)throw Error('Could not generate JPEG');
-  const url=URL.createObjectURL(blob),a=document.createElement('a');
-  a.href=url;a.download='Varda_Leader_'+l.name.replace(/[^a-z0-9]+/gi,'_').slice(0,50)+'_'+day+'_Complete.jpg';
-  document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),15000);
-  say('✓ One-page JPEG generated with '+imageFiles.reduce((n,fs)=>n+fs.length,0)+' photo slots and full comments.'+(scale<.55?' Many items required smaller text to fit one page.':''));
- }catch(e){say('JPEG export failed: '+e.message)}
+  return blob;
+}
+
+function leaderJpegFilename(l,day){return 'Varda_Leader_'+l.name.replace(/[^a-z0-9]+/gi,'_').slice(0,50)+'_'+day+'_Complete.jpg'}
+function downloadLeaderBlob(blob,l,day){
+ const url=URL.createObjectURL(blob),a=document.createElement('a');
+ a.href=url;a.download=leaderJpegFilename(l,day);
+ document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);
+}
+async function saveLeaderJpeg(){
+ const button=$('jpegLeaderReport'),l=data.leaders.find(x=>x.id===selected),day=$('day').value;
+ if(!l){say('Select a leader before exporting JPEG.');return}
+ button.disabled=true;button.textContent='Preparing JPEG…';say('Preparing all photos and comments for your JPEG…');
+ try{const blob=await buildLeaderJpegBlob(l,day);downloadLeaderBlob(blob,l,day);say('✓ One-page JPEG downloaded with full comments and all photos.')}
+ catch(e){say('JPEG export failed: '+e.message)}
  finally{button.disabled=false;button.textContent='📷 Save 1-Page JPEG'}
 }
+// Approval is date-specific. Do not automatically reopen on each 12-second sync.
+let approvedPreviewUrl='',approvedBlob=null,approvedBlobKey='',approvedSessionKey='';
+function headApprovedForDay(leader,day){
+ const tasks=leaderTasks(leader.id);
+ return day===today()&&tasks.length>0&&tasks.every(t=>{
+  const v=entry(leader.id,t.id,taskDay(t,day));
+  return v.head_status==='complete';
+ });
+}
+function hideApprovedPopup(){
+ $('approvedPopup').classList.add('hide');
+ $('approvedImage').classList.add('hide');
+ if(approvedPreviewUrl){URL.revokeObjectURL(approvedPreviewUrl);approvedPreviewUrl=''}
+}
+function approvalState(){
+ if(mode!=='leader')return;
+ const l=data.leaders[0],day=$('myDay').value;
+ if(!l)return;
+ const approved=headApprovedForDay(l,day),key='vg-approval-shown-'+l.id+'-'+day;
+ $('approvedOpenAgain').classList.toggle('hide',!approved);
+ if(!approved){
+  if(!$('approvedPopup').classList.contains('hide'))hideApprovedPopup();
+  approvedBlob=null;approvedBlobKey='';
+  return;
+ }
+ if(!sessionStorage.getItem(key)){
+  sessionStorage.setItem(key,'1');
+  openApprovedPopup();
+ }
+}
+function openApprovedPopup(){
+ const l=data.leaders[0],day=$('myDay').value;
+ if(!l||!headApprovedForDay(l,day))return;
+ $('approvedDetails').textContent=l.name+' · '+day+' · All '+leaderTasks(l.id).length+' tasks marked Complete by your Head. Your JPEG includes photos and remarks.';
+ $('approvedMessage').textContent='Choose View to preview or Download to save the report to your phone.';
+ $('approvedPopup').classList.remove('hide');
+}
+async function approvedReportBlob(){
+ const l=data.leaders[0],day=$('myDay').value;
+ if(!l||!headApprovedForDay(l,day))throw Error('This day is not currently 100% approved.');
+ const key=l.id+':'+day+':'+data.entries.filter(e=>e.leader_id===l.id).map(e=>e.updated_at||'').join(',')+':'+data.files.length;
+ if(approvedBlob&&approvedBlobKey===key)return approvedBlob;
+ const b=await buildLeaderJpegBlob(l,day);approvedBlob=b;approvedBlobKey=key;return b;
+}
+async function approvedAction(kind){
+ const buttons=[$('approvedView'),$('approvedDownload')];buttons.forEach(b=>b.disabled=true);
+ $('approvedMessage').textContent='Preparing your complete JPEG with all uploaded photos…';
+ try{
+  const blob=await approvedReportBlob();
+  if(kind==='download'){
+   downloadLeaderBlob(blob,data.leaders[0],$('myDay').value);
+   $('approvedMessage').textContent='✓ JPEG downloaded to your device.';
+  }else{
+   if(approvedPreviewUrl)URL.revokeObjectURL(approvedPreviewUrl);
+   approvedPreviewUrl=URL.createObjectURL(blob);
+   $('approvedImage').src=approvedPreviewUrl;
+   $('approvedImage').classList.remove('hide');
+   $('approvedMessage').textContent='✓ Your full one-page summary is ready. Use Download JPEG to save.';
+  }
+ }catch(e){$('approvedMessage').textContent='Could not prepare report: '+e.message}
+ finally{buttons.forEach(b=>b.disabled=false)}
+}
+$('approvedClose').onclick=hideApprovedPopup;
+$('approvedView').onclick=()=>approvedAction('view');
+$('approvedDownload').onclick=()=>approvedAction('download');
+$('approvedOpenAgain').onclick=openApprovedPopup;
 $('jpegLeaderReport').onclick=saveLeaderJpeg;
 
 $('individualReport').onclick=()=>printReport(false);
