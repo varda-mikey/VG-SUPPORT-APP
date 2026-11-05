@@ -333,37 +333,64 @@ async function saveLeaderJpeg(){
   c.fillStyle='#f5f3f4';c.fillRect(48,251,1144,71);
   const stats=[['TASKS',tasks.length],['SUBMITTED',submitted],['REVIEWED',reviewed.length],['SCORE',score],['NO OUTPUT',records.filter(x=>x.record.head_status==='no-output').length]];
   stats.forEach(([label,num],i)=>{let x=70+i*228;c.fillStyle=brand;c.font='bold 25px Arial';c.fillText(String(num),x,282);c.fillStyle=sub;c.font='bold 13px Arial';c.fillText(label,x,304)});
-  const cols=tasks.length>18?3:2,gap=14,left=48,top=346,usable=1310,bottom=1678;
-  const cardW=(1144-gap*(cols-1))/cols,rows=Math.max(1,Math.ceil(records.length/cols)),cardH=Math.max(36,Math.min(265,(bottom-top-gap*(rows-1))/rows));
-  const compact=cardH<115,dense=cardH<77;
+  // Responsive report layout: expand cards to fill the page for small task lists.
+  // More tasks automatically switch to three columns and reduce typography.
+  const cols=records.length===1?1:records.length>10?3:2;
+  const gap=14,left=48,top=346,bottom=1678;
+  const cardW=(1144-gap*(cols-1))/cols;
+  const rows=Math.max(1,Math.ceil(records.length/cols));
+  const cardH=(bottom-top-gap*(rows-1))/rows;
+  const dense=cardH<112,compact=cardH<215,spacious=cardH>390;
   records.forEach(({task,record},i)=>{
    const x=left+(i%cols)*(cardW+gap),y=top+Math.floor(i/cols)*(cardH+gap);
    c.fillStyle='#fff';c.fillRect(x,y,cardW,cardH);c.strokeStyle='#dedfe4';c.lineWidth=1.5;c.strokeRect(x,y,cardW,cardH);
    c.fillStyle=record.leader_status==='submitted'?'#19714a':record.leader_status==='working'?'#aa751d':'#a24b4b';
    c.fillRect(x,y,6,cardH);
-   const p=14,xx=x+p+6,available=cardW-p*2-6;
-   c.fillStyle=brand;c.font='bold '+(dense?11:13)+'px Arial';
-   c.fillText((i+1)+'. '+String(task.category||'TASK').toUpperCase().slice(0,40),xx,y+(dense?16:23));
-   c.fillStyle=ink;c.font='bold '+(dense?12:compact?14:17)+'px Arial';
-   const titleY=y+(dense?32:compact?44:48);
-   canvasLines(c,task.title,xx,titleY,available,dense?1:2,compact?16:20);
+   const pad=spacious?23:compact?10:17,xx=x+pad+6,available=cardW-pad*2-6;
+   const categorySize=spacious?19:compact?11:15;
+   c.fillStyle=brand;c.font='bold '+categorySize+'px Arial';
+   canvasLines(c,(i+1)+'. '+String(task.category||'TASK').toUpperCase(),xx,y+(spacious?37:compact?17:27),available,1,categorySize+4);
+   const titleSize=spacious?25:compact?13:19,titleY=y+(spacious?75:compact?35:56),titleLH=titleSize+5;
+   c.fillStyle=ink;c.font='bold '+titleSize+'px Arial';
+   const titleLines=canvasLines(c,task.title,xx,titleY,available,dense?1:2,titleLH);
+   const statusY=titleY+titleLines+(spacious?11:compact?5:9);
    c.fillStyle=record.leader_status==='submitted'?'#176841':'#7b5b33';
-   c.font='bold '+(dense?10:12)+'px Arial';
+   c.font='bold '+(spacious?16:compact?10:13)+'px Arial';
    const statusLabel='LEADER: '+status(record.leader_status||'pending')+'     REVIEW: '+status(record.head_status||'pending');
-   c.fillText(statusLabel.slice(0,66),xx,y+(dense?46:compact?65:92));
-   if(dense)return;
-   const thumb=compact?0:Math.min(132,Math.max(65,cardH-120)),textX=xx+thumb+(thumb?12:0),textWidth=available-thumb-(thumb?12:0);
-   if(thumb){
-    const img=images[i],file=photos[i];
-    if(file)canvasPhoto(c,img,xx,y+106,thumb,thumb*.82);
-    else{c.fillStyle='#f4f5f7';c.fillRect(xx,y+106,thumb,thumb*.82);c.fillStyle=sub;c.font='12px Arial';c.fillText('No photo',xx+8,y+135)}
+   canvasLines(c,statusLabel,xx,statusY,available,1,18);
+   const contentTop=statusY+(spacious?37:compact?13:26);
+   const contentBottom=y+cardH-(spacious?23:12);
+   const contentH=Math.max(0,contentBottom-contentTop);
+   if(contentH<38)return;
+   // Photo grows substantially for spacious cards; both remark columns expand as well.
+   const large=cardH>310;
+   const photoW=large?Math.min(available*.51,contentH*.90):compact?Math.min(available*.27,contentH*.85):Math.min(available*.37,contentH*.85);
+   const photoH=Math.min(contentH,large?contentH:photoW*1.10);
+   const img=images[i],file=photos[i];
+   const gapInner=large?20:10,textX=xx+photoW+gapInner,textWidth=available-photoW-gapInner;
+   if(file){
+    canvasPhoto(c,img,xx,contentTop,photoW,photoH);
+    c.strokeStyle='#eaebee';c.strokeRect(xx,contentTop,photoW,photoH);
+   }else{
+    c.fillStyle='#f4f5f7';c.fillRect(xx,contentTop,photoW,photoH);
+    c.fillStyle=sub;c.font=(spacious?15:11)+'px Arial';
+    if(photoW>60)c.fillText('No photo',xx+7,contentTop+25);
    }
-   const ty=compact?y+82:y+116,availableHeight=cardH-(ty-y)-12,lines=Math.max(1,Math.floor(availableHeight/18/2));
-   c.fillStyle=sub;c.font='bold 12px Arial';c.fillText('LEADER REMARKS',textX,ty);
-   c.fillStyle=ink;c.font='12px Arial';
-   const used=canvasLines(c,record.leader_note||'No remarks submitted',textX,ty+17,textWidth,lines,17);
-   c.fillStyle=sub;c.font='bold 12px Arial';c.fillText('HEAD COMMENTS',textX,ty+used+24);
-   c.fillStyle=ink;c.font='12px Arial';canvasLines(c,record.head_note||'No head remarks',textX,ty+used+41,textWidth,lines,17);
+   const bodySize=spacious?17:large?15:compact?10:13;
+   const headingSize=spacious?17:compact?10:12;
+   const lh=bodySize+6,headingGap=headingSize+12;
+   const halfH=(contentH-18)/2;
+   c.fillStyle=sub;c.font='bold '+headingSize+'px Arial';
+   c.fillText('LEADER REMARKS',textX,contentTop+headingSize);
+   c.fillStyle=ink;c.font=bodySize+'px Arial';
+   const leaderLines=Math.max(1,Math.floor((halfH-headingGap)/lh));
+   canvasLines(c,record.leader_note||'No remarks submitted',textX,contentTop+headingGap,textWidth,leaderLines,lh);
+   const secondTop=contentTop+halfH+18;
+   c.fillStyle=sub;c.font='bold '+headingSize+'px Arial';
+   c.fillText('HEAD COMMENTS',textX,secondTop+headingSize);
+   c.fillStyle=ink;c.font=bodySize+'px Arial';
+   const headLines=Math.max(1,Math.floor((contentBottom-secondTop-headingGap)/lh));
+   canvasLines(c,record.head_note||'No head remarks',textX,secondTop+headingGap,textWidth,headLines,lh);
   });
   if(!records.length){c.fillStyle=sub;c.font='22px Arial';c.fillText('No assigned tasks for this leader.',48,405)}
   c.strokeStyle='#ddd';c.beginPath();c.moveTo(48,1690);c.lineTo(1192,1690);c.stroke();
