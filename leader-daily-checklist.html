@@ -173,7 +173,7 @@ function restoreHeadDrafts(d){
  d.values.forEach(v=>{const card=[...document.querySelectorAll('#tasks .task')].find(x=>x.dataset.task===v.id);if(!card)return;card.querySelector('.review').value=v.status;card.querySelector('.note').value=v.note;card.dataset.dirty='1'});
 }
 
-async function load(quiet=false){if(loading)return;loading=true;try{let old=selected,drafts=headDrafts();data=await api('load',{day:mode==='head'?$('day').value:$('myDay').value});if(mode==='head'){selected=data.leaders.some(l=>l.id===old)?old:(data.leaders.find(l=>l.active!==false)?.id||data.leaders[0]?.id||'');renderHead();restoreHeadDrafts(drafts)}else renderLeader();syncState(true);if(!quiet){say('Updated '+new Date().toLocaleTimeString('en-PH'));if(mode==='head')renderHistory()}}catch(e){syncState(false);if(!quiet)say(e.message);if(mode==='head'&&/sign in/i.test(e.message))logout()}finally{loading=false}}
+async function load(quiet=false){if(loading)return;loading=true;try{let old=selected,drafts=headDrafts();data=await api('load',{day:mode==='head'?$('day').value:$('myDay').value});if(mode==='head'){selected=data.leaders.some(l=>l.id===old)?old:(data.leaders.find(l=>l.active!==false)?.id||data.leaders[0]?.id||'');renderHead();restoreHeadDrafts(drafts);previousHeadDate=$('day').value}else renderLeader();syncState(true);if(!quiet){say('Updated '+new Date().toLocaleTimeString('en-PH'));if(mode==='head')renderHistory()}}catch(e){syncState(false);if(!quiet)say(e.message);if(mode==='head'&&/sign in/i.test(e.message))logout()}finally{loading=false}}
 function openHead(){$('headLogin').classList.add('hide');$('headView').classList.remove('hide');$('signout').classList.remove('hide');$('sessionTitle').textContent='Head Review Board';load();}
 function logout(){headToken='';sessionStorage.removeItem('vg-head-checklist-token');$('headView').classList.add('hide');$('headLogin').classList.remove('hide');$('signout').classList.add('hide')}
 $('signout').onclick=logout;
@@ -262,7 +262,7 @@ function wireTasks(isHead){document.querySelectorAll((isHead?'#tasks':'#myTasks'
  }
  picker.addEventListener('click',()=>{card.querySelector('.result').textContent='Choose a photo or video from your device.';});
  picker.onchange=()=>{selectedPreview();card.querySelector('.result').textContent=picker.files.length?'✓ Photo ready. Tap green SUBMIT & SAVE TASK.':'No photo selected.';};upload.disabled=true;
- card.querySelector('.save').onclick=()=>perform(card,async()=>{if(!isHead&&select.value==='pending'&&picker.files.length)select.value='submitted';if(picker.files.length)await uploadSelected();await api('entry_save',{day:workDay,leader_id:isHead?selected:undefined,task_id:tid,status:select.value,note:card.querySelector('.note').value});await load(true);say('✓ Task saved. Your Head can view it now.')});
+ card.querySelector('.save').onclick=()=>perform(card,async()=>{if(!isHead&&select.value==='pending'&&picker.files.length)select.value='submitted';if(picker.files.length)await uploadSelected();await api('entry_save',{day:workDay,leader_id:isHead?selected:undefined,task_id:tid,status:select.value,note:card.querySelector('.note').value});if(isHead)delete card.dataset.dirty;await load(true);say('✓ Task saved. Your Head can view it now.')});
  async function uploadSelected(){
   const files=[...picker.files];if(!files.length)throw Error('Select a photo or video first.');
   const leaderId=isHead?selected:undefined;let count=0;
