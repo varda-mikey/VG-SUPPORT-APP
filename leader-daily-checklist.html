@@ -94,7 +94,7 @@ button.main,.person.selected{background:var(--brand);color:white}
 @media print{header,.leaderSteps,#leaderProgress{display:none!important}}
 </style></head><body><header><small>NATIONAL RETAIL HEAD • VARDA GROUP</small><h1>LEADER TASK CHECKLIST</h1><div class="headnav"><a href="index.html">← VG Support Home</a><span id="sessionTitle">Shared daily output monitoring</span><button id="signout" class="hide">Sign out</button></div></header>
 <main><section id="headLogin" class="login panel"><h2>National Retail Head</h2><p class="muted">Sign in with your existing Generals & Missions / Retail Audit head password.</p><form id="loginForm"><label>Head password <input id="password" type="password" autocomplete="current-password" required style="width:100%;display:block;margin:8px 0"></label><button class="main" type="submit">Open checking board</button></form><p id="loginError" class="pending"></p></section>
-<section id="headView" class="hide"><div class="toolbar"><div class="actions"><label>Evaluation date<input id="day" type="date"></label><label>Region<select id="region"><option value="">All regions</option></select></label><button id="refresh">↻ Refresh</button><span class="syncBadge" id="syncBadge">● Live sync</span></div><div class="actions"><button id="manageToggle">⚙ Edit Task List</button><button id="individualReport" class="main">Print Leader A4</button><button id="allReport">All Leaders Daily Summary A4</button><button id="monthReport">Monthly Summary A4</button></div></div>
+<section id="headView" class="hide"><div class="toolbar"><div class="actions"><label>Evaluation date<input id="day" type="date"></label><label>Region<select id="region"><option value="">All regions</option></select></label><button id="refresh">↻ Refresh</button><span class="syncBadge" id="syncBadge">● Live sync</span></div><div class="actions"><button id="manageToggle">⚙ Edit Task List</button><button id="individualReport" class="main">Print Leader A4</button><button id="jpegLeaderReport" class="main" title="Download one-page JPEG report with photos and comments">📷 Save 1-Page JPEG</button><button id="allReport">All Leaders Daily Summary A4</button><button id="monthReport">Monthly Summary A4</button></div></div>
 <div class="layout"><aside class="panel"><div class="heading"><h2>Leaders</h2><button id="addLeader" class="main">+ Add</button></div><p class="muted">Select a leader to review outputs. Copy their private personal link for phone submissions.</p><div class="people" id="people"></div><button id="editLeader" style="margin-top:10px">Edit selected leader</button><button id="rotate" style="margin-top:10px">Reset personal link</button></aside><section class="panel"><div class="heading"><div><h2 id="leaderName">Select leader</h2><div id="leaderMeta" class="muted"></div></div><button id="copyLink" class="main">Copy personal link</button></div><div id="stats" class="kpis"></div><div id="tasks" class="tasks"><p class="muted">Select a leader.</p></div><div id="historyPanel" class="history"><div class="heading"><h3>Saved reports by date</h3><button id="historyRefresh">Load History</button></div><div class="archiveControls"><label>Year<select id="archiveYear"></select></label><label>Month<select id="archiveMonth"></select></label><button id="archiveToday">Today</button><button id="deleteReportDay" class="danger">Delete Selected Day</button></div><p class="muted">Saved automatically by Year → Month → Date. Select any date to view its report and attached proof.</p><div id="archiveSummary" class="archiveSummary"></div><div id="historyDays" class="calendarDays"></div><p class="muted">Green = submitted, yellow = partial, red = no daily report, faded = future. Deletion is permanent and reserved for the National Retail Head.</p></div><p id="message" role="status"></p></section></div>
 <section id="manage" class="panel manage hide"><div class="heading"><h2>Customize selected leader's checklist</h2><button id="addTask" class="main">+ Add output task</button></div><p class="muted">Add, edit or remove duties for the selected leader only. Other leaders' forms do not change. Earlier submissions stay in their records.</p><div id="taskEditor"></div><button id="closeManage">Done editing</button></section></section>
 <section id="leaderView" class="hide"><div class="panel leaderBanner"><small>MY PERSONAL DAILY DASHBOARD</small><h2 id="myName"></h2><p class="muted" id="myMeta"></p><div class="toolbar"><label>Work date<input id="myDay" type="date"></label><button id="myToday">Today / New Daily Checklist</button><button id="myRefresh">↻ Refresh</button></div><div class="leaderSteps"><span>① Piliin ang task status</span><span>② Lagay ng picture at remarks</span><span>③ Pindutin ang green SUBMIT button</span></div><p class="hint">📱 Simple lang: Piliin ang <b>✓ Done — Submit</b> kung natapos ang task, maglagay ng picture ng actual work, at pindutin ang <b>SUBMIT & SAVE</b>. Automatic na makikita ng Head ang report. Maaaring mag-upload ng higit sa isang photo.</p><div id="leaderProgress" aria-live="polite"></div><p class="syncBadge" id="leaderSync">● Live sync</p></div><div id="myTasks" class="tasks"></div><p id="myMessage" role="status"></p></section>
@@ -264,6 +264,121 @@ if(all)return '<div class="page"><h2>VARDA GROUP · DAILY LEADERS SUMMARY</h2><p
 return rows.map(o=>'<div class="page"><h2>VARDA GROUP · LEADER DAILY OUTPUT REPORT</h2><p class="small">National Retail Head | '+enc(day)+'</p><h3>'+enc(o.l.name)+' · '+enc(o.l.position)+' · '+enc(o.l.area)+'</h3><div class="stats"><b>Score: '+o.score+'</b><b>Reviewed: '+o.reviewed.length+'/'+o.v.length+'</b><b>Submitted: '+o.v.filter(x=>x.entry.leader_status==='submitted').length+'</b></div><table><thead><tr><th style="width:38%">Output / Checklist</th><th style="width:17%">Leader</th><th style="width:17%">Head review</th><th>Head findings / remarks</th></tr></thead><tbody>'+o.v.map(x=>'<tr><td>'+enc(x.task.category)+'<br><b>'+enc(x.task.title)+'</b></td><td>'+enc(status(x.entry.leader_status||'pending'))+'</td><td>'+enc(status(x.entry.head_status||'pending'))+'</td><td>'+enc((x.entry.head_note||'').slice(0,300))+'</td></tr>').join('')+'</tbody></table><h3>Evidence attachments (2×2-inch photos)</h3>'+o.v.map(x=>{let files=data.files.filter(f=>f.entry_id===x.entry.id);return files.length?'<section class="reportSection"><h4>'+enc(x.task.title)+'</h4><div class="reportFilm">'+reportEvidence(x.entry.id)+'</div></section>':''}).join('')+'<div class="signature"><div>Reviewed by: ____________________</div><div>Date: ____________________</div></div><p class="small">Photographs are displayed at 2×2 inches. Extra images or longer remarks may continue onto another A4 page. Video is referenced by filename rather than embedded in print.</p></div>').join('')}
 async function printReport(all){if(!all&&!selected){say('Choose a leader');return} $('report').innerHTML=buildReport(all);await waitReportImages();window.print()}
 async function waitReportImages(){let imgs=[...$('report').querySelectorAll('img')];await Promise.all(imgs.map(img=>img.complete?Promise.resolve():new Promise(resolve=>{img.onload=resolve;img.onerror=resolve;setTimeout(resolve,5000)})))}
+
+
+// One-page A4-ratio JPEG snapshot. PDF report generation remains unchanged.
+function wrapCanvasText(ctx,value,maxWidth,maxLines){
+ const words=String(value??'—').replace(/\s+/g,' ').trim().split(' '),result=[];let line='';
+ for(const w of words){
+  let trial=line?line+' '+w:w;
+  if(ctx.measureText(trial).width<=maxWidth){line=trial;continue}
+  if(line){result.push(line);line=''}
+  if(ctx.measureText(w).width<=maxWidth){line=w}
+  else{
+   let part='';for(const ch of w){if(ctx.measureText(part+ch).width>maxWidth&&part){result.push(part);part=''}part+=ch}line=part;
+  }
+ }
+ if(line)result.push(line);
+ if(!result.length)result.push('—');
+ if(result.length>maxLines){
+  const cut=result.slice(0,maxLines);let last=cut[maxLines-1];
+  while(last.length&&ctx.measureText(last+'…').width>maxWidth)last=last.slice(0,-1);
+  cut[maxLines-1]=last+'…';return cut;
+ }
+ return result;
+}
+function canvasLines(ctx,value,x,y,width,maxLines,lineHeight){
+ const lines=wrapCanvasText(ctx,value,width,Math.max(1,maxLines));lines.forEach((line,i)=>ctx.fillText(line,x,y+i*lineHeight));return lines.length*lineHeight;
+}
+async function jpegPhoto(url){
+ if(!url)return null;
+ try{
+  const response=await fetch(url,{mode:'cors'});
+  if(!response.ok)throw Error('Photo unavailable');
+  const blob=await response.blob();
+  if(!blob.type.startsWith('image/'))return null;
+  const local=URL.createObjectURL(blob);
+  try{return await new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=()=>reject(Error('Image failed'));img.src=local})}
+  finally{URL.revokeObjectURL(local)}
+ }catch{return null}
+}
+function canvasPhoto(ctx,img,x,y,w,h){
+ ctx.fillStyle='#f1f2f4';ctx.fillRect(x,y,w,h);
+ if(!img){ctx.fillStyle='#858895';ctx.font='13px Arial';ctx.fillText('Photo not available',x+7,y+h/2);return}
+ const ratio=Math.min(w/img.width,h/img.height),rw=img.width*ratio,rh=img.height*ratio;
+ ctx.drawImage(img,x+(w-rw)/2,y+(h-rh)/2,rw,rh);
+}
+async function saveLeaderJpeg(){
+ const button=$('jpegLeaderReport'),l=data.leaders.find(x=>x.id===selected),day=$('day').value;
+ if(!l){say('Select a leader before exporting JPEG.');return}
+ const tasks=leaderTasks(l.id),records=tasks.map(t=>({task:t,record:entry(l.id,t.id,taskDay(t,day))}));
+ const W=1240,H=1754,canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;
+ const c=canvas.getContext('2d');if(!c){say('JPEG export is not available on this browser.');return}
+ button.disabled=true;button.textContent='Preparing JPEG…';say('Creating one-page image with photo proof and remarks…');
+ try{
+  const photos=records.map(x=>data.files.find(f=>f.entry_id===x.record.id&&f.mime?.startsWith('image/')&&f.url));
+  const images=await Promise.all(photos.map(f=>f?jpegPhoto(f.url):Promise.resolve(null)));
+  const brand='#7c292e',ink='#292b32',sub='#636977';
+  c.fillStyle='#fff';c.fillRect(0,0,W,H);
+  c.fillStyle=brand;c.fillRect(0,0,W,148);
+  c.fillStyle='#fff';c.font='bold 17px Arial';c.fillText('VARDA GROUP  •  NATIONAL RETAIL HEAD',48,45);
+  c.font='bold 39px Arial';c.fillText('LEADER DAILY OUTPUT REPORT',48,98);
+  c.font='18px Arial';c.fillText('ONE-PAGE PHOTO & REMARKS SUMMARY',49,127);
+  c.fillStyle=ink;c.font='bold 28px Arial';c.fillText(l.name.toUpperCase().slice(0,70),48,194);
+  c.fillStyle=sub;c.font='17px Arial';canvasLines(c,[l.position,l.area].filter(Boolean).join('  •  '),48,226,1090,2,22);
+  c.textAlign='right';c.fillStyle=brand;c.font='bold 21px Arial';c.fillText(day,1192,192);c.textAlign='left';
+  const submitted=records.filter(x=>x.record.leader_status==='submitted').length;
+  const reviewed=records.filter(x=>x.record.head_status&&!['pending','na'].includes(x.record.head_status));
+  const score=reviewed.length?Math.round(reviewed.reduce((n,x)=>n+(x.record.head_status==='complete'?1:x.record.head_status==='incomplete'?.5:0),0)/reviewed.length*100)+'%':'—';
+  c.fillStyle='#f5f3f4';c.fillRect(48,251,1144,71);
+  const stats=[['TASKS',tasks.length],['SUBMITTED',submitted],['REVIEWED',reviewed.length],['SCORE',score],['NO OUTPUT',records.filter(x=>x.record.head_status==='no-output').length]];
+  stats.forEach(([label,num],i)=>{let x=70+i*228;c.fillStyle=brand;c.font='bold 25px Arial';c.fillText(String(num),x,282);c.fillStyle=sub;c.font='bold 13px Arial';c.fillText(label,x,304)});
+  const cols=tasks.length>18?3:2,gap=14,left=48,top=346,usable=1310,bottom=1678;
+  const cardW=(1144-gap*(cols-1))/cols,rows=Math.max(1,Math.ceil(records.length/cols)),cardH=Math.max(36,Math.min(265,(bottom-top-gap*(rows-1))/rows));
+  const compact=cardH<115,dense=cardH<77;
+  records.forEach(({task,record},i)=>{
+   const x=left+(i%cols)*(cardW+gap),y=top+Math.floor(i/cols)*(cardH+gap);
+   c.fillStyle='#fff';c.fillRect(x,y,cardW,cardH);c.strokeStyle='#dedfe4';c.lineWidth=1.5;c.strokeRect(x,y,cardW,cardH);
+   c.fillStyle=record.leader_status==='submitted'?'#19714a':record.leader_status==='working'?'#aa751d':'#a24b4b';
+   c.fillRect(x,y,6,cardH);
+   const p=14,xx=x+p+6,available=cardW-p*2-6;
+   c.fillStyle=brand;c.font='bold '+(dense?11:13)+'px Arial';
+   c.fillText((i+1)+'. '+String(task.category||'TASK').toUpperCase().slice(0,40),xx,y+(dense?16:23));
+   c.fillStyle=ink;c.font='bold '+(dense?12:compact?14:17)+'px Arial';
+   const titleY=y+(dense?32:compact?44:48);
+   canvasLines(c,task.title,xx,titleY,available,dense?1:2,compact?16:20);
+   c.fillStyle=record.leader_status==='submitted'?'#176841':'#7b5b33';
+   c.font='bold '+(dense?10:12)+'px Arial';
+   const statusLabel='LEADER: '+status(record.leader_status||'pending')+'     REVIEW: '+status(record.head_status||'pending');
+   c.fillText(statusLabel.slice(0,66),xx,y+(dense?46:compact?65:92));
+   if(dense)return;
+   const thumb=compact?0:Math.min(132,Math.max(65,cardH-120)),textX=xx+thumb+(thumb?12:0),textWidth=available-thumb-(thumb?12:0);
+   if(thumb){
+    const img=images[i],file=photos[i];
+    if(file)canvasPhoto(c,img,xx,y+106,thumb,thumb*.82);
+    else{c.fillStyle='#f4f5f7';c.fillRect(xx,y+106,thumb,thumb*.82);c.fillStyle=sub;c.font='12px Arial';c.fillText('No photo',xx+8,y+135)}
+   }
+   const ty=compact?y+82:y+116,availableHeight=cardH-(ty-y)-12,lines=Math.max(1,Math.floor(availableHeight/18/2));
+   c.fillStyle=sub;c.font='bold 12px Arial';c.fillText('LEADER REMARKS',textX,ty);
+   c.fillStyle=ink;c.font='12px Arial';
+   const used=canvasLines(c,record.leader_note||'No remarks submitted',textX,ty+17,textWidth,lines,17);
+   c.fillStyle=sub;c.font='bold 12px Arial';c.fillText('HEAD COMMENTS',textX,ty+used+24);
+   c.fillStyle=ink;c.font='12px Arial';canvasLines(c,record.head_note||'No head remarks',textX,ty+used+41,textWidth,lines,17);
+  });
+  if(!records.length){c.fillStyle=sub;c.font='22px Arial';c.fillText('No assigned tasks for this leader.',48,405)}
+  c.strokeStyle='#ddd';c.beginPath();c.moveTo(48,1690);c.lineTo(1192,1690);c.stroke();
+  c.fillStyle=sub;c.font='15px Arial';c.fillText('Prepared for National Retail Head review • Single-page visual summary',48,1716);
+  c.textAlign='right';c.fillText('Photos: first image per task • Full records available online',1192,1716);c.textAlign='left';
+  const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',.88));
+  if(!blob)throw Error('Browser could not generate JPEG file');
+  const url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download='Varda_Leader_'+l.name.replace(/[^a-z0-9]+/gi,'_').slice(0,50)+'_'+day+'_Summary.jpg';
+  document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),15000);
+  say('✓ One-page JPEG saved. Full PDF reports remain available.');
+ }catch(e){say('JPEG export failed: '+e.message)}
+ finally{button.disabled=false;button.textContent='📷 Save 1-Page JPEG'}
+}
+$('jpegLeaderReport').onclick=saveLeaderJpeg;
 
 $('individualReport').onclick=()=>printReport(false);
 $('allReport').onclick=()=>printReport(true);
