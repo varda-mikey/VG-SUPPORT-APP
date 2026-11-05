@@ -311,97 +311,105 @@ function canvasPhoto(ctx,img,x,y,w,h){
 async function saveLeaderJpeg(){
  const button=$('jpegLeaderReport'),l=data.leaders.find(x=>x.id===selected),day=$('day').value;
  if(!l){say('Select a leader before exporting JPEG.');return}
- const tasks=leaderTasks(l.id),records=tasks.map(t=>({task:t,record:entry(l.id,t.id,taskDay(t,day))}));
- const W=1240,H=1754,canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;
- const c=canvas.getContext('2d');if(!c){say('JPEG export is not available on this browser.');return}
- button.disabled=true;button.textContent='Preparing JPEG…';say('Creating one-page image with photo proof and remarks…');
+ const records=leaderTasks(l.id).map(task=>({task,record:entry(l.id,task.id,taskDay(task,day))}));
+ button.disabled=true;button.textContent='Preparing JPEG…';say('Preparing ALL photos and complete remarks for the one-page JPEG…');
  try{
-  const photos=records.map(x=>data.files.find(f=>f.entry_id===x.record.id&&f.mime?.startsWith('image/')&&f.url));
-  const images=await Promise.all(photos.map(f=>f?jpegPhoto(f.url):Promise.resolve(null)));
-  const brand='#7c292e',ink='#292b32',sub='#636977';
+  // Gather every image for every task, not merely the first photo.
+  const imageFiles=records.map(x=>data.files.filter(f=>f.entry_id===x.record.id&&f.mime?.startsWith('image/')));
+  const loaded=await Promise.all(imageFiles.flat().map(async file=>({file,img:await jpegPhoto(file.url)})));
+  const imageMap=new Map(loaded.map(x=>[x.file.id,x.img]));
+  const W=1240,H=1754,canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;
+  const c=canvas.getContext('2d');if(!c)throw Error('Canvas unsupported');
+  const brand='#77292f',ink='#292c34',muted='#626976';
+  const margin=46,gap=14,top=335,bottom=1670,usableH=bottom-top;
   c.fillStyle='#fff';c.fillRect(0,0,W,H);
-  c.fillStyle=brand;c.fillRect(0,0,W,148);
-  c.fillStyle='#fff';c.font='bold 17px Arial';c.fillText('VARDA GROUP  •  NATIONAL RETAIL HEAD',48,45);
-  c.font='bold 39px Arial';c.fillText('LEADER DAILY OUTPUT REPORT',48,98);
-  c.font='18px Arial';c.fillText('ONE-PAGE PHOTO & REMARKS SUMMARY',49,127);
-  c.fillStyle=ink;c.font='bold 28px Arial';c.fillText(l.name.toUpperCase().slice(0,70),48,194);
-  c.fillStyle=sub;c.font='17px Arial';canvasLines(c,[l.position,l.area].filter(Boolean).join('  •  '),48,226,1090,2,22);
-  c.textAlign='right';c.fillStyle=brand;c.font='bold 21px Arial';c.fillText(day,1192,192);c.textAlign='left';
-  const submitted=records.filter(x=>x.record.leader_status==='submitted').length;
+  c.fillStyle=brand;c.fillRect(0,0,W,144);
+  c.fillStyle='#fff';c.font='bold 16px Arial';c.fillText('VARDA GROUP  /  NATIONAL RETAIL HEAD',margin,43);
+  c.font='bold 36px Arial';c.fillText('LEADER DAILY OUTPUT REPORT',margin,91);
+  c.font='17px Arial';c.fillText('COMPLETE PHOTO EVIDENCE & REMARKS  •  ONE-PAGE SUMMARY',margin,121);
+  c.fillStyle=ink;c.font='bold 25px Arial';c.fillText(l.name.toUpperCase().slice(0,70),margin,187);
+  c.fillStyle=muted;c.font='16px Arial';
+  canvasLines(c,[l.position,l.area].filter(Boolean).join(' • '),margin,215,900,2,19);
+  c.fillStyle=brand;c.font='bold 20px Arial';c.textAlign='right';c.fillText(day,W-margin,187);c.textAlign='left';
   const reviewed=records.filter(x=>x.record.head_status&&!['pending','na'].includes(x.record.head_status));
   const score=reviewed.length?Math.round(reviewed.reduce((n,x)=>n+(x.record.head_status==='complete'?1:x.record.head_status==='incomplete'?.5:0),0)/reviewed.length*100)+'%':'—';
-  c.fillStyle='#f5f3f4';c.fillRect(48,251,1144,71);
-  const stats=[['TASKS',tasks.length],['SUBMITTED',submitted],['REVIEWED',reviewed.length],['SCORE',score],['NO OUTPUT',records.filter(x=>x.record.head_status==='no-output').length]];
-  stats.forEach(([label,num],i)=>{let x=70+i*228;c.fillStyle=brand;c.font='bold 25px Arial';c.fillText(String(num),x,282);c.fillStyle=sub;c.font='bold 13px Arial';c.fillText(label,x,304)});
-  // Responsive report layout: expand cards to fill the page for small task lists.
-  // More tasks automatically switch to three columns and reduce typography.
-  const cols=records.length===1?1:records.length>10?3:2;
-  const gap=14,left=48,top=346,bottom=1678;
-  const cardW=(1144-gap*(cols-1))/cols;
-  const rows=Math.max(1,Math.ceil(records.length/cols));
-  const cardH=(bottom-top-gap*(rows-1))/rows;
-  const dense=cardH<112,compact=cardH<215,spacious=cardH>390;
-  records.forEach(({task,record},i)=>{
-   const x=left+(i%cols)*(cardW+gap),y=top+Math.floor(i/cols)*(cardH+gap);
-   c.fillStyle='#fff';c.fillRect(x,y,cardW,cardH);c.strokeStyle='#dedfe4';c.lineWidth=1.5;c.strokeRect(x,y,cardW,cardH);
-   c.fillStyle=record.leader_status==='submitted'?'#19714a':record.leader_status==='working'?'#aa751d':'#a24b4b';
-   c.fillRect(x,y,6,cardH);
-   const pad=spacious?23:compact?10:17,xx=x+pad+6,available=cardW-pad*2-6;
-   const categorySize=spacious?19:compact?11:15;
-   c.fillStyle=brand;c.font='bold '+categorySize+'px Arial';
-   canvasLines(c,(i+1)+'. '+String(task.category||'TASK').toUpperCase(),xx,y+(spacious?37:compact?17:27),available,1,categorySize+4);
-   const titleSize=spacious?25:compact?13:19,titleY=y+(spacious?75:compact?35:56),titleLH=titleSize+5;
-   c.fillStyle=ink;c.font='bold '+titleSize+'px Arial';
-   const titleLines=canvasLines(c,task.title,xx,titleY,available,dense?1:2,titleLH);
-   const statusY=titleY+titleLines+(spacious?11:compact?5:9);
-   c.fillStyle=record.leader_status==='submitted'?'#176841':'#7b5b33';
-   c.font='bold '+(spacious?16:compact?10:13)+'px Arial';
-   const statusLabel='LEADER: '+status(record.leader_status||'pending')+'     REVIEW: '+status(record.head_status||'pending');
-   canvasLines(c,statusLabel,xx,statusY,available,1,18);
-   const contentTop=statusY+(spacious?37:compact?13:26);
-   const contentBottom=y+cardH-(spacious?23:12);
-   const contentH=Math.max(0,contentBottom-contentTop);
-   if(contentH<38)return;
-   // Photo grows substantially for spacious cards; both remark columns expand as well.
-   const large=cardH>310;
-   const photoW=large?Math.min(available*.51,contentH*.90):compact?Math.min(available*.27,contentH*.85):Math.min(available*.37,contentH*.85);
-   const photoH=Math.min(contentH,large?contentH:photoW*1.10);
-   const img=images[i],file=photos[i];
-   const gapInner=large?20:10,textX=xx+photoW+gapInner,textWidth=available-photoW-gapInner;
-   if(file){
-    canvasPhoto(c,img,xx,contentTop,photoW,photoH);
-    c.strokeStyle='#eaebee';c.strokeRect(xx,contentTop,photoW,photoH);
-   }else{
-    c.fillStyle='#f4f5f7';c.fillRect(xx,contentTop,photoW,photoH);
-    c.fillStyle=sub;c.font=(spacious?15:11)+'px Arial';
-    if(photoW>60)c.fillText('No photo',xx+7,contentTop+25);
+  const values=[['TASKS',records.length],['SUBMITTED',records.filter(x=>x.record.leader_status==='submitted').length],['REVIEWED',reviewed.length],['SCORE',score],['NO OUTPUT',records.filter(x=>x.record.head_status==='no-output').length]];
+  c.fillStyle='#f6f5f6';c.fillRect(margin,243,W-2*margin,72);
+  values.forEach(([label,value],i)=>{const x=margin+24+i*(W-2*margin)/5;c.fillStyle=brand;c.font='bold 24px Arial';c.fillText(String(value),x,273);c.fillStyle=muted;c.font='bold 12px Arial';c.fillText(label,x,299)});
+  // Measured content layout. Long comments and all photos remain included:
+  // when content grows, scale the whole report body to fit the same single page.
+  const columns=records.length===1?1:records.length>9?3:2;
+  const contentW=W-2*margin,cardW=(contentW-gap*(columns-1))/columns;
+  const bodyFont=14,bodyLine=19,photoGap=7;
+  function measureText(value,width,font,maxLines=10000){
+   c.font=font;return wrapCanvasText(c,String(value||'—'),width,maxLines);
+  }
+  function measureCard(x,photoSize){
+   const inner=cardW-30;
+   const title=measureText(x.task.title,inner,'bold 16px Arial');
+   const leader=measureText(x.record.leader_note||'No remarks submitted',inner,'14px Arial');
+   const head=measureText(x.record.head_note||'No head remarks',inner,'14px Arial');
+   const files=imageFiles[records.indexOf(x)];
+   const perRow=Math.max(1,Math.floor((inner+photoGap)/(photoSize+photoGap)));
+   const actualSize=Math.min(photoSize,(inner-(perRow-1)*photoGap)/perRow);
+   const photoRows=Math.ceil(files.length/perRow);
+   const photoHeight=files.length?27+photoRows*(actualSize+photoGap):0;
+   const h=18+19+title.length*21+23+23+leader.length*bodyLine+16+head.length*bodyLine+photoHeight+20;
+   return {h,title,leader,head,files,perRow,actualSize};
+  }
+  const rows=Math.ceil(records.length/columns);
+  function layout(photoSize){
+   const cards=records.map(x=>measureCard(x,photoSize)),rowHeights=Array.from({length:rows},(_,r)=>Math.max(...cards.slice(r*columns,(r+1)*columns).map(x=>x.h)));
+   return {cards,rowHeights,total:rowHeights.reduce((a,b)=>a+b,0)+gap*(rows-1)};
+  }
+  let photoSize=125,layoutData=layout(photoSize);
+  // When there is spare room, expand the photograph thumbnails until the page fills naturally.
+  while(layoutData.total<usableH-70&&photoSize<420&&imageFiles.some(fs=>fs.length)){
+   const next=layout(photoSize+12);
+   if(next.total>usableH)break;
+   photoSize+=12;layoutData=next;
+  }
+  const scale=Math.min(1,usableH/Math.max(1,layoutData.total));
+  // Center the report grid vertically when no additional content is present.
+  const drawnH=layoutData.total*scale,startY=top+Math.max(0,(usableH-drawnH)/2);
+  c.save();c.translate(margin,startY);c.scale(scale,scale);
+  const rowY=[];let running=0;
+  layoutData.rowHeights.forEach(h=>{rowY.push(running);running+=h+gap});
+  records.forEach((x,i)=>{
+   const m=layoutData.cards[i],col=i%columns,row=Math.floor(i/columns),px=col*(cardW+gap),py=rowY[row],ph=layoutData.rowHeights[row];
+   c.fillStyle='#fff';c.fillRect(px,py,cardW,ph);c.strokeStyle='#dfe1e6';c.lineWidth=1.2;c.strokeRect(px,py,cardW,ph);
+   c.fillStyle=x.record.leader_status==='submitted'?'#23845b':x.record.leader_status==='working'?'#d39c39':'#c95d5d';
+   c.fillRect(px,py,5,ph);
+   const xx=px+17,tw=cardW-34;
+   c.fillStyle=brand;c.font='bold 12px Arial';c.fillText((i+1)+'. '+String(x.task.category||'TASK').toUpperCase(),xx,py+21);
+   let yy=py+42;
+   c.fillStyle=ink;c.font='bold 16px Arial';
+   m.title.forEach(line=>{c.fillText(line,xx,yy);yy+=21});
+   c.fillStyle=x.record.leader_status==='submitted'?'#167247':muted;c.font='bold 11px Arial';
+   c.fillText('LEADER: '+status(x.record.leader_status||'pending')+'  |  HEAD: '+status(x.record.head_status||'pending'),xx,yy+4);yy+=27;
+   c.fillStyle=muted;c.font='bold 11px Arial';c.fillText('LEADER REMARKS',xx,yy);yy+=19;
+   c.fillStyle=ink;c.font='14px Arial';m.leader.forEach(line=>{c.fillText(line,xx,yy);yy+=bodyLine});
+   yy+=8;c.fillStyle=muted;c.font='bold 11px Arial';c.fillText('HEAD COMMENTS',xx,yy);yy+=19;
+   c.fillStyle=ink;c.font='14px Arial';m.head.forEach(line=>{c.fillText(line,xx,yy);yy+=bodyLine});
+   if(m.files.length){
+    yy+=14;c.fillStyle=brand;c.font='bold 11px Arial';c.fillText('PHOTO EVIDENCE  •  '+m.files.length+' FILE(S)',xx,yy);yy+=10;
+    m.files.forEach((file,j)=>{
+     const fx=xx+(j%m.perRow)*(m.actualSize+photoGap),fy=yy+Math.floor(j/m.perRow)*(m.actualSize+photoGap);
+     canvasPhoto(c,imageMap.get(file.id),fx,fy,m.actualSize,m.actualSize);
+     c.strokeStyle='#e4e4e8';c.strokeRect(fx,fy,m.actualSize,m.actualSize);
+    });
    }
-   const bodySize=spacious?17:large?15:compact?10:13;
-   const headingSize=spacious?17:compact?10:12;
-   const lh=bodySize+6,headingGap=headingSize+12;
-   const halfH=(contentH-18)/2;
-   c.fillStyle=sub;c.font='bold '+headingSize+'px Arial';
-   c.fillText('LEADER REMARKS',textX,contentTop+headingSize);
-   c.fillStyle=ink;c.font=bodySize+'px Arial';
-   const leaderLines=Math.max(1,Math.floor((halfH-headingGap)/lh));
-   canvasLines(c,record.leader_note||'No remarks submitted',textX,contentTop+headingGap,textWidth,leaderLines,lh);
-   const secondTop=contentTop+halfH+18;
-   c.fillStyle=sub;c.font='bold '+headingSize+'px Arial';
-   c.fillText('HEAD COMMENTS',textX,secondTop+headingSize);
-   c.fillStyle=ink;c.font=bodySize+'px Arial';
-   const headLines=Math.max(1,Math.floor((contentBottom-secondTop-headingGap)/lh));
-   canvasLines(c,record.head_note||'No head remarks',textX,secondTop+headingGap,textWidth,headLines,lh);
   });
-  if(!records.length){c.fillStyle=sub;c.font='22px Arial';c.fillText('No assigned tasks for this leader.',48,405)}
-  c.strokeStyle='#ddd';c.beginPath();c.moveTo(48,1690);c.lineTo(1192,1690);c.stroke();
-  c.fillStyle=sub;c.font='15px Arial';c.fillText('Prepared for National Retail Head review • Single-page visual summary',48,1716);
-  c.textAlign='right';c.fillText('Photos: first image per task • Full records available online',1192,1716);c.textAlign='left';
-  const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',.88));
-  if(!blob)throw Error('Browser could not generate JPEG file');
+  c.restore();
+  c.strokeStyle='#e0e1e4';c.beginPath();c.moveTo(margin,1690);c.lineTo(W-margin,1690);c.stroke();
+  c.fillStyle=muted;c.font='13px Arial';c.fillText('VARDA GROUP  •  Leader output monitoring',margin,1715);
+  c.textAlign='right';c.fillText('All '+imageFiles.reduce((n,fs)=>n+fs.length,0)+' photos included  •  Original evidence saved online',W-margin,1715);c.textAlign='left';
+  const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',.9));
+  if(!blob)throw Error('Could not generate JPEG');
   const url=URL.createObjectURL(blob),a=document.createElement('a');
-  a.href=url;a.download='Varda_Leader_'+l.name.replace(/[^a-z0-9]+/gi,'_').slice(0,50)+'_'+day+'_Summary.jpg';
+  a.href=url;a.download='Varda_Leader_'+l.name.replace(/[^a-z0-9]+/gi,'_').slice(0,50)+'_'+day+'_Complete.jpg';
   document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),15000);
-  say('✓ One-page JPEG saved. Full PDF reports remain available.');
+  say('✓ One-page JPEG generated with '+imageFiles.reduce((n,fs)=>n+fs.length,0)+' photo slots and full comments.'+(scale<.55?' Many items required smaller text to fit one page.':''));
  }catch(e){say('JPEG export failed: '+e.message)}
  finally{button.disabled=false;button.textContent='📷 Save 1-Page JPEG'}
 }
