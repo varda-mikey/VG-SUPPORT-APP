@@ -301,7 +301,10 @@ const api=async(action,payload={})=>{const r=await fetch(END,{method:'POST',head
 const status=x=>({pending:'Not reviewed',complete:'Complete',incomplete:'Incomplete','no-output':'No output',na:'N/A',working:'In progress',submitted:'Submitted'})[x]||x;
 const leaderTasks=(id)=>data.tasks.filter(t=>t.leader_id===id);
 const taskDay=(task,day)=>task?.frequency==='monthly'?day.slice(0,7)+'-01':day;
-const taskSubmission=(leaderId,day)=>{const tasks=leaderTasks(leaderId);return {total:tasks.length,submitted:tasks.filter(t=>entry(leaderId,t.id,taskDay(t,day)).leader_status==='submitted').length}};
+const taskSubmission=(leaderId,day)=>{
+ const tasks=leaderTasks(leaderId),entries=tasks.map(t=>entry(leaderId,t.id,taskDay(t,day)));
+ return {total:tasks.length,submitted:entries.filter(e=>e.leader_status==='submitted').length,received:entries.filter(e=>e.id&&data.files.some(f=>f.entry_id===e.id)).length};
+};
 
 const entry=(leader,task,day)=>data.entries.find(e=>e.leader_id===leader&&e.task_id===task&&e.work_date===day)||{};
 const link=l=>ROOT+'?leader='+encodeURIComponent(l.id)+'#key='+encodeURIComponent(l.access_token);
@@ -342,12 +345,12 @@ $('loginForm').onsubmit=async ev=>{ev.preventDefault();$('loginError').textConte
 function leaderDailyCounts(l,day){
  const tasks=leaderTasks(l.id),applicable=tasks.map(t=>({task:t,date:taskDay(t,day)}));
  const entries=applicable.map(x=>entry(l.id,x.task.id,x.date));
- const submitted=taskSubmission(l.id,day).submitted;
+ const taskCounts=taskSubmission(l.id,day),submitted=taskCounts.submitted;
  const saved=entries.filter(e=>!!e.id).length;
  const files=entries.reduce((n,e)=>n+(e.id?data.files.filter(f=>f.entry_id===e.id).length:0),0);
  const photos=entries.reduce((n,e)=>n+(e.id?data.files.filter(f=>f.entry_id===e.id&&f.mime?.startsWith('image/')).length:0),0);
  const lastUpdate=entries.filter(e=>e.updated_at).sort((a,b)=>String(b.updated_at).localeCompare(String(a.updated_at)))[0]?.updated_at;
- return {total:tasks.length,submitted,saved,files,photos,lastUpdate};
+ return {total:tasks.length,submitted,received:taskCounts.received,saved,files,photos,lastUpdate};
 }
 function renderHead(){
  let areas=[...new Set(data.leaders.filter(l=>l.active!==false).map(l=>l.area).filter(Boolean))].sort(),region=$('region').value;
@@ -357,16 +360,16 @@ function renderHead(){
  const active=data.leaders.filter(l=>l.active!==false);
  const totals=active.map(l=>({leader:l,...leaderDailyCounts(l,day)}));
  const withReport=totals.filter(x=>x.saved>0).length;
- const submitted=totals.reduce((n,x)=>n+x.submitted,0);
+ const submitted=totals.reduce((n,x)=>n+x.submitted,0),received=totals.reduce((n,x)=>n+x.received,0);
  const proof=totals.reduce((n,x)=>n+x.files,0);
- $('headActivity').innerHTML='<h3>Daily Leader Reports · '+enc(day)+'</h3><div class="activityStats"><span><b>'+active.length+'</b>Active leaders</span><span><b>'+withReport+'</b>Leaders with saved reports</span><span><b>'+submitted+'</b>Submitted tasks</span><span><b>'+proof+'</b>Evidence files</span></div><p class="muted">Saved reports include drafts and in-progress tasks. Select a leader below to see their complete records and photo proof. Counts reflect the selected date.</p>';
+ $('headActivity').innerHTML='<h3>Daily Leader Reports · '+enc(day)+'</h3><div class="activityStats"><span><b>'+active.length+'</b>Active leaders</span><span><b>'+withReport+'</b>Leaders with saved reports</span><span><b>'+received+'</b>Tasks with proof</span><span><b>'+submitted+'</b>Formally submitted</span><span><b>'+proof+'</b>Evidence files</span></div><p class="muted">Saved reports include drafts and in-progress tasks. Select a leader below to see their complete records and photo proof. Counts reflect the selected date.</p>';
  let visible=data.leaders.filter(l=>($('showArchivedLeaders').checked||l.active!==false)&&(!$('region').value||l.area===$('region').value));
  $('people').innerHTML=visible.map(l=>{
   const c=leaderDailyCounts(l,day);
   const flag=c.submitted&&c.submitted===c.total?'done':c.saved||c.files?'saved':'none';
-  const label=l.active===false?'ARCHIVED':c.submitted===c.total&&c.total?'All tasks submitted':c.saved?'Saved '+c.saved+'/'+c.total+' tasks':'No saved tasks';
+  const label=l.active===false?'ARCHIVED':c.submitted===c.total&&c.total?'All tasks submitted':c.received?'Proof: '+c.received+'/'+c.total+' tasks':c.saved?'Saved '+c.saved+'/'+c.total+' tasks':'No saved tasks';
   const recent=c.lastUpdate?new Date(c.lastUpdate).toLocaleTimeString('en-PH',{timeZone:'Asia/Manila',hour:'numeric',minute:'2-digit'}):'—';
-  return '<button class="person '+(l.id===selected?'selected':'')+'" data-person="'+enc(l.id)+'"><strong>'+enc(l.name)+'</strong><small>'+enc(l.position)+' · '+enc(l.area)+'</small><span class="leaderStatus '+flag+'">'+enc(label)+'</span><span class="leaderSaved">'+c.submitted+' submitted · '+c.files+' uploaded file(s)<br>Last saved: '+enc(recent)+'</span></button>';
+  return '<button class="person '+(l.id===selected?'selected':'')+'" data-person="'+enc(l.id)+'"><strong>'+enc(l.name)+'</strong><small>'+enc(l.position)+' · '+enc(l.area)+'</small><span class="leaderStatus '+flag+'">'+enc(label)+'</span><span class="leaderSaved">'+c.submitted+'/'+c.total+' submitted · '+c.files+' uploaded file(s)<br>Last saved: '+enc(recent)+'</span></button>';
  }).join('')||'<p class="muted">No leaders match the selected region.</p>';
  document.querySelectorAll('[data-person]').forEach(b=>b.onclick=()=>{
   if(b.dataset.person!==selected&&hasUnsavedChanges()&&!confirm('You have unsaved remarks, ratings, or evidence. Switch leaders and discard them?'))return;
@@ -377,9 +380,9 @@ function renderHead(){
 }
 function renderSelected(){let leader=data.leaders.find(l=>l.id===selected);$('leaderName').textContent=leader?.name||'Select leader';$('leaderMeta').textContent=leader?[leader.position,leader.area,$('day').value].filter(Boolean).join(' • '):'';$('copyLink').disabled=!leader||leader.active===false;$('openAddTask').disabled=!leader;$('archiveLeader').disabled=!leader;$('archiveLeader').textContent=leader?.active===false?'Restore selected leader':'Archive selected leader';
 $('historyPanel').classList.toggle('hide',!leader);if(!leader){$('tasks').innerHTML='<p class="muted">Add or select a leader.</p>';$('stats').innerHTML='';return;}
-let counts=leaderDailyCounts(leader,$('day').value);$('headSelectedSummary').innerHTML='<strong>Saved report status:</strong> '+counts.saved+' of '+counts.total+' tasks have saved records · '+counts.submitted+' submitted · '+counts.files+' uploaded file(s). '+(counts.saved&&!counts.files?'<strong>No photo evidence recorded for this date.</strong>':'')+'<br><span class="muted">A saved draft or in-progress task is visible even when not yet submitted. Check the selected date above if an expected report is missing.</span>';
+let counts=leaderDailyCounts(leader,$('day').value);$('headSelectedSummary').innerHTML='<strong>Photo proof received:</strong> '+counts.received+'/'+counts.total+' tasks · <strong>Formally submitted:</strong> '+counts.submitted+'/'+counts.total+' · '+counts.files+' file(s). '+(counts.saved&&!counts.files?'<strong>No photo evidence recorded for this date.</strong>':'')+'<br><span class="muted">A saved draft or in-progress task is visible even when not yet submitted. Check the selected date above if an expected report is missing.</span>';
 let vals=leaderTasks(selected).map(t=>entry(selected,t.id,taskDay(t,$('day').value))),reviewed=vals.filter(x=>x.head_status&&!['pending','na'].includes(x.head_status)),point=reviewed.reduce((n,x)=>n+(x.head_status==='complete'?1:x.head_status==='incomplete'?.5:0),0),score=reviewed.length?Math.round(point/reviewed.length*100)+'%':'—';
-$('stats').innerHTML=[['Score',score],['Reviewed',reviewed.length+'/'+leaderTasks(selected).length],['Submitted',vals.filter(x=>x.leader_status==='submitted').length],['No output',vals.filter(x=>x.head_status==='no-output').length]].map(([x,y])=>'<span><b>'+y+'</b>'+x+'</span>').join('');
+$('stats').innerHTML=[['Score',score],['Reviewed',reviewed.length+'/'+leaderTasks(selected).length],['Proof received',counts.received+'/'+counts.total],['Submitted',counts.submitted+'/'+counts.total]].map(([x,y])=>'<span><b>'+y+'</b>'+x+'</span>').join('');
 $('tasks').innerHTML=leaderTasks(selected).map(t=>{let v=entry(selected,t.id,taskDay(t,$('day').value));return taskCard(t,v,true)}).join('');wireTasks(true);}
 function evidence(entryId){return data.files.filter(f=>f.entry_id===entryId).map(f=>'<span class="evidence">'+(f.mime?.startsWith('image/')?'<button type="button" class="evidencePreview" data-evidence-id="'+enc(f.id)+'" aria-label="Preview '+enc(f.original_name)+'"><img loading="lazy" class="evidenceThumb" src="'+enc(f.url||'')+'" alt="'+enc(f.original_name)+'"></button>':f.mime?.startsWith('video/')?'<button type="button" class="evidencePreview" data-evidence-id="'+enc(f.id)+'" aria-label="Preview video '+enc(f.original_name)+'">▶ View video</button>':'📎')+'<span title="'+enc(f.original_name)+'">'+enc(f.original_name)+'</span> '+Math.max(1,Math.round(f.bytes/1024))+' KB</span>').join('')}
 
@@ -506,7 +509,7 @@ function wireTasks(isHead){document.querySelectorAll((isHead?'#tasks':'#myTasks'
   $('leaderProgress').innerHTML='<b>'+count.submitted+' of '+count.total+' tasks submitted</b> · ✓ Synced with Head dashboard';
   const savedTask=card.querySelector('.taskState');if(savedTask){savedTask.className='taskState submitted';savedTask.textContent='✓ Submitted'}
  }
- phase('verified','✓ VERIFIED in Supabase · '+count.submitted+'/'+count.total+' tasks submitted',100);
+ phase('verified','✓ VERIFIED in Supabase · '+count.submitted+'/'+count.total+' formally submitted · '+count.received+'/'+count.total+' with photo proof',100);
  say('✓ Server verified '+count.submitted+'/'+count.total+' submitted task(s). Head and leader read the same records.');
 });
  async function uploadSelected(){
@@ -654,7 +657,7 @@ $('deleteReportDay').onclick=async()=>{
  if(prompt('Type DELETE to confirm permanent deletion:')!=='DELETE')return say('Deletion cancelled.');
  try{const result=await api('report_delete_day',{leader_id:selected,day});await load(true);await renderHistory();say('Deleted '+result.deleted+' saved task records for '+leader.name+' on '+day+'.')}catch(e){say('Deletion failed: '+e.message)}
 };
-function renderLeader(){let l=data.leaders[0];if(!l){$('myName').textContent='Access unavailable';return;}$('myName').textContent=l.name;$('myMeta').textContent=l.position+' • '+l.area+' • '+$('myDay').value;const tasks=leaderTasks(l.id),done=taskSubmission(l.id,$('myDay').value).submitted;$('leaderProgress').innerHTML='<b>'+done+' of '+tasks.length+' tasks submitted</b> · '+(done===tasks.length?'✓ Completed for selected date':'Tap each task below, attach proof, then submit.');$('myTasks').innerHTML=tasks.map((t,i)=>{const v=entry(l.id,t.id,taskDay(t,$('myDay').value));return taskCard(t,v,false).replace('<article class="task"','<article class="task"').replace('<div class="taskHeading"><h3>','<div class="taskHeading"><h3>'+(i+1)+'. ').replace('</h3></div><div class="taskContent">','</h3></div><div class="taskState '+enc(v.leader_status||'pending')+'">'+enc(v.leader_status==='submitted'?'✓ Submitted':v.leader_status==='working'?'In progress':'Not yet submitted')+'</div><div class="taskContent">')}).join('')||'<p>No active tasks.</p>';wireTasks(false);approvalState()}
+function renderLeader(){let l=data.leaders[0];if(!l){$('myName').textContent='Access unavailable';return;}$('myName').textContent=l.name;$('myMeta').textContent=l.position+' • '+l.area+' • '+$('myDay').value;const tasks=leaderTasks(l.id),totals=taskSubmission(l.id,$('myDay').value),done=totals.submitted;$('leaderProgress').innerHTML='<b>'+done+' of '+tasks.length+' formally submitted</b> · <strong>'+totals.received+'/'+tasks.length+' with saved proof</strong> · '+(done===tasks.length?'✓ Completed for selected date':'Photos may already be saved even when the task needs final submission.');$('myTasks').innerHTML=tasks.map((t,i)=>{const v=entry(l.id,t.id,taskDay(t,$('myDay').value));return taskCard(t,v,false).replace('<article class="task"','<article class="task"').replace('<div class="taskHeading"><h3>','<div class="taskHeading"><h3>'+(i+1)+'. ').replace('</h3></div><div class="taskContent">','</h3></div><div class="taskState '+enc(v.leader_status||'pending')+'">'+enc(v.leader_status==='submitted'?'✓ Submitted':v.leader_status==='working'?'In progress':'Not yet submitted')+'</div><div class="taskContent">')}).join('')||'<p>No active tasks.</p>';wireTasks(false);approvalState()}
 $('headToday').onclick=()=>{
  if(hasUnsavedChanges()&&!confirm('You have unsaved changes. Switch to today and all regions?'))return;
  $('day').value=today();$('region').value='';$('showArchivedLeaders').checked=false;selected='';load();
