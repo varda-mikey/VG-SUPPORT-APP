@@ -361,7 +361,7 @@ function wireTasks(isHead){document.querySelectorAll((isHead?'#tasks':'#myTasks'
   }).join('')+'</div><small>Ready to upload. Press the green Upload selected files button.</small>';
  }
  picker.addEventListener('click',()=>{card.querySelector('.result').textContent='Choose a photo or video from your device.';});
- picker.onchange=()=>{selectedPreview();card.dataset.dirty='1';card.querySelector('.result').textContent=pendingFiles.length?'✓ '+pendingFiles.length+' gallery/camera photo(s) ready. Tap SUBMIT & SAVE.':'No photo selected.';};upload.disabled=true;
+ picker.onchange=()=>{uploadedPaths.clear();selectedPreview();card.dataset.dirty='1';card.querySelector('.result').textContent=pendingFiles.length?'✓ '+pendingFiles.length+' gallery/camera photo(s) ready. Tap SUBMIT & SAVE.':'No photo selected.';};upload.disabled=true;
  card.querySelector('.save').onclick=()=>perform(card,async()=>{
  const hadFiles=pendingFiles.length>0;
  if(!isHead&&select.value==='pending'&&hadFiles)select.value='submitted';
@@ -372,8 +372,11 @@ function wireTasks(isHead){document.querySelectorAll((isHead?'#tasks':'#myTasks'
  // Remarks are stored even if photo upload needs a retry.
  if(hadFiles)await uploadSelected();
  clearTaskDraft(card,currentLeader,workDay,tid);
- await load(true);
- say('✓ Task and evidence saved in Supabase and visible on the Head dashboard.');
+ // If another task has selected files, never rebuild its file input.
+ const otherPending=[...document.querySelectorAll((isHead?'#tasks':'#myTasks')+' .task')].some(other=>other!==card&&(other.querySelector('.fileInput')?.files?.length||other.dataset.dirty==='1'));
+ if(!otherPending)await load(true);
+ else{card.querySelector('.result').textContent='✓ Saved. Other unsaved tasks are preserved; refresh after finishing them.';say('✓ Saved. Other tasks with unsaved changes were not refreshed.')}
+ if(!otherPending)say('✓ Task and evidence saved in Supabase and visible on the Head dashboard.');
 });
  async function uploadSelected(){
   const files=[...pendingFiles];if(!files.length)throw Error('Select a photo or video first.');card.dataset.uploading='1';
@@ -411,7 +414,7 @@ function wireTasks(isHead){document.querySelectorAll((isHead?'#tasks':'#myTasks'
   card.dataset.uploadVerified='1';
   card.querySelector('.result').textContent='✓ '+count+' file(s) saved to Supabase. Finishing task submission…';
  }
- upload.onclick=()=>perform(card,async()=>{await uploadSelected();clearTaskDraft(card,currentLeader,workDay,tid);await load(true)});
+ upload.onclick=()=>perform(card,async()=>{await uploadSelected();card.dataset.dirty='1';card.querySelector('.result').textContent='✓ Photos uploaded. Your current typed remarks remain; tap SUBMIT & SAVE TASK to save remarks.'});
 })}
 
 async function perform(card,fn){let buttons=card.querySelectorAll('button'),msg=card.querySelector('.result');buttons.forEach(b=>b.disabled=true);msg.textContent='Processing…';try{await fn();msg.textContent='✓ Completed';msg.style.color='#146b3a'}catch(e){msg.textContent='⚠ Upload/save failed: '+e.message;msg.style.color='#a02020';const global=$(mode==='head'?'message':'myMessage');if(global)global.textContent=msg.textContent;}finally{delete card.dataset.uploading;buttons.forEach(b=>b.disabled=false)}}
