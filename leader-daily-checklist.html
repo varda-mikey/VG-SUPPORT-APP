@@ -266,6 +266,9 @@ input:focus,select:focus,textarea:focus{border-color:#906571}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}button,.task{transition:none!important}}
 @media print{#leaderView,.headActivity{display:none!important}}
 
+/* Mobile retry button is revealed only while photos are selected or need retry */
+#leaderView .task.hasFiles .taskFooter .upload{display:block;min-height:49px;background:#f3f6fb;color:#284b71;border:1px solid #ccd9e8;border-radius:12px;width:100%}
+#leaderView .task.hasFiles .taskFooter .upload:disabled{opacity:.55}
 /* Multiple photo upload progress · small iPhone-safe list rather than memory-heavy thumbnails */
 .batchFiles{display:grid;gap:6px;margin:9px 0}
 .batchFile{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 10px;background:#fff;border:1px solid #e5e9ee;border-radius:10px;font-size:12px}
@@ -567,7 +570,7 @@ function wireTasks(isHead){document.querySelectorAll((isHead?'#tasks':'#myTasks'
   renderBatch();
  }
  picker.addEventListener('click',()=>{card.querySelector('.result').textContent='Choose a photo or video from your device.';});
- picker.onchange=()=>{uploadedPaths.clear();uploadIds.clear();fileStates.clear();selectedPreview();card.dataset.dirty='1';phase(pendingFiles.length?'waiting':'waiting',pendingFiles.length?pendingFiles.length+' photo(s) selected — tap SUBMIT & SAVE':'Ready to submit');card.querySelector('.result').textContent=pendingFiles.length?'✓ '+pendingFiles.length+' gallery/camera photo(s) ready. Tap SUBMIT & SAVE.':'No photo selected.';};upload.disabled=true;
+ picker.onchange=()=>{uploadedPaths.clear();uploadIds.clear();fileStates.clear();selectedPreview();card.classList.toggle('hasFiles',pendingFiles.length>0);card.dataset.dirty='1';phase(pendingFiles.length?'waiting':'waiting',pendingFiles.length?pendingFiles.length+' photo(s) selected — tap SUBMIT & SAVE':'Ready to submit');card.querySelector('.result').textContent=pendingFiles.length?'✓ '+pendingFiles.length+' gallery/camera photo(s) ready. Tap SUBMIT & SAVE.':'No photo selected.';};upload.disabled=true;
  card.querySelector('.save').onclick=()=>perform(card,async()=>{
  const hadFiles=pendingFiles.length>0;
  // The green action explicitly submits a completed task, rather than saving a pending draft.
@@ -666,7 +669,7 @@ function wireTasks(isHead){document.querySelectorAll((isHead?'#tasks':'#myTasks'
   phase('verified','✓ UPLOADED & VERIFIED · '+saved+'/'+total+' photos saved for the Head',100);
   card.querySelector('.result').textContent='✓ '+saved+'/'+total+' photos verified and visible on Head dashboard.';
   chosen.textContent='✓ '+saved+'/'+total+' photos uploaded and verified';
-  upload.disabled=true;releasePreviews();pendingFiles=[];uploadedPaths.clear();uploadIds.clear();fileStates.clear();picker.value='';
+  upload.disabled=true;releasePreviews();pendingFiles=[];uploadedPaths.clear();uploadIds.clear();fileStates.clear();picker.value='';card.classList.remove('hasFiles');
   delete card.dataset.uploading;
  }
  upload.onclick=()=>perform(card,async()=>{await uploadSelected();card.dataset.dirty='1';card.querySelector('.result').textContent='✓ Photos uploaded. Your current typed remarks remain; tap SUBMIT & SAVE TASK to save remarks.'});
