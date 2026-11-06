@@ -687,12 +687,15 @@ function wireTasks(isHead){document.querySelectorAll((isHead?'#tasks':'#myTasks'
   card.querySelector('.result').textContent='Opening gallery… selected photos will remain queued.';
  });
  picker.addEventListener('cancel',()=>{setGalleryPickerOpen(false);phase('waiting',pendingFiles.length?pendingFiles.length+' photo(s) still ready':'No photos selected');});
- picker.onchange=()=>{
+ function receiveGalleryFiles(){
   setGalleryPickerOpen(false);
   const fresh=[...picker.files];
-  selectedPreview(fresh);
-  picker.value=''; // permit the same photo or another group to be chosen next
- };
+  if(fresh.length)selectedPreview(fresh);
+  picker.value=''; // Safari can re-select the same photo on the next attempt.
+ }
+ // Some iOS WebKit versions fire input before change; both safely use queued File objects.
+ picker.addEventListener('input',receiveGalleryFiles);
+ picker.addEventListener('change',receiveGalleryFiles);
  upload.disabled=true;
 
  card.querySelector('.save').onclick=()=>perform(card,async()=>{
