@@ -522,20 +522,30 @@ function wireTasks(isHead){document.querySelectorAll((isHead?'#tasks':'#myTasks'
    const meta={day:workDay,leader_id:leaderId,task_id:tid,mime:f.type,bytes:f.size};
    const feedback=card.querySelector('.result');feedback.textContent='Uploading '+(count+1)+' of '+files.length+': '+original.name;
    phase('uploading','Uploading '+(count+1)+' of '+files.length+' · '+original.name,Math.round(20+65*count/files.length));
-   if(f.size<=4800000){
+   if(f.size>52428800)throw Error('File too large: maximum 50 MB. Trim the video or select fewer files.');
+   // Supabase signed uploads bypass restrictive phone/browser multipart handling.
+   // Fallback only if preparation fails, before any storage write is attempted.
+   let up;
+   try{up=await api('upload_prepare',meta)}
+   catch(prepareError){
+    if(f.size>4800000)throw Error('Secure upload link unavailable. Check mobile data/Wi-Fi and retry: '+prepareError.message);
+    phase('uploading','Using compatible upload mode for '+original.name+'…',Math.round(25+65*count/files.length));
     const form=new FormData();form.append('action','upload_file');
     form.append(isHead?'headToken':'leader',isHead?headToken:leaderToken);
     form.append('day',workDay);form.append('task_id',tid);
-    if(isHead)form.append('leader_id',selected);form.append('file',f,f.name);
-    const response=await fetch(END,{method:'POST',body:form});
-    let outcome;try{outcome=await response.json()}catch{throw Error('Upload server did not respond correctly');}
-    if(!response.ok||outcome.error)throw Error((outcome.error||'Upload failed')+' (server '+response.status+')');if(outcome.file?.id)uploadIds.add(outcome.file.id);
-   }else{
-    if(f.size>52428800)throw Error('Video too large (50 MB maximum). Trim video or select a shorter clip.');
-    const up=await api('upload_prepare',meta);
-    const response=await fetch(up.url,{method:'PUT',headers:{'Content-Type':f.type},body:f});
-    if(!response.ok){const details=await response.text();throw Error('Video upload failed: '+details.slice(0,140))}
-    const finished=await api('upload_finish',{...meta,path:up.path,entry_id:up.entry_id,name:f.name});if(finished.file?.id)uploadIds.add(finished.file.id);
+    if(isHead)form.append('leader_id',selected);
+    form.append('file',f,f.name);
+    const outcome=await sendMultipartWithProgress(form,(pct)=>phase('uploading','Uploading '+(count+1)+' of '+files.length+' · '+pct+'%',Math.round(20+65*(count+pct/100)/files.length)));
+    if(outcome.file?.id)uploadIds.add(outcome.file.id);
+    else throw Error('Server did not return a saved photo ID. Please check saved evidence before retrying.');
+   }
+   if(up){
+    phase('uploading','Securely uploading '+(count+1)+' of '+files.length+'…',Math.round(20+65*count/files.length));
+    await putSignedWithProgress(up.url,f,pct=>phase('uploading','Uploading '+(count+1)+' of '+files.length+' · '+pct+'%',Math.round(20+65*(count+pct/100)/files.length)));
+    phase('uploading','Photo uploaded · registering evidence on Head board…',Math.round(20+65*(count+.95)/files.length));
+    const finished=await api('upload_finish',{...meta,path:up.path,entry_id:up.entry_id,name:f.name});
+    if(!finished.file?.id)throw Error('Photo reached storage but was not registered. Check the Head evidence before uploading again.');
+    uploadIds.add(finished.file.id);
    }
    count++;uploadedPaths.add(original);phase('uploading','Uploaded '+count+' of '+files.length+' photo(s) · verifying…',Math.round(20+65*count/files.length));
   }
@@ -553,6 +563,29 @@ function wireTasks(isHead){document.querySelectorAll((isHead?'#tasks':'#myTasks'
  upload.onclick=()=>perform(card,async()=>{await uploadSelected();card.dataset.dirty='1';card.querySelector('.result').textContent='✓ Photos uploaded. Your current typed remarks remain; tap SUBMIT & SAVE TASK to save remarks.'});
 })}
 
+// Native XHR gives accurate upload progress on Safari/iOS, Android and desktop.
+function xhrUpload(method,url,body,headers,onProgress,timeout=120000){
+ return new Promise((resolve,reject)=>{
+  const xhr=new XMLHttpRequest();xhr.open(method,url,true);xhr.timeout=timeout;
+  Object.entries(headers||{}).forEach(([key,value])=>xhr.setRequestHeader(key,value));
+  xhr.upload.onprogress=e=>{if(e.lengthComputable&&onProgress)onProgress(Math.min(99,Math.round(e.loaded/e.total*100)))};
+  xhr.onload=()=>{if(xhr.status>=200&&xhr.status<300){onProgress?.(100);resolve(xhr.responseText)}
+   else reject(Error('Upload failed (HTTP '+xhr.status+'). '+String(xhr.responseText||'').slice(0,140)))};
+  xhr.onerror=()=>reject(Error('Connection interrupted while uploading. Please check Wi-Fi/mobile data and retry.'));
+  xhr.ontimeout=()=>reject(Error('Upload timed out on this connection. Choose a smaller photo or try another network.'));
+  xhr.onabort=()=>reject(Error('Upload was cancelled before completion.'));
+  xhr.send(body);
+ });
+}
+async function putSignedWithProgress(url,file,progress){
+ await xhrUpload('PUT',url,file,{'Content-Type':file.type},progress);
+}
+async function sendMultipartWithProgress(form,progress){
+ const raw=await xhrUpload('POST',END,form,{},progress);
+ let obj;try{obj=JSON.parse(raw)}catch{throw Error('Upload server did not return valid confirmation.')}
+ if(obj.error)throw Error(obj.error);
+ return obj;
+}
 async function perform(card,fn){
  let buttons=card.querySelectorAll('button'),msg=card.querySelector('.result');
  buttons.forEach(b=>b.disabled=true);msg.textContent='Processing…';
