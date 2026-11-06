@@ -310,6 +310,66 @@ const entry=(leader,task,day)=>data.entries.find(e=>e.leader_id===leader&&e.task
 const link=l=>ROOT+'?leader='+encodeURIComponent(l.id)+'#key='+encodeURIComponent(l.access_token);
 const say=(msg)=>{$(mode==='head'?'message':'myMessage').textContent=msg};
 function syncState(ok){let el=$(mode==='head'?'syncBadge':'leaderSync');if(el){el.classList.toggle('offline',!ok);el.textContent=ok?'● Live sync · 12 sec':'● Offline / retry refresh'}}
+function quietLiveRefresh(){
+ if(loading||document.querySelector('.task[data-uploading="1"]'))return;
+ loading=true;
+ const day=mode==='head'?$('day').value:$('myDay').value;
+ api('load',{day}).then(fresh=>{
+  // Replace the read-only cache, not any in-progress form or phone file input.
+  data=fresh;
+  if(mode==='head'){
+   const active=data.leaders.filter(l=>l.active!==false);
+   const totals=active.map(l=>leaderDailyCounts(l,day));
+   const counts={active:active.length,saved:totals.filter(x=>x.saved>0).length,received:totals.reduce((n,x)=>n+x.received,0),submitted:totals.reduce((n,x)=>n+x.submitted,0),files:totals.reduce((n,x)=>n+x.files,0)};
+   const stats=$('headActivity').querySelectorAll('.activityStats span b');
+   [counts.active,counts.saved,counts.received,counts.submitted,counts.files].forEach((val,i)=>{if(stats[i])stats[i].textContent=String(val)});
+   $('people').querySelectorAll('[data-person]').forEach(el=>{
+    const leader=data.leaders.find(l=>l.id===el.dataset.person);if(!leader)return;
+    const c=leaderDailyCounts(leader,day),flag=c.submitted===c.total&&c.total?'done':c.saved?'saved':'none';
+    const chip=el.querySelector('.leaderStatus'),saved=el.querySelector('.leaderSaved');
+    if(chip){chip.className='leaderStatus '+flag;chip.textContent=leader.active===false?'ARCHIVED':c.submitted===c.total&&c.total?'All tasks submitted':c.received?'Proof: '+c.received+'/'+c.total+' tasks':c.saved?'Saved '+c.saved+'/'+c.total+' tasks':'No saved tasks'}
+    if(saved){saved.textContent=c.submitted+'/'+c.total+' submitted · '+c.files+' uploaded file(s) · Last saved: '+(c.lastUpdate?new Date(c.lastUpdate).toLocaleTimeString('en-PH',{timeZone:'Asia/Manila',hour:'numeric',minute:'2-digit'}):'—')}
+   });
+   const leader=data.leaders.find(l=>l.id===selected);
+   if(leader){
+    const c=leaderDailyCounts(leader,day),summary=$('headSelectedSummary');
+    summary.textContent='LIVE · '+c.received+'/'+c.total+' tasks with photo proof · '+c.submitted+'/'+c.total+' formally submitted · '+c.files+' uploaded file(s)';
+    const kpi=$('stats').querySelectorAll('span b');
+    if(kpi[2])kpi[2].textContent=c.received+'/'+c.total;
+    if(kpi[3])kpi[3].textContent=c.submitted+'/'+c.total;
+   }
+  }else{
+   const leader=data.leaders[0];
+   if(leader){
+    const c=taskSubmission(leader.id,day);
+    $('leaderProgress').innerHTML='<b>'+c.submitted+'/'+c.total+' formally submitted</b> · '+c.received+'/'+c.total+' tasks with saved photo proof · Synced with Supabase';
+    $('myTasks').querySelectorAll('.task').forEach(card=>{
+     if(card.dataset.dirty==='1'||card.dataset.uploading==='1')return;
+     const task=data.tasks.find(t=>t.id===card.dataset.task);
+     const record=entry(leader.id,card.dataset.task,taskDay(task,day)),state=card.querySelector('.taskState');
+     if(state){state.className='taskState '+enc(record.leader_status||'pending');state.textContent=record.leader_status==='submitted'?'✓ Submitted':record.leader_status==='working'?'In progress':'Not yet submitted'}
+    });
+   }
+  }
+  // Photo galleries can update safely: do not touch text fields or file pickers.
+  const cards=document.querySelectorAll(mode==='head'?'#tasks .task':'#myTasks .task');
+  cards.forEach(card=>{
+   if(card.dataset.uploading==='1')return;
+   const task=data.tasks.find(t=>t.id===card.dataset.task);if(!task)return;
+   const leaderId=mode==='head'?selected:data.leaders[0]?.id;
+   const record=entry(leaderId,task.id,taskDay(task,day));
+   const files=data.files.filter(f=>f.entry_id===record.id);
+   const label=card.querySelector('.savedLabel'),gallery=card.querySelector('.savedGallery');
+   if(label)label.textContent='📷 UPLOADED PHOTOS & VIDEOS — '+files.length+' saved · Tap photo to preview';
+   if(gallery&&Number(card.dataset.galleryCount||-1)!==files.length){
+    gallery.innerHTML=evidence(record.id)||'<span class="muted">No saved evidence for this task/date yet.</span>';
+    card.dataset.galleryCount=String(files.length);
+   }
+  });
+  syncState(true);
+ }).catch(()=>syncState(false)).finally(()=>{loading=false});
+}
+
 function hasUnsavedChanges(){return !!document.querySelector('#myTasks .task[data-dirty="1"]')||!!document.querySelector('#myTasks .task[data-uploading="1"]')||!!document.querySelector('#headView .task[data-uploading="1"]')||[...document.querySelectorAll('#headView .fileInput,#leaderView .fileInput')].some(el=>el.files?.length)||!!document.querySelector('#headView .task[data-dirty="1"]')||!$('evidenceViewer').classList.contains('hide')||!!document.querySelector('#tasks .inlineEditor:not(.hide)')||!$('addTaskBoard').classList.contains('hide');}
 // Session-only backup of text/selection, never file bytes or private tokens.
 const draftKey=(leaderId,day,taskId)=>'vg-task-draft-v2:'+leaderId+':'+day+':'+taskId;
@@ -977,6 +1037,9 @@ if(mode==='leader'){$('headLogin').classList.add('hide');$('leaderView').classLi
 else if(isViewer&&ceoToken){$('headLogin').classList.add('hide');$('headView').classList.remove('hide');$('sessionTitle').textContent='CEO • View-Only Reports';load()}
 else if(headToken)openHead();
 window.addEventListener('beforeunload',e=>{if(hasUnsavedChanges()){e.preventDefault();e.returnValue=''}});
-setInterval(()=>{if(mode==='leader'&&leaderToken&&$('myDay').value!==today()&&!hasUnsavedChanges()&&!document.querySelector('input:focus,textarea:focus,select:focus')){$('myDay').value=today();load(true);say('New day: checklist reset for '+today()+'. Older reports remain saved.');return;}if(mode==='leader'&&leaderToken||mode==='head'&&headToken){if(!hasUnsavedChanges()&&!document.querySelector('input:focus,textarea:focus,select:focus'))load(true)}},12000);
+setInterval(()=>{if(mode==='leader'&&leaderToken&&$('myDay').value!==today()&&!hasUnsavedChanges()&&!document.querySelector('input:focus,textarea:focus,select:focus')){$('myDay').value=today();load(true);say('New day: checklist reset for '+today()+'. Older reports remain saved.');return;}if(mode==='leader'&&leaderToken||mode==='head'&&(headToken||isViewer&&ceoToken)){
+ if(!hasUnsavedChanges()&&!document.querySelector('input:focus,textarea:focus,select:focus'))load(true);
+ else quietLiveRefresh();
+}},12000);
 })();
 </script></body></html>
