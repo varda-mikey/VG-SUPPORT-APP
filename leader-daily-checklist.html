@@ -516,7 +516,11 @@ $('headToday').onclick=()=>{
  if(hasUnsavedChanges()&&!confirm('You have unsaved changes. Switch to today and all regions?'))return;
  $('day').value=today();$('region').value='';$('showArchivedLeaders').checked=false;selected='';load();
 };
-$('refresh').onclick=()=>load();$('myRefresh').onclick=()=>load();let previousHeadDate=$('day').value;
+function safeManualRefresh(){
+ if(hasUnsavedChanges()){say('Unsaved typing or selected photos are still on the form. Submit them before refreshing; nothing was erased.');return}
+ load();
+}
+$('refresh').onclick=safeManualRefresh;$('myRefresh').onclick=safeManualRefresh;let previousHeadDate=$('day').value;
 $('day').onchange=()=>{const next=$('day').value;if(hasUnsavedChanges()&&!confirm('Discard unsaved reviews and switch to '+next+'?')){$('day').value=previousHeadDate;return}previousHeadDate=next;load()};$('myDay').onchange=()=>load();$('myToday').onclick=()=>{if(hasUnsavedChanges()&&!confirm('Discard unuploaded files and open today?'))return;$('myDay').value=today();load()};$('region').onchange=()=>renderHead();
 const CEO_ROOT=ROOT+'?ceo=1#key=';
 async function createCEOViewLink(reset){
@@ -793,6 +797,7 @@ $('monthReport').onclick=async()=>{try{let month=$('day').value.slice(0,7),from=
 if(mode==='leader'){$('headLogin').classList.add('hide');$('leaderView').classList.remove('hide');$('sessionTitle').textContent='Leader Personal Dashboard';if(!leaderToken){$('myName').textContent='Missing personal link key';$('myMessage').textContent='Ask your Head to send your complete link.'}else load();}
 else if(isViewer&&ceoToken){$('headLogin').classList.add('hide');$('headView').classList.remove('hide');$('sessionTitle').textContent='CEO • View-Only Reports';load()}
 else if(headToken)openHead();
+window.addEventListener('beforeunload',e=>{if(hasUnsavedChanges()){e.preventDefault();e.returnValue=''}});
 setInterval(()=>{if(mode==='leader'&&leaderToken&&$('myDay').value!==today()&&!hasUnsavedChanges()&&!document.querySelector('input:focus,textarea:focus,select:focus')){$('myDay').value=today();load(true);say('New day: checklist reset for '+today()+'. Older reports remain saved.');return;}if(mode==='leader'&&leaderToken||mode==='head'&&headToken){if(!hasUnsavedChanges()&&!document.querySelector('input:focus,textarea:focus,select:focus'))load(true)}},12000);
 })();
 </script></body></html>
