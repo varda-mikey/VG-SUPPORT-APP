@@ -278,6 +278,15 @@ input:focus,select:focus,textarea:focus{border-color:#906571}
 .batchState.failed{background:#feeaea;color:#a52c2c}
 .batchState.uploading{background:#e4efff;color:#225c9e}
 @media(max-width:560px){.batchFile{font-size:11px}.batchState{padding:5px 7px}}
+/* Inline photo deletion: touch friendly, with explicit second confirmation */
+.evidence .removeEvidence{width:100%;margin-top:7px;background:#fff0f0;color:#9c2934;border:1px solid #e9bdc3;padding:9px 10px;border-radius:9px;font-size:12px}
+.evidenceDeleteConfirm{display:grid;gap:8px;margin-top:9px;padding:12px;background:#fff7f4;border:1px solid #eccbc7;border-radius:12px;color:#743439;font-size:13px;min-width:175px}
+.evidenceDeleteConfirm small{font-size:12px;line-height:1.45}
+.evidenceDeleteActions{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.evidenceDeleteActions button{min-height:43px;font-size:12px;padding:7px}
+.evidenceDeleteActions .confirmDeleteEvidence{background:#a32f3d;color:white}
+.evidenceDeleteActions .cancelDeleteEvidence{background:white;color:#603b40;border:1px solid #dfc8c8}
+body.viewerMode .removeEvidence{display:none!important}
 </style></head><body><header><small>NATIONAL RETAIL HEAD • VARDA GROUP</small><h1>LEADER TASK CHECKLIST</h1><div class="headnav"><a href="index.html">← VG Support Home</a><span id="sessionTitle">Shared daily output monitoring</span><button id="signout" class="hide">Sign out</button></div></header>
 <main><section id="headLogin" class="login panel"><h2>National Retail Head</h2><p class="muted">Sign in with your existing Generals & Missions / Retail Audit head password.</p><form id="loginForm"><label>Head password <input id="password" type="password" autocomplete="current-password" required style="width:100%;display:block;margin:8px 0"></label><button class="main" type="submit">Open checking board</button></form><p id="loginError" class="pending"></p></section>
 <section id="headView" class="hide"><div class="toolbar"><div class="actions"><label>Evaluation date<input id="day" type="date"></label><label>Region<select id="region"><option value="">All regions</option></select></label><button id="headToday" class="main" type="button">Today / Show All</button><button id="refresh">↻ Refresh</button><span class="syncBadge" id="syncBadge">● Live sync</span></div><div class="actions"><button id="manageToggle">⚙ Edit Task List</button><span id="ceoLinkControls" class="actions"><button type="button" id="createCEO" title="Create a private CEO view-only link">🔗 Create CEO View Link</button><button type="button" id="resetCEO" title="Disable previous CEO link and make a new one">Reset CEO Link</button></span><button id="individualReport" class="main">Print Leader A4</button><button id="jpegLeaderReport" class="main" title="Download one-page JPEG report with photos and comments">📷 Save 1-Page JPEG</button><button id="allReport">All Leaders Daily Summary A4</button><button id="monthReport">Monthly Summary A4</button></div></div>
@@ -456,9 +465,76 @@ let counts=leaderDailyCounts(leader,$('day').value);$('headSelectedSummary').inn
 let vals=leaderTasks(selected).map(t=>entry(selected,t.id,taskDay(t,$('day').value))),reviewed=vals.filter(x=>x.head_status&&!['pending','na'].includes(x.head_status)),point=reviewed.reduce((n,x)=>n+(x.head_status==='complete'?1:x.head_status==='incomplete'?.5:0),0),score=reviewed.length?Math.round(point/reviewed.length*100)+'%':'—';
 $('stats').innerHTML=[['Score',score],['Reviewed',reviewed.length+'/'+leaderTasks(selected).length],['Proof received',counts.received+'/'+counts.total],['Submitted',counts.submitted+'/'+counts.total]].map(([x,y])=>'<span><b>'+y+'</b>'+x+'</span>').join('');
 $('tasks').innerHTML=leaderTasks(selected).map(t=>{let v=entry(selected,t.id,taskDay(t,$('day').value));return taskCard(t,v,true)}).join('');wireTasks(true);}
-function evidence(entryId){return data.files.filter(f=>f.entry_id===entryId).map(f=>'<span class="evidence">'+(f.mime?.startsWith('image/')?'<button type="button" class="evidencePreview" data-evidence-id="'+enc(f.id)+'" aria-label="Preview '+enc(f.original_name)+'"><img loading="lazy" class="evidenceThumb" src="'+enc(f.url||'')+'" alt="'+enc(f.original_name)+'"></button>':f.mime?.startsWith('video/')?'<button type="button" class="evidencePreview" data-evidence-id="'+enc(f.id)+'" aria-label="Preview video '+enc(f.original_name)+'">▶ View video</button>':'📎')+'<span title="'+enc(f.original_name)+'">'+enc(f.original_name)+'</span> '+Math.max(1,Math.round(f.bytes/1024))+' KB</span>').join('')}
+function evidence(entryId){
+ return data.files.filter(f=>f.entry_id===entryId).map(f=>{
+  const canDelete=!isViewer&&(mode==='head'||f.added_by==='leader');
+  return '<span class="evidence" data-file-id="'+enc(f.id)+'">'+
+   (f.mime?.startsWith('image/')?'<button type="button" class="evidencePreview" data-evidence-id="'+enc(f.id)+'" aria-label="Preview '+enc(f.original_name)+'"><img loading="lazy" class="evidenceThumb" src="'+enc(f.url||'')+'" alt="'+enc(f.original_name)+'"></button>':
+    f.mime?.startsWith('video/')?'<button type="button" class="evidencePreview" data-evidence-id="'+enc(f.id)+'" aria-label="Preview video '+enc(f.original_name)+'">▶ View video</button>':'📎')+
+   '<span title="'+enc(f.original_name)+'">'+enc(f.original_name)+'</span> '+Math.max(1,Math.round(f.bytes/1024))+' KB'+
+   (canDelete?'<button type="button" class="removeEvidence" data-file-id="'+enc(f.id)+'" aria-label="Remove wrong upload '+enc(f.original_name)+'">🗑 Remove</button>':'')+
+   '</span>';
+ }).join('');
+}
 
 
+// Confirm deletion on the same task card, so mobile users do not lose their work.
+document.addEventListener('click',async event=>{
+ const ask=event.target.closest?.('.removeEvidence');
+ if(ask){
+  event.preventDefault();
+  const wrap=ask.closest('.evidence');if(!wrap||wrap.querySelector('.evidenceDeleteConfirm'))return;
+  const file=data.files.find(f=>f.id===ask.dataset.fileId);if(!file)return;
+  const panel=document.createElement('div');panel.className='evidenceDeleteConfirm';
+  panel.innerHTML='<strong>Remove this uploaded file?</strong>'+
+   '<small>This deletes the photo from the saved report and Head dashboard. It cannot be undone.</small>'+
+   '<div class="evidenceDeleteActions"><button type="button" class="confirmDeleteEvidence">Yes, remove</button><button type="button" class="cancelDeleteEvidence">Keep photo</button></div>';
+  wrap.appendChild(panel);ask.disabled=true;panel.querySelector('.cancelDeleteEvidence').focus();
+  return;
+ }
+ const cancel=event.target.closest?.('.cancelDeleteEvidence');
+ if(cancel){
+  const wrap=cancel.closest('.evidence');wrap?.querySelector('.evidenceDeleteConfirm')?.remove();
+  const button=wrap?.querySelector('.removeEvidence');if(button)button.disabled=false;
+  return;
+ }
+ const confirm=event.target.closest?.('.confirmDeleteEvidence');
+ if(!confirm)return;
+ const wrap=confirm.closest('.evidence'),fileId=wrap?.dataset.fileId;
+ const file=data.files.find(f=>String(f.id)===String(fileId)),card=confirm.closest('.task');
+ if(!file||!card)return;
+ const buttons=wrap.querySelectorAll('.evidenceDeleteConfirm button');
+ buttons.forEach(btn=>btn.disabled=true);
+ confirm.textContent='Removing…';
+ try{
+  const response=await api('file_delete',{file_id:file.id,leader_id:mode==='head'?selected:undefined});
+  if(!response.ok||response.deleted_file_id!==file.id)throw Error('Server did not confirm photo removal.');
+  data.files=data.files.filter(f=>f.id!==file.id);
+  const entryId=file.entry_id,remaining=data.files.filter(f=>f.entry_id===entryId);
+  const gallery=card.querySelector('.savedGallery'),label=card.querySelector('.savedLabel');
+  if(gallery)gallery.innerHTML=evidence(entryId)||'<span class="muted">No saved evidence for this task/date yet.</span>';
+  if(label)label.textContent='📷 UPLOADED PHOTOS & VIDEOS — '+remaining.length+' saved · Tap photo to preview';
+  card.dataset.galleryCount=String(remaining.length);
+  const status=card.querySelector('.uploadStatus');
+  if(status){status.className='uploadStatus verified';status.textContent='✓ Wrong upload removed. '+remaining.length+' saved file(s) remain.'}
+  const global=$(mode==='head'?'message':'myMessage');
+  if(global)global.textContent='✓ Photo removed from Supabase and the shared report.';
+  // Refresh only server-backed summaries, preserving all text and selected file inputs.
+  if(mode==='leader'&&data.leaders[0]){
+   const id=data.leaders[0].id,d=taskSubmission(id,$('myDay').value);
+   $('leaderProgress').innerHTML='<b>'+d.submitted+'/'+d.total+' formally submitted</b> · '+d.received+'/'+d.total+' tasks with saved photo proof';
+  }else if(mode==='head'&&data.leaders.length){
+   const l=data.leaders.find(x=>x.id===selected);
+   if(l){const c=leaderDailyCounts(l,$('day').value);$('headSelectedSummary').textContent='LIVE · '+c.received+'/'+c.total+' tasks with photo proof · '+c.submitted+'/'+c.total+' formally submitted · '+c.files+' uploaded file(s)'}
+  }
+ }catch(error){
+  const panel=wrap.querySelector('.evidenceDeleteConfirm');
+  if(panel){
+   const small=panel.querySelector('small');if(small)small.textContent='Removal failed: '+error.message;
+   buttons.forEach(btn=>btn.disabled=false);confirm.textContent='Retry removal';
+  }
+ }
+});
 // Modal uses the currently visible leader/date's files. No new browser tab.
 let viewerFiles=[],viewerIndex=0,viewerLastFocus=null,viewerStartX=null;
 function viewerItems(){
