@@ -394,8 +394,12 @@ function wireTasks(isHead){document.querySelectorAll((isHead?'#tasks':'#myTasks'
  data=latest;
  clearTaskDraft(card,currentLeader,workDay,tid);
  const otherPending=[...document.querySelectorAll((isHead?'#tasks':'#myTasks')+' .task')].some(other=>other!==card&&(other.querySelector('.fileInput')?.files?.length||other.dataset.dirty==='1'));
- if(!otherPending){if(isHead)renderHead();else renderLeader()}
  const count=taskSubmission(currentLeader,workDay);
+ if(!otherPending){if(isHead)renderHead();else renderLeader()}
+ else if(!isHead){
+  $('leaderProgress').innerHTML='<b>'+count.submitted+' of '+count.total+' tasks submitted</b> · ✓ Synced with Head dashboard';
+  const savedTask=card.querySelector('.taskState');if(savedTask){savedTask.className='taskState submitted';savedTask.textContent='✓ Submitted'}
+ }
  phase('verified','✓ VERIFIED in Supabase · '+count.submitted+'/'+count.total+' tasks submitted',100);
  say('✓ Server verified '+count.submitted+'/'+count.total+' submitted task(s). Head and leader read the same records.');
 });
