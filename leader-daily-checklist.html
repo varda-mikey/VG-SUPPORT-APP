@@ -350,7 +350,7 @@ function wireTasks(isHead){document.querySelectorAll((isHead?'#tasks':'#myTasks'
  select.onchange=()=>saveTaskDraft(card,currentLeader,workDay,tid,isHead);
  card.querySelector('.note').addEventListener('input',()=>saveTaskDraft(card,currentLeader,workDay,tid,isHead));
  const picker=card.querySelector('.fileInput'),chosen=card.querySelector('.selectedFiles'),upload=card.querySelector('.upload');
- let previews=[],pendingFiles=[],uploadedPaths=new Set();
+ let previews=[],pendingFiles=[],uploadedPaths=new Set(),uploadIds=new Set();
  function releasePreviews(){previews.forEach(URL.revokeObjectURL);previews=[];}
  function selectedPreview(){releasePreviews();pendingFiles=[...picker.files];const files=pendingFiles;upload.disabled=!files.length;
   if(!files.length){chosen.textContent='No files selected';return;}
@@ -361,7 +361,7 @@ function wireTasks(isHead){document.querySelectorAll((isHead?'#tasks':'#myTasks'
   }).join('')+'</div><small>Ready to upload. Press the green Upload selected files button.</small>';
  }
  picker.addEventListener('click',()=>{card.querySelector('.result').textContent='Choose a photo or video from your device.';});
- picker.onchange=()=>{uploadedPaths.clear();selectedPreview();card.dataset.dirty='1';card.querySelector('.result').textContent=pendingFiles.length?'✓ '+pendingFiles.length+' gallery/camera photo(s) ready. Tap SUBMIT & SAVE.':'No photo selected.';};upload.disabled=true;
+ picker.onchange=()=>{uploadedPaths.clear();uploadIds.clear();selectedPreview();card.dataset.dirty='1';card.querySelector('.result').textContent=pendingFiles.length?'✓ '+pendingFiles.length+' gallery/camera photo(s) ready. Tap SUBMIT & SAVE.':'No photo selected.';};upload.disabled=true;
  card.querySelector('.save').onclick=()=>perform(card,async()=>{
  const hadFiles=pendingFiles.length>0;
  if(!isHead&&select.value==='pending'&&hadFiles)select.value='submitted';
@@ -393,13 +393,13 @@ function wireTasks(isHead){document.querySelectorAll((isHead?'#tasks':'#myTasks'
     if(isHead)form.append('leader_id',selected);form.append('file',f,f.name);
     const response=await fetch(END,{method:'POST',body:form});
     let outcome;try{outcome=await response.json()}catch{throw Error('Upload server did not respond correctly');}
-    if(!response.ok||outcome.error)throw Error((outcome.error||'Upload failed')+' (server '+response.status+')');
+    if(!response.ok||outcome.error)throw Error((outcome.error||'Upload failed')+' (server '+response.status+')');if(outcome.file?.id)uploadIds.add(outcome.file.id);
    }else{
     if(f.size>52428800)throw Error('Video too large (50 MB maximum). Trim video or select a shorter clip.');
     const up=await api('upload_prepare',meta);
     const response=await fetch(up.url,{method:'PUT',headers:{'Content-Type':f.type},body:f});
     if(!response.ok){const details=await response.text();throw Error('Video upload failed: '+details.slice(0,140))}
-    await api('upload_finish',{...meta,path:up.path,entry_id:up.entry_id,name:f.name});
+    const finished=await api('upload_finish',{...meta,path:up.path,entry_id:up.entry_id,name:f.name});if(finished.file?.id)uploadIds.add(finished.file.id);
    }
    count++;uploadedPaths.add(original);
   }
@@ -409,8 +409,8 @@ function wireTasks(isHead){document.querySelectorAll((isHead?'#tasks':'#myTasks'
   const viewLeader=isHead?selected:data.leaders[0]?.id;
   const saved=result.entries.filter(x=>x.leader_id===viewLeader&&x.task_id===tid&&x.work_date===workDay);
   const visible=result.files.filter(x=>saved.some(e=>e.id===x.entry_id));
-  if(visible.length<count)throw Error('Saved file check is still pending. Refresh Head dashboard to confirm before uploading the same photos again.');
-  releasePreviews();pendingFiles=[];uploadedPaths.clear();picker.value='';chosen.textContent=count+' new photo/video file(s) saved ✓';upload.disabled=true;delete card.dataset.uploading;
+  if([...uploadIds].some(id=>!visible.some(x=>x.id===id)))throw Error('Some uploaded photos have not appeared in the server response yet. Do not reupload immediately; use Refresh to check saved proof first.');
+  releasePreviews();pendingFiles=[];uploadedPaths.clear();uploadIds.clear();picker.value='';chosen.textContent=count+' new photo/video file(s) saved ✓';upload.disabled=true;delete card.dataset.uploading;
   card.dataset.uploadVerified='1';
   card.querySelector('.result').textContent='✓ '+count+' file(s) saved to Supabase. Finishing task submission…';
  }
