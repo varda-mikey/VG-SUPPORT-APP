@@ -191,7 +191,24 @@ const entry=(leader,task,day)=>data.entries.find(e=>e.leader_id===leader&&e.task
 const link=l=>ROOT+'?leader='+encodeURIComponent(l.id)+'#key='+encodeURIComponent(l.access_token);
 const say=(msg)=>{$(mode==='head'?'message':'myMessage').textContent=msg};
 function syncState(ok){let el=$(mode==='head'?'syncBadge':'leaderSync');if(el){el.classList.toggle('offline',!ok);el.textContent=ok?'● Live sync · 12 sec':'● Offline / retry refresh'}}
-function hasUnsavedChanges(){return [...document.querySelectorAll('#headView .fileInput,#leaderView .fileInput')].some(el=>el.files?.length)||!!document.querySelector('#headView .task[data-dirty="1"]')||!$('evidenceViewer').classList.contains('hide')||!!document.querySelector('#tasks .inlineEditor:not(.hide)')||!$('addTaskBoard').classList.contains('hide');}
+function hasUnsavedChanges(){return !!document.querySelector('#myTasks .task[data-dirty="1"]')||!!document.querySelector('#myTasks .task[data-uploading="1"]')||!!document.querySelector('#headView .task[data-uploading="1"]')||[...document.querySelectorAll('#headView .fileInput,#leaderView .fileInput')].some(el=>el.files?.length)||!!document.querySelector('#headView .task[data-dirty="1"]')||!$('evidenceViewer').classList.contains('hide')||!!document.querySelector('#tasks .inlineEditor:not(.hide)')||!$('addTaskBoard').classList.contains('hide');}
+// Session-only backup of text/selection, never file bytes or private tokens.
+const draftKey=(leaderId,day,taskId)=>'vg-task-draft-v2:'+leaderId+':'+day+':'+taskId;
+function saveTaskDraft(card,leaderId,day,taskId,isHead){
+ const key=draftKey(leaderId,day,taskId);
+ try{sessionStorage.setItem(key,JSON.stringify({status:card.querySelector(isHead?'.review':'.progress')?.value,note:card.querySelector('.note')?.value||'',savedAt:Date.now()}))}catch{}
+ card.dataset.dirty='1';
+}
+function restoreTaskDraft(card,leaderId,day,taskId,isHead){
+ try{
+  const raw=sessionStorage.getItem(draftKey(leaderId,day,taskId));if(!raw)return;
+  const draft=JSON.parse(raw),field=card.querySelector(isHead?'.review':'.progress');
+  if(Date.now()-draft.savedAt>86400000){sessionStorage.removeItem(draftKey(leaderId,day,taskId));return}
+  if(field&&[...field.options].some(x=>x.value===draft.status))field.value=draft.status;
+  card.querySelector('.note').value=draft.note||'';card.dataset.dirty='1';
+ }catch{}
+}
+function clearTaskDraft(card,leaderId,day,taskId){try{sessionStorage.removeItem(draftKey(leaderId,day,taskId))}catch{}delete card.dataset.dirty}
 function headDrafts(){
  if(mode!=='head')return null;
  return {leader:selected,day:$('day').value,values:[...document.querySelectorAll('#tasks .task[data-dirty="1"]')].map(card=>({id:card.dataset.task,status:card.querySelector('.review')?.value,note:card.querySelector('.note')?.value}))};
@@ -327,9 +344,13 @@ function wireTasks(isHead){document.querySelectorAll((isHead?'#tasks':'#myTasks'
  ed.querySelector('.inlineRemoveYes').onclick=()=>removeTaskInline(card,task);
 }
  const select=card.querySelector(isHead?'.review':'.progress');select.value=isHead?v.head_status||'pending':v.leader_status||'pending';
- if(isHead){select.onchange=()=>{card.dataset.dirty='1'};card.querySelector('.note').oninput=()=>{card.dataset.dirty='1'};}
+ const currentLeader=isHead?selected:data.leaders[0]?.id;
+ // Restore unsaved text after an accidental page reload and keep refreshing from erasing it.
+ restoreTaskDraft(card,currentLeader,workDay,tid,isHead);
+ select.onchange=()=>saveTaskDraft(card,currentLeader,workDay,tid,isHead);
+ card.querySelector('.note').addEventListener('input',()=>saveTaskDraft(card,currentLeader,workDay,tid,isHead));
  const picker=card.querySelector('.fileInput'),chosen=card.querySelector('.selectedFiles'),upload=card.querySelector('.upload');
- let previews=[],pendingFiles=[];
+ let previews=[],pendingFiles=[],uploadedPaths=new Set();
  function releasePreviews(){previews.forEach(URL.revokeObjectURL);previews=[];}
  function selectedPreview(){releasePreviews();pendingFiles=[...picker.files];const files=pendingFiles;upload.disabled=!files.length;
   if(!files.length){chosen.textContent='No files selected';return;}
@@ -340,13 +361,25 @@ function wireTasks(isHead){document.querySelectorAll((isHead?'#tasks':'#myTasks'
   }).join('')+'</div><small>Ready to upload. Press the green Upload selected files button.</small>';
  }
  picker.addEventListener('click',()=>{card.querySelector('.result').textContent='Choose a photo or video from your device.';});
- picker.onchange=()=>{selectedPreview();card.querySelector('.result').textContent=pendingFiles.length?'✓ '+pendingFiles.length+' gallery/camera photo(s) ready. Tap SUBMIT & SAVE.':'No photo selected.';};upload.disabled=true;
- card.querySelector('.save').onclick=()=>perform(card,async()=>{const hadFiles=pendingFiles.length>0;if(!isHead&&select.value==='pending'&&hadFiles)select.value='submitted';const newStatus=select.value,newNote=card.querySelector('.note').value;if(hadFiles)await uploadSelected();await api('entry_save',{day:workDay,leader_id:isHead?selected:undefined,task_id:tid,status:newStatus,note:newNote});if(isHead)delete card.dataset.dirty;await load(true);say('✓ Task and attached evidence saved and visible on both dashboards.')});
+ picker.onchange=()=>{selectedPreview();card.dataset.dirty='1';card.querySelector('.result').textContent=pendingFiles.length?'✓ '+pendingFiles.length+' gallery/camera photo(s) ready. Tap SUBMIT & SAVE.':'No photo selected.';};upload.disabled=true;
+ card.querySelector('.save').onclick=()=>perform(card,async()=>{
+ const hadFiles=pendingFiles.length>0;
+ if(!isHead&&select.value==='pending'&&hadFiles)select.value='submitted';
+ const newStatus=select.value,newNote=card.querySelector('.note').value;
+ // Save text first. A weak phone connection must not discard remarks if a photo fails.
+ saveTaskDraft(card,currentLeader,workDay,tid,isHead);
+ await api('entry_save',{day:workDay,leader_id:isHead?selected:undefined,task_id:tid,status:newStatus,note:newNote});
+ // Remarks are stored even if photo upload needs a retry.
+ if(hadFiles)await uploadSelected();
+ clearTaskDraft(card,currentLeader,workDay,tid);
+ await load(true);
+ say('✓ Task and evidence saved in Supabase and visible on the Head dashboard.');
+});
  async function uploadSelected(){
-  const files=[...pendingFiles];if(!files.length)throw Error('Select a photo or video first.');
+  const files=[...pendingFiles];if(!files.length)throw Error('Select a photo or video first.');card.dataset.uploading='1';
   if(files.length>12)throw Error('Choose up to 12 files per submission. Upload the remaining pictures afterward.');
   const leaderId=isHead?selected:undefined;let count=0;
-  for(let original of files){
+  for(let original of files){if(uploadedPaths.has(original))continue;
    let f=await optimize(original);if(!['image/jpeg','image/png','image/webp','video/mp4','video/webm','video/quicktime'].includes(f.type)){throw Error('Unsupported file type ('+(original.type||original.name)+'). Choose a JPG/PNG photo or MP4 video.');}
    const meta={day:workDay,leader_id:leaderId,task_id:tid,mime:f.type,bytes:f.size};
    const feedback=card.querySelector('.result');feedback.textContent='Uploading '+(count+1)+' of '+files.length+': '+original.name;
@@ -365,7 +398,7 @@ function wireTasks(isHead){document.querySelectorAll((isHead?'#tasks':'#myTasks'
     if(!response.ok){const details=await response.text();throw Error('Video upload failed: '+details.slice(0,140))}
     await api('upload_finish',{...meta,path:up.path,entry_id:up.entry_id,name:f.name});
    }
-   count++;
+   count++;uploadedPaths.add(original);
   }
   // Do not re-render here: doing so destroys the active task form before its status/remarks are saved.
   // Final verification and UI refresh happen after entry_save succeeds.
@@ -373,15 +406,15 @@ function wireTasks(isHead){document.querySelectorAll((isHead?'#tasks':'#myTasks'
   const viewLeader=isHead?selected:data.leaders[0]?.id;
   const saved=result.entries.filter(x=>x.leader_id===viewLeader&&x.task_id===tid&&x.work_date===workDay);
   const visible=result.files.filter(x=>saved.some(e=>e.id===x.entry_id));
-  if(visible.length<count)throw Error('Uploaded files could not all be verified in saved evidence. Please refresh before retrying to avoid duplicate photos.');
-  releasePreviews();pendingFiles=[];picker.value='';chosen.textContent=count+' photo/video file(s) saved ✓';upload.disabled=true;
+  if(visible.length<count)throw Error('Saved file check is still pending. Refresh Head dashboard to confirm before uploading the same photos again.');
+  releasePreviews();pendingFiles=[];uploadedPaths.clear();picker.value='';chosen.textContent=count+' new photo/video file(s) saved ✓';upload.disabled=true;delete card.dataset.uploading;
   card.dataset.uploadVerified='1';
   card.querySelector('.result').textContent='✓ '+count+' file(s) saved to Supabase. Finishing task submission…';
  }
- upload.onclick=()=>perform(card,uploadSelected);
+ upload.onclick=()=>perform(card,async()=>{await uploadSelected();clearTaskDraft(card,currentLeader,workDay,tid);await load(true)});
 })}
 
-async function perform(card,fn){let buttons=card.querySelectorAll('button'),msg=card.querySelector('.result');buttons.forEach(b=>b.disabled=true);msg.textContent='Processing…';try{await fn();msg.textContent='✓ Completed';msg.style.color='#146b3a'}catch(e){msg.textContent='⚠ Upload/save failed: '+e.message;msg.style.color='#a02020';const global=$(mode==='head'?'message':'myMessage');if(global)global.textContent=msg.textContent;}finally{buttons.forEach(b=>b.disabled=false)}}
+async function perform(card,fn){let buttons=card.querySelectorAll('button'),msg=card.querySelector('.result');buttons.forEach(b=>b.disabled=true);msg.textContent='Processing…';try{await fn();msg.textContent='✓ Completed';msg.style.color='#146b3a'}catch(e){msg.textContent='⚠ Upload/save failed: '+e.message;msg.style.color='#a02020';const global=$(mode==='head'?'message':'myMessage');if(global)global.textContent=msg.textContent;}finally{delete card.dataset.uploading;buttons.forEach(b=>b.disabled=false)}}
 function isPhotoFile(file){
  return /^image\//i.test(file.type||'')||/\.(heic|heif|jpe?g|png|webp|gif|bmp|tiff?)$/i.test(file.name||'');
 }
