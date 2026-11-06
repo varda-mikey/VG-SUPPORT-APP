@@ -245,7 +245,7 @@ $('evidenceViewer').addEventListener('touchend',e=>{if(viewerStartX===null)retur
 document.addEventListener('keydown',e=>{if($('evidenceViewer').classList.contains('hide'))return;if(e.key==='Escape')viewerClose();else if(e.key==='ArrowLeft')viewerShow(viewerIndex-1);else if(e.key==='ArrowRight')viewerShow(viewerIndex+1)});
 document.addEventListener('click',e=>{const target=e.target.closest?.('#headView .evidencePreview');if(target){e.preventDefault();viewerOpen(target.dataset.evidenceId)}});
 
-function taskCard(t,v,isHead){return '<article class="task" data-task="'+enc(t.id)+'"><div class="taskHeading"><div class="category">'+enc(t.category)+'<span class="period">'+enc((t.frequency||'daily').toUpperCase())+'</span></div>'+(isHead?'<button type="button" class="editPencil editCategory" title="Edit category name" aria-label="Edit category '+enc(t.category)+'">✎ Category</button>':'')+'</div><div class="taskHeading"><h3>'+enc(t.title)+'</h3>'+(isHead?'<button type="button" class="editPencil editTitle" title="Edit this checklist task" aria-label="Edit task '+enc(t.title)+'">✎ Edit Task</button><button type="button" class="editPencil editDelete" aria-label="Remove task '+enc(t.title)+'">− Remove</button>':'')+'</div><div class="inlineEditor hide" aria-label="Task editor"><label>Task name<input class="taskNameInput" value="'+enc(t.title)+'"></label><label>Category<input class="taskCategoryInput" value="'+enc(t.category)+'"></label><label>Repeat<select class="taskFrequencyInput"><option value="daily">Daily</option><option value="monthly">Monthly</option></select></label><div class="inlineActions"><button type="button" class="main inlineSave">Save Changes</button><button type="button" class="inlineCancel">Cancel</button><button type="button" class="taskRemove inlineRemove">Remove This Task</button></div><div class="inlineConfirm hide"><strong>Remove this task from the active checklist?</strong><p class="muted">Previous submissions and evidence remain saved.</p><div class="inlineActions"><button type="button" class="taskRemove inlineRemoveYes">Yes, Remove Task</button><button type="button" class="inlineRemoveNo">Keep Task</button></div></div><small class="taskEditMessage">Changes apply to this leader&#39;s future checklist. Previous report records are retained.</small></div><div class="taskContent">'+(isHead?'<div><label>Leader progress<input disabled value="'+enc(status(v.leader_status||'pending'))+'"></label><p class="muted">Leader note: '+enc(v.leader_note||'—')+'</p><label>Your review <select class="review"><option value="pending">Not reviewed</option><option value="complete">✓ Complete</option><option value="incomplete">△ Incomplete</option><option value="no-output">✕ No output</option><option value="na">N/A</option></select></label></div><div><label>Head remarks<textarea class="note" placeholder="Findings and required correction">'+enc(v.head_note||'')+'</textarea></label></div>':'<div><label>① Status ng task<select class="progress"><option value="pending">Not yet started</option><option value="working">Working on it / In progress</option><option value="submitted">✓ Done — Submit to Head</option></select></label><label>② Ano ang ginawa mo? (remarks)<textarea class="note" placeholder="Halimbawa: Na-check ang inventory, price tags at expiry dates.">'+enc(v.leader_note||'')+'</textarea></label></div><div><p class="muted">Status sa Head: <strong>'+enc(status(v.head_status||'pending'))+'</strong></p><p class="muted">'+enc(v.head_note||'')+'</p></div>')+'</div><section class="taskEvidence"><div class="savedLabel">📷 UPLOADED PHOTOS & VIDEOS — '+data.files.filter(f=>f.entry_id===v.id).length+' saved · Tap photo to preview</div><div class="files savedGallery">'+(evidence(v.id)||'<span class="muted">No saved evidence for this task/date yet.</span>')+'</div></section><div class="taskFooter"><input type="file" class="fileInput" aria-label="Choose actual photo or video proof" accept="image/*,video/mp4,video/webm,video/quicktime" multiple><div class="selectedFiles">No new files selected</div><button type="button" class="upload">＋ Add More Photos</button><button class="save main">'+(isHead?'Save Review':'✓ SUBMIT & SAVE TASK')+'</button><small class="muted">Photos are saved together with the report. Existing photos remain available.</small></div><div class="muted result"></div></article>'}
+function taskCard(t,v,isHead){return '<article class="task" data-task="'+enc(t.id)+'"><div class="taskHeading"><div class="category">'+enc(t.category)+'<span class="period">'+enc((t.frequency||'daily').toUpperCase())+'</span></div>'+(isHead?'<button type="button" class="editPencil editCategory" title="Edit category name" aria-label="Edit category '+enc(t.category)+'">✎ Category</button>':'')+'</div><div class="taskHeading"><h3>'+enc(t.title)+'</h3>'+(isHead?'<button type="button" class="editPencil editTitle" title="Edit this checklist task" aria-label="Edit task '+enc(t.title)+'">✎ Edit Task</button><button type="button" class="editPencil editDelete" aria-label="Remove task '+enc(t.title)+'">− Remove</button>':'')+'</div><div class="inlineEditor hide" aria-label="Task editor"><label>Task name<input class="taskNameInput" value="'+enc(t.title)+'"></label><label>Category<input class="taskCategoryInput" value="'+enc(t.category)+'"></label><label>Repeat<select class="taskFrequencyInput"><option value="daily">Daily</option><option value="monthly">Monthly</option></select></label><div class="inlineActions"><button type="button" class="main inlineSave">Save Changes</button><button type="button" class="inlineCancel">Cancel</button><button type="button" class="taskRemove inlineRemove">Remove This Task</button></div><div class="inlineConfirm hide"><strong>Remove this task from the active checklist?</strong><p class="muted">Previous submissions and evidence remain saved.</p><div class="inlineActions"><button type="button" class="taskRemove inlineRemoveYes">Yes, Remove Task</button><button type="button" class="inlineRemoveNo">Keep Task</button></div></div><small class="taskEditMessage">Changes apply to this leader&#39;s future checklist. Previous report records are retained.</small></div><div class="taskContent">'+(isHead?'<div><label>Leader progress<input disabled value="'+enc(status(v.leader_status||'pending'))+'"></label><p class="muted">Leader note: '+enc(v.leader_note||'—')+'</p><label>Your review <select class="review"><option value="pending">Not reviewed</option><option value="complete">✓ Complete</option><option value="incomplete">△ Incomplete</option><option value="no-output">✕ No output</option><option value="na">N/A</option></select></label></div><div><label>Head remarks<textarea class="note" placeholder="Findings and required correction">'+enc(v.head_note||'')+'</textarea></label></div>':'<div><label>① Status ng task<select class="progress"><option value="pending">Not yet started</option><option value="working">Working on it / In progress</option><option value="submitted">✓ Done — Submit to Head</option></select></label><label>② Ano ang ginawa mo? (remarks)<textarea class="note" placeholder="Halimbawa: Na-check ang inventory, price tags at expiry dates.">'+enc(v.leader_note||'')+'</textarea></label></div><div><p class="muted">Status sa Head: <strong>'+enc(status(v.head_status||'pending'))+'</strong></p><p class="muted">'+enc(v.head_note||'')+'</p></div>')+'</div><section class="taskEvidence"><div class="savedLabel">📷 UPLOADED PHOTOS & VIDEOS — '+data.files.filter(f=>f.entry_id===v.id).length+' saved · Tap photo to preview</div><div class="files savedGallery">'+(evidence(v.id)||'<span class="muted">No saved evidence for this task/date yet.</span>')+'</div></section><div class="taskFooter"><input type="file" class="fileInput" aria-label="Choose actual photo or video proof" accept="image/*,.heic,.heif,.jpg,.jpeg,.png,.webp,video/mp4,video/webm,video/quicktime" multiple><div class="selectedFiles">No new files selected</div><button type="button" class="upload">＋ Add More Photos</button><button class="save main">'+(isHead?'Save Review':'✓ SUBMIT & SAVE TASK')+'</button><small class="muted">Photos are saved together with the report. Existing photos remain available.</small></div><div class="muted result"></div></article>'}
 function openTaskEditor(card,task,focusField='title'){
  if(isViewer)return;
  document.querySelectorAll('#tasks .inlineEditor').forEach(el=>{if(el!==card.querySelector('.inlineEditor'))el.classList.add('hide')});
@@ -283,25 +283,25 @@ function wireTasks(isHead){document.querySelectorAll((isHead?'#tasks':'#myTasks'
  const select=card.querySelector(isHead?'.review':'.progress');select.value=isHead?v.head_status||'pending':v.leader_status||'pending';
  if(isHead){select.onchange=()=>{card.dataset.dirty='1'};card.querySelector('.note').oninput=()=>{card.dataset.dirty='1'};}
  const picker=card.querySelector('.fileInput'),chosen=card.querySelector('.selectedFiles'),upload=card.querySelector('.upload');
- let previews=[];
+ let previews=[],pendingFiles=[];
  function releasePreviews(){previews.forEach(URL.revokeObjectURL);previews=[];}
- function selectedPreview(){releasePreviews();const files=[...picker.files];upload.disabled=!files.length;
+ function selectedPreview(){releasePreviews();pendingFiles=[...picker.files];const files=pendingFiles;upload.disabled=!files.length;
   if(!files.length){chosen.textContent='No files selected';return;}
   chosen.innerHTML='<strong>✓ '+files.length+' photo/video selected — tap SUBMIT & SAVE below.</strong><div class="pendingPreview">'+files.map(f=>{
    const u=URL.createObjectURL(f);previews.push(u);
-   const thumb=f.type.startsWith('image/')?'<img src="'+enc(u)+'" alt="Selected image preview">':'<span>🎬 Video</span>';
+   const isPhoto=isPhotoFile(f);const thumb=isPhoto?'<img src="'+enc(u)+'" alt="Selected image preview" onerror="this.style.display=\'none\';this.insertAdjacentText(\'afterend\',\'📷 Gallery photo selected\')">':'<span>🎬 Video</span>';
    return '<span>'+thumb+'<span class="filename">'+enc(f.name)+' ('+Math.ceil(f.size/1024)+' KB)</span></span>';
   }).join('')+'</div><small>Ready to upload. Press the green Upload selected files button.</small>';
  }
  picker.addEventListener('click',()=>{card.querySelector('.result').textContent='Choose a photo or video from your device.';});
- picker.onchange=()=>{selectedPreview();card.querySelector('.result').textContent=picker.files.length?'✓ Photo ready. Tap green SUBMIT & SAVE TASK.':'No photo selected.';};upload.disabled=true;
- card.querySelector('.save').onclick=()=>perform(card,async()=>{const hadFiles=picker.files.length>0;if(!isHead&&select.value==='pending'&&hadFiles)select.value='submitted';const newStatus=select.value,newNote=card.querySelector('.note').value;if(hadFiles)await uploadSelected();await api('entry_save',{day:workDay,leader_id:isHead?selected:undefined,task_id:tid,status:newStatus,note:newNote});if(isHead)delete card.dataset.dirty;await load(true);say('✓ Task and attached evidence saved and visible on both dashboards.')});
+ picker.onchange=()=>{selectedPreview();card.querySelector('.result').textContent=pendingFiles.length?'✓ '+pendingFiles.length+' gallery/camera photo(s) ready. Tap SUBMIT & SAVE.':'No photo selected.';};upload.disabled=true;
+ card.querySelector('.save').onclick=()=>perform(card,async()=>{const hadFiles=pendingFiles.length>0;if(!isHead&&select.value==='pending'&&hadFiles)select.value='submitted';const newStatus=select.value,newNote=card.querySelector('.note').value;if(hadFiles)await uploadSelected();await api('entry_save',{day:workDay,leader_id:isHead?selected:undefined,task_id:tid,status:newStatus,note:newNote});if(isHead)delete card.dataset.dirty;await load(true);say('✓ Task and attached evidence saved and visible on both dashboards.')});
  async function uploadSelected(){
-  const files=[...picker.files];if(!files.length)throw Error('Select a photo or video first.');
+  const files=[...pendingFiles];if(!files.length)throw Error('Select a photo or video first.');
   if(files.length>12)throw Error('Choose up to 12 files per submission. Upload the remaining pictures afterward.');
   const leaderId=isHead?selected:undefined;let count=0;
   for(let original of files){
-   let f=await optimize(original);if(!['image/jpeg','image/png','image/webp','video/mp4','video/webm','video/quicktime'].includes(f.type)){throw Error('This device selected '+(original.type||'an unsupported image format')+'. Please use a JPG or PNG photo. If your iPhone photo is HEIC, open it and save or share it as JPEG first.');}
+   let f=await optimize(original);if(!['image/jpeg','image/png','image/webp','video/mp4','video/webm','video/quicktime'].includes(f.type)){throw Error('Unsupported file type ('+(original.type||original.name)+'). Choose a JPG/PNG photo or MP4 video.');}
    const meta={day:workDay,leader_id:leaderId,task_id:tid,mime:f.type,bytes:f.size};
    const feedback=card.querySelector('.result');feedback.textContent='Uploading '+(count+1)+' of '+files.length+': '+original.name;
    if(f.size<=4800000){
@@ -328,7 +328,7 @@ function wireTasks(isHead){document.querySelectorAll((isHead?'#tasks':'#myTasks'
   const saved=result.entries.filter(x=>x.leader_id===viewLeader&&x.task_id===tid&&x.work_date===workDay);
   const visible=result.files.filter(x=>saved.some(e=>e.id===x.entry_id));
   if(visible.length<count)throw Error('Uploaded files could not all be verified in saved evidence. Please refresh before retrying to avoid duplicate photos.');
-  releasePreviews();picker.value='';chosen.textContent=count+' photo/video file(s) saved ✓';upload.disabled=true;
+  releasePreviews();pendingFiles=[];picker.value='';chosen.textContent=count+' photo/video file(s) saved ✓';upload.disabled=true;
   card.dataset.uploadVerified='1';
   card.querySelector('.result').textContent='✓ '+count+' file(s) saved to Supabase. Finishing task submission…';
  }
@@ -336,7 +336,55 @@ function wireTasks(isHead){document.querySelectorAll((isHead?'#tasks':'#myTasks'
 })}
 
 async function perform(card,fn){let buttons=card.querySelectorAll('button'),msg=card.querySelector('.result');buttons.forEach(b=>b.disabled=true);msg.textContent='Processing…';try{await fn();msg.textContent='✓ Completed';msg.style.color='#146b3a'}catch(e){msg.textContent='⚠ Upload/save failed: '+e.message;msg.style.color='#a02020';const global=$(mode==='head'?'message':'myMessage');if(global)global.textContent=msg.textContent;}finally{buttons.forEach(b=>b.disabled=false)}}
-async function optimize(file){if(!file.type.startsWith('image/'))return file;if(file.size<90000&&file.type==='image/jpeg')return file;return new Promise(resolve=>{let img=new Image(),url=URL.createObjectURL(file);img.onload=()=>{try{let scale=Math.min(1,1600/Math.max(img.width,img.height)),canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(img.width*scale));canvas.height=Math.max(1,Math.round(img.height*scale));canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);canvas.toBlob(blob=>{URL.revokeObjectURL(url);{const small=blob?new File([blob],file.name.replace(/\.[^.]+$/,'.jpg'),{type:'image/jpeg'}):file;resolve(small.size<file.size?small:file)}},'image/jpeg',.56)}catch{URL.revokeObjectURL(url);resolve(file)}};img.onerror=()=>{URL.revokeObjectURL(url);resolve(file)};img.src=url})}
+function isPhotoFile(file){
+ return /^image\//i.test(file.type||'')||/\.(heic|heif|jpe?g|png|webp|gif|bmp|tiff?)$/i.test(file.name||'');
+}
+function isHeicFile(file){
+ return /image\/(heic|heif)/i.test(file.type||'')||/\.(heic|heif)$/i.test(file.name||'');
+}
+function photoToJpeg(file){
+ return new Promise((resolve,reject)=>{
+  const url=URL.createObjectURL(file),img=new Image();let finished=false;
+  const finish=(error,value)=>{if(finished)return;finished=true;clearTimeout(timeout);URL.revokeObjectURL(url);if(error)reject(error);else resolve(value)};
+  const timeout=setTimeout(()=>finish(Error('The gallery image could not be opened. On iPhone, open the photo in Photos and use Share → Save to Files as JPEG, or enable Camera → Formats → Most Compatible for future photos.')),25000);
+  img.onload=()=>{
+   try{
+    if(!img.naturalWidth||!img.naturalHeight)throw Error('Gallery photo is empty or unsupported.');
+    const scale=Math.min(1,1600/Math.max(img.naturalWidth,img.naturalHeight));
+    const canvas=document.createElement('canvas');
+    canvas.width=Math.max(1,Math.round(img.naturalWidth*scale));
+    canvas.height=Math.max(1,Math.round(img.naturalHeight*scale));
+    const ctx=canvas.getContext('2d');
+    if(!ctx)throw Error('Image conversion is unavailable on this device.');
+    ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.drawImage(img,0,0,canvas.width,canvas.height);
+    canvas.toBlob(blob=>{
+     if(!blob||!blob.size){finish(Error('Photo compression failed. Try a smaller image or export this photo as JPEG.'));return}
+     const jpeg=new File([blob],(file.name||'gallery-photo').replace(/\.[^.]+$/, '')+'.jpg',{type:'image/jpeg'});
+     finish(null,jpeg);
+    },'image/jpeg',.68);
+   }catch(e){finish(e)}
+  };
+  img.onerror=()=>finish(Error('Your browser cannot decode this gallery photo ('+(file.name||'HEIC/HEIF')+'). Open it in Photos and share/export as JPEG, then try again.'));
+  img.src=url;
+ });
+}
+async function optimize(file){
+ if(!isPhotoFile(file))return file;
+ const heic=isHeicFile(file),nativePhoto=['image/jpeg','image/png','image/webp'].includes(file.type);
+ if(nativePhoto&&file.size<=4800000&&!heic&&file.size<90000)return file;
+ try{
+  const jpg=await photoToJpeg(file);
+  // Always convert HEIC/HEIF and gallery formats with a missing MIME type to JPEG.
+  if(heic||!nativePhoto||file.size>4800000)return jpg;
+  return jpg.size<file.size?jpg:file;
+ }catch(err){
+  // Do not silently send HEIC as an unsupported type.
+  if(heic||!nativePhoto||file.size>4800000)throw err;
+  return file;
+ }
+}
+
 const monthNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
 function archiveSetDate(d){historyYear=d.slice(0,4);historyMonth=d.slice(5,7)}
 function archiveOptions(){
