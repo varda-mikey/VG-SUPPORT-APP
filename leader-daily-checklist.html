@@ -295,9 +295,10 @@ function wireTasks(isHead){document.querySelectorAll((isHead?'#tasks':'#myTasks'
  }
  picker.addEventListener('click',()=>{card.querySelector('.result').textContent='Choose a photo or video from your device.';});
  picker.onchange=()=>{selectedPreview();card.querySelector('.result').textContent=picker.files.length?'✓ Photo ready. Tap green SUBMIT & SAVE TASK.':'No photo selected.';};upload.disabled=true;
- card.querySelector('.save').onclick=()=>perform(card,async()=>{if(!isHead&&select.value==='pending'&&picker.files.length)select.value='submitted';if(picker.files.length)await uploadSelected();await api('entry_save',{day:workDay,leader_id:isHead?selected:undefined,task_id:tid,status:select.value,note:card.querySelector('.note').value});if(isHead)delete card.dataset.dirty;await load(true);say('✓ Task saved. Your Head can view it now.')});
+ card.querySelector('.save').onclick=()=>perform(card,async()=>{const hadFiles=picker.files.length>0;if(!isHead&&select.value==='pending'&&hadFiles)select.value='submitted';const newStatus=select.value,newNote=card.querySelector('.note').value;if(hadFiles)await uploadSelected();await api('entry_save',{day:workDay,leader_id:isHead?selected:undefined,task_id:tid,status:newStatus,note:newNote});if(isHead)delete card.dataset.dirty;await load(true);say('✓ Task and attached evidence saved and visible on both dashboards.')});
  async function uploadSelected(){
   const files=[...picker.files];if(!files.length)throw Error('Select a photo or video first.');
+  if(files.length>12)throw Error('Choose up to 12 files per submission. Upload the remaining pictures afterward.');
   const leaderId=isHead?selected:undefined;let count=0;
   for(let original of files){
    let f=await optimize(original);if(!['image/jpeg','image/png','image/webp','video/mp4','video/webm','video/quicktime'].includes(f.type)){throw Error('This device selected '+(original.type||'an unsupported image format')+'. Please use a JPG or PNG photo. If your iPhone photo is HEIC, open it and save or share it as JPEG first.');}
@@ -320,14 +321,16 @@ function wireTasks(isHead){document.querySelectorAll((isHead?'#tasks':'#myTasks'
    }
    count++;
   }
-  releasePreviews();picker.value='';chosen.textContent=count+' file(s) uploaded successfully ✓';upload.disabled=true;
-  const result=await api('load',{day:isHead?$('day').value:$('myDay').value});
-  data=result;const viewLeader=isHead?selected:data.leaders[0]?.id;
+  // Do not re-render here: doing so destroys the active task form before its status/remarks are saved.
+  // Final verification and UI refresh happen after entry_save succeeds.
+  const result=await api('load',{day:workDay});
+  const viewLeader=isHead?selected:data.leaders[0]?.id;
   const saved=result.entries.filter(x=>x.leader_id===viewLeader&&x.task_id===tid&&x.work_date===workDay);
-  const visible=result.files.some(x=>saved.some(e=>e.id===x.entry_id));
-  if(!visible)throw Error('Upload completed but photo did not appear in saved evidence. Please retry or report this message.');
-  if(isHead)renderHead();else renderLeader();
-  say('✓ '+count+' attachment(s) saved and visible on both dashboards.');
+  const visible=result.files.filter(x=>saved.some(e=>e.id===x.entry_id));
+  if(visible.length<count)throw Error('Uploaded files could not all be verified in saved evidence. Please refresh before retrying to avoid duplicate photos.');
+  releasePreviews();picker.value='';chosen.textContent=count+' photo/video file(s) saved ✓';upload.disabled=true;
+  card.dataset.uploadVerified='1';
+  feedback.textContent='✓ '+count+' file(s) saved to Supabase. Finishing task submission…';
  }
  upload.onclick=()=>perform(card,uploadSelected);
 })}
