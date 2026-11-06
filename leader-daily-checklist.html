@@ -330,7 +330,7 @@ function wireTasks(isHead){document.querySelectorAll((isHead?'#tasks':'#myTasks'
   if(visible.length<count)throw Error('Uploaded files could not all be verified in saved evidence. Please refresh before retrying to avoid duplicate photos.');
   releasePreviews();picker.value='';chosen.textContent=count+' photo/video file(s) saved ✓';upload.disabled=true;
   card.dataset.uploadVerified='1';
-  feedback.textContent='✓ '+count+' file(s) saved to Supabase. Finishing task submission…';
+  card.querySelector('.result').textContent='✓ '+count+' file(s) saved to Supabase. Finishing task submission…';
  }
  upload.onclick=()=>perform(card,uploadSelected);
 })}
