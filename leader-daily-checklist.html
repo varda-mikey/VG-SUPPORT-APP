@@ -266,6 +266,15 @@ input:focus,select:focus,textarea:focus{border-color:#906571}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}button,.task{transition:none!important}}
 @media print{#leaderView,.headActivity{display:none!important}}
 
+/* Multiple photo upload progress · small iPhone-safe list rather than memory-heavy thumbnails */
+.batchFiles{display:grid;gap:6px;margin:9px 0}
+.batchFile{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 10px;background:#fff;border:1px solid #e5e9ee;border-radius:10px;font-size:12px}
+.batchName{flex:1;min-width:0;overflow-wrap:anywhere}
+.batchState{flex:none;border-radius:30px;padding:5px 9px;font-weight:750;background:#f4f6f9;color:#5b6474}
+.batchState.ok{background:#e1f7e9;color:#157342}
+.batchState.failed{background:#feeaea;color:#a52c2c}
+.batchState.uploading{background:#e4efff;color:#225c9e}
+@media(max-width:560px){.batchFile{font-size:11px}.batchState{padding:5px 7px}}
 </style></head><body><header><small>NATIONAL RETAIL HEAD • VARDA GROUP</small><h1>LEADER TASK CHECKLIST</h1><div class="headnav"><a href="index.html">← VG Support Home</a><span id="sessionTitle">Shared daily output monitoring</span><button id="signout" class="hide">Sign out</button></div></header>
 <main><section id="headLogin" class="login panel"><h2>National Retail Head</h2><p class="muted">Sign in with your existing Generals & Missions / Retail Audit head password.</p><form id="loginForm"><label>Head password <input id="password" type="password" autocomplete="current-password" required style="width:100%;display:block;margin:8px 0"></label><button class="main" type="submit">Open checking board</button></form><p id="loginError" class="pending"></p></section>
 <section id="headView" class="hide"><div class="toolbar"><div class="actions"><label>Evaluation date<input id="day" type="date"></label><label>Region<select id="region"><option value="">All regions</option></select></label><button id="headToday" class="main" type="button">Today / Show All</button><button id="refresh">↻ Refresh</button><span class="syncBadge" id="syncBadge">● Live sync</span></div><div class="actions"><button id="manageToggle">⚙ Edit Task List</button><span id="ceoLinkControls" class="actions"><button type="button" id="createCEO" title="Create a private CEO view-only link">🔗 Create CEO View Link</button><button type="button" id="resetCEO" title="Disable previous CEO link and make a new one">Reset CEO Link</button></span><button id="individualReport" class="main">Print Leader A4</button><button id="jpegLeaderReport" class="main" title="Download one-page JPEG report with photos and comments">📷 Save 1-Page JPEG</button><button id="allReport">All Leaders Daily Summary A4</button><button id="monthReport">Monthly Summary A4</button></div></div>
@@ -534,18 +543,31 @@ function wireTasks(isHead){document.querySelectorAll((isHead?'#tasks':'#myTasks'
   statusBar.textContent=message;
   if(typeof percent==='number'){const bar=document.createElement('progress');bar.max=100;bar.value=percent;statusBar.appendChild(bar)}
  }
- let previews=[],pendingFiles=[],uploadedPaths=new Set(),uploadIds=new Set();
+ let previews=[],pendingFiles=[],uploadedPaths=new Set(),uploadIds=new Set(),fileStates=new Map();
+ function fileKey(file){return [file.name,file.size,file.lastModified,file.type].join(' | ')}
+ function renderBatch(){
+  if(!pendingFiles.length)return;
+  const saved=pendingFiles.filter(f=>uploadedPaths.has(f)).length;
+  const failed=pendingFiles.filter(f=>fileStates.get(f)==='failed').length;
+  const queued=pendingFiles.length-saved-failed;
+  const rows=pendingFiles.map((f,i)=>'<div class="batchFile">'+
+   '<span class="batchName">'+(i+1)+'. '+enc(f.name||'Gallery photo')+'</span>'+
+   '<span class="batchState '+(uploadedPaths.has(f)?'ok':fileStates.get(f)||'waiting')+'">'+
+   (uploadedPaths.has(f)?'✓ Saved':fileStates.get(f)==='failed'?'⚠ Retry needed':fileStates.get(f)==='uploading'?'⏳ Uploading': 'Ready')+'</span></div>').join('');
+  chosen.innerHTML='<strong>'+saved+'/'+pendingFiles.length+' photos uploaded'+(failed?' · '+failed+' failed':'')+'</strong>'+
+   '<div class="batchFiles">'+rows+'</div>'+
+   '<small>'+(failed?'Tap Retry Failed Photos; saved photos will not be uploaded again.':queued?'Tap SUBMIT & SAVE TASK to upload all photos.':'All selected photos have been saved.')+'</small>';
+  upload.textContent=failed?'↻ Retry Failed Photos':'＋ Upload Selected Photos';
+ }
  function releasePreviews(){previews.forEach(URL.revokeObjectURL);previews=[];}
- function selectedPreview(){releasePreviews();pendingFiles=[...picker.files];const files=pendingFiles;upload.disabled=!files.length;
-  if(!files.length){chosen.textContent='No files selected';return;}
-  chosen.innerHTML='<strong>✓ '+files.length+' photo/video selected — tap SUBMIT & SAVE below.</strong><div class="pendingPreview">'+files.map(f=>{
-   const u=URL.createObjectURL(f);previews.push(u);
-   const isPhoto=isPhotoFile(f);const thumb=isPhoto?'<img src="'+enc(u)+'" alt="Selected image preview" onerror="this.style.display=\'none\';this.insertAdjacentText(\'afterend\',\'📷 Gallery photo selected\')">':'<span>🎬 Video</span>';
-   return '<span>'+thumb+'<span class="filename">'+enc(f.name)+' ('+Math.ceil(f.size/1024)+' KB)</span></span>';
-  }).join('')+'</div><small>Ready to upload. Press the green Upload selected files button.</small>';
+ function selectedPreview(){
+  releasePreviews();pendingFiles=[...picker.files];upload.disabled=!pendingFiles.length;
+  if(!pendingFiles.length){chosen.textContent='No files selected';return}
+  // Avoid decoding 8-12 full-resolution iPhone photos simultaneously: that can close Safari.
+  renderBatch();
  }
  picker.addEventListener('click',()=>{card.querySelector('.result').textContent='Choose a photo or video from your device.';});
- picker.onchange=()=>{uploadedPaths.clear();uploadIds.clear();selectedPreview();card.dataset.dirty='1';phase(pendingFiles.length?'waiting':'waiting',pendingFiles.length?pendingFiles.length+' photo(s) selected — tap SUBMIT & SAVE':'Ready to submit');card.querySelector('.result').textContent=pendingFiles.length?'✓ '+pendingFiles.length+' gallery/camera photo(s) ready. Tap SUBMIT & SAVE.':'No photo selected.';};upload.disabled=true;
+ picker.onchange=()=>{uploadedPaths.clear();uploadIds.clear();fileStates.clear();selectedPreview();card.dataset.dirty='1';phase(pendingFiles.length?'waiting':'waiting',pendingFiles.length?pendingFiles.length+' photo(s) selected — tap SUBMIT & SAVE':'Ready to submit');card.querySelector('.result').textContent=pendingFiles.length?'✓ '+pendingFiles.length+' gallery/camera photo(s) ready. Tap SUBMIT & SAVE.':'No photo selected.';};upload.disabled=true;
  card.querySelector('.save').onclick=()=>perform(card,async()=>{
  const hadFiles=pendingFiles.length>0;
  // The green action explicitly submits a completed task, rather than saving a pending draft.
@@ -573,52 +595,79 @@ function wireTasks(isHead){document.querySelectorAll((isHead?'#tasks':'#myTasks'
  say('✓ Server verified '+count.submitted+'/'+count.total+' submitted task(s). Head and leader read the same records.');
 });
  async function uploadSelected(){
-  const files=[...pendingFiles];if(!files.length)throw Error('Select a photo or video first.');card.dataset.uploading='1';
-  if(files.length>12)throw Error('Choose up to 12 files per submission. Upload the remaining pictures afterward.');
-  const leaderId=isHead?selected:undefined;let count=0;
-  for(let original of files){if(uploadedPaths.has(original))continue;
-   phase('uploading','Preparing photo '+(count+1)+' of '+files.length+' for upload…',Math.round(17+65*count/files.length));
-   let f=await optimize(original);if(!['image/jpeg','image/png','image/webp','video/mp4','video/webm','video/quicktime'].includes(f.type)){throw Error('Unsupported file type ('+(original.type||original.name)+'). Choose a JPG/PNG photo or MP4 video.');}
-   const meta={day:workDay,leader_id:leaderId,task_id:tid,mime:f.type,bytes:f.size};
-   const feedback=card.querySelector('.result');feedback.textContent='Uploading '+(count+1)+' of '+files.length+': '+original.name;
-   phase('uploading','Uploading '+(count+1)+' of '+files.length+' · '+original.name,Math.round(20+65*count/files.length));
-   if(f.size>52428800)throw Error('File too large: maximum 50 MB. Trim the video or select fewer files.');
-   // Supabase signed uploads bypass restrictive phone/browser multipart handling.
-   // Fallback only if preparation fails, before any storage write is attempted.
-   let up;
-   try{up=await api('upload_prepare',meta)}
-   catch(prepareError){
-    if(f.size>4800000)throw Error('Secure upload link unavailable. Check mobile data/Wi-Fi and retry: '+prepareError.message);
-    phase('uploading','Using compatible upload mode for '+original.name+'…',Math.round(25+65*count/files.length));
-    const form=new FormData();form.append('action','upload_file');
-    form.append(isHead?'headToken':'leader',isHead?headToken:leaderToken);
-    form.append('day',workDay);form.append('task_id',tid);
-    if(isHead)form.append('leader_id',selected);
-    form.append('file',f,f.name);
-    const outcome=await sendMultipartWithProgress(form,(pct)=>phase('uploading','Uploading '+(count+1)+' of '+files.length+' · '+pct+'%',Math.round(20+65*(count+pct/100)/files.length)));
-    if(outcome.file?.id)uploadIds.add(outcome.file.id);
-    else throw Error('Server did not return a saved photo ID. Please check saved evidence before retrying.');
+  if(!pendingFiles.length)throw Error('Select photos first.');
+  if(pendingFiles.length>12)throw Error('Select up to 12 photos per batch; upload the rest afterward.');
+  card.dataset.uploading='1';
+  let savedThisRun=0;const failures=[];const total=pendingFiles.length;
+  for(let i=0;i<total;i++){
+   const original=pendingFiles[i];
+   if(uploadedPaths.has(original))continue;
+   fileStates.set(original,'uploading');renderBatch();
+   phase('uploading','Uploading '+(i+1)+' of '+total+' photos · '+original.name,Math.round(i/total*85));
+   try{
+    const f=await optimize(original);
+    if(!['image/jpeg','image/png','image/webp','video/mp4','video/webm','video/quicktime'].includes(f.type))
+     throw Error('Unsupported file format. Try exporting this image as JPEG.');
+    if(f.size>52428800)throw Error('Maximum 50 MB per file.');
+    const meta={day:workDay,leader_id:isHead?selected:undefined,task_id:tid,mime:f.type,bytes:f.size};
+    let fileId='';
+    // Small, compressed photos use the original server-side upload, proven on mobile.
+    // Larger files use Supabase signed-storage upload to avoid Edge Function size limits.
+    if(f.size<=4500000){
+     const form=new FormData();
+     form.append('action','upload_file');
+     form.append(isHead?'headToken':'leader',isHead?headToken:leaderToken);
+     form.append('day',workDay);form.append('task_id',tid);
+     if(isHead)form.append('leader_id',selected);
+     form.append('file',f,f.name);
+     const outcome=await sendMultipartWithProgress(form,pct=>phase('uploading','Photo '+(i+1)+'/'+total+' · '+pct+'% sent',Math.round((i+pct/100)/total*90)));
+     fileId=outcome.file?.id||'';
+    }else{
+     const up=await api('upload_prepare',meta);
+     await putSignedWithProgress(up.url,f,pct=>phase('uploading','Photo '+(i+1)+'/'+total+' · '+pct+'% sent',Math.round((i+pct/100)/total*90)));
+     const finished=await api('upload_finish',{...meta,path:up.path,entry_id:up.entry_id,name:f.name});
+     fileId=finished.file?.id||'';
+    }
+    if(!fileId)throw Error('Server did not confirm a saved attachment.');
+    // A returned file ID is durable server confirmation. Never retry it as a new upload.
+    uploadIds.add(fileId);uploadedPaths.add(original);
+    fileStates.set(original,'saved');savedThisRun++;
+    renderBatch();phase('uploading','✓ Photo '+(i+1)+'/'+total+' saved · uploading remaining photos…',Math.round((i+1)/total*92));
+   }catch(error){
+    fileStates.set(original,'failed');failures.push((original.name||'Photo '+(i+1))+': '+(error?.message||String(error)));
+    renderBatch();
+    phase('failed','⚠ Photo '+(i+1)+' failed; continuing with other photos.',Math.round((i+1)/total*85));
    }
-   if(up){
-    phase('uploading','Securely uploading '+(count+1)+' of '+files.length+'…',Math.round(20+65*count/files.length));
-    await putSignedWithProgress(up.url,f,pct=>phase('uploading','Uploading '+(count+1)+' of '+files.length+' · '+pct+'%',Math.round(20+65*(count+pct/100)/files.length)));
-    phase('uploading','Photo uploaded · registering evidence on Head board…',Math.round(20+65*(count+.95)/files.length));
-    const finished=await api('upload_finish',{...meta,path:up.path,entry_id:up.entry_id,name:f.name});
-    if(!finished.file?.id)throw Error('Photo reached storage but was not registered. Check the Head evidence before uploading again.');
-    uploadIds.add(finished.file.id);
-   }
-   count++;uploadedPaths.add(original);phase('uploading','Uploaded '+count+' of '+files.length+' photo(s) · verifying…',Math.round(20+65*count/files.length));
   }
-  // Do not re-render here: doing so destroys the active task form before its status/remarks are saved.
-  // Final verification and UI refresh happen after entry_save succeeds.
-  const result=await api('load',{day:workDay});
-  const viewLeader=isHead?selected:data.leaders[0]?.id;
-  const saved=result.entries.filter(x=>x.leader_id===viewLeader&&x.task_id===tid&&x.work_date===workDay);
-  const visible=result.files.filter(x=>saved.some(e=>e.id===x.entry_id));
-  if([...uploadIds].some(id=>!visible.some(x=>x.id===id)))throw Error('Some uploaded photos have not appeared in the server response yet. Do not reupload immediately; use Refresh to check saved proof first.');
-  releasePreviews();pendingFiles=[];uploadedPaths.clear();uploadIds.clear();picker.value='';chosen.textContent=count+' new photo/video file(s) saved ✓';upload.disabled=true;delete card.dataset.uploading;
-  card.dataset.uploadVerified='1';phase('verified','✓ UPLOADED & VERIFIED · '+count+' new photo(s) saved to Supabase',100);
-  card.querySelector('.result').textContent='✓ '+count+' file(s) saved to Supabase. Finishing task submission…';
+  // Independently confirm every successful file appears in the same shared Head/leader data.
+  let verificationError='';
+  try{
+   const latest=await api('load',{day:workDay}),leaderId=isHead?selected:data.leaders[0]?.id;
+   const rec=latest.entries.find(e=>e.leader_id===leaderId&&e.task_id===tid&&e.work_date===workDay);
+   const verified=latest.files.filter(f=>f.entry_id===rec?.id);
+   for(const id of uploadIds)if(!verified.some(f=>f.id===id)){verificationError='A saved photo is not appearing in the report yet. Please refresh before retrying.';break}
+   if(!verificationError){
+    data=latest;
+    const gallery=card.querySelector('.savedGallery'),label=card.querySelector('.savedLabel');
+    if(gallery){gallery.innerHTML=evidence(rec?.id)||'<span class="muted">No saved evidence.</span>';card.dataset.galleryCount=String(verified.length)}
+    if(label)label.textContent='📷 UPLOADED PHOTOS & VIDEOS — '+verified.length+' saved · Tap photo to preview';
+   }
+  }catch(e){verificationError='Photos were saved, but the verification request failed: '+e.message}
+  const saved=uploadedPaths.size;
+  renderBatch();
+  if(failures.length){
+   const message=saved+'/'+total+' photos saved. '+failures.length+' failed. Tap Retry Failed Photos. '+failures[0];
+   phase('failed',message);
+   card.querySelector('.result').textContent=message;
+   // Keep file handles and successful-file IDs in memory so retry uploads failed files only.
+   throw Error(message);
+  }
+  if(verificationError){phase('failed',verificationError);throw Error(verificationError)}
+  phase('verified','✓ UPLOADED & VERIFIED · '+saved+'/'+total+' photos saved for the Head',100);
+  card.querySelector('.result').textContent='✓ '+saved+'/'+total+' photos verified and visible on Head dashboard.';
+  chosen.textContent='✓ '+saved+'/'+total+' photos uploaded and verified';
+  upload.disabled=true;releasePreviews();pendingFiles=[];uploadedPaths.clear();uploadIds.clear();fileStates.clear();picker.value='';
+  delete card.dataset.uploading;
  }
  upload.onclick=()=>perform(card,async()=>{await uploadSelected();card.dataset.dirty='1';card.querySelector('.result').textContent='✓ Photos uploaded. Your current typed remarks remain; tap SUBMIT & SAVE TASK to save remarks.'});
 })}
