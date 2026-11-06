@@ -646,12 +646,29 @@ async function saveTaskInline(card,task){
  const ed=card.querySelector('.inlineEditor'),title=ed.querySelector('.taskNameInput').value.trim(),category=ed.querySelector('.taskCategoryInput').value.trim(),frequency=ed.querySelector('.taskFrequencyInput').value;
  if(!title||!category){ed.querySelector('.taskEditMessage').textContent='Enter both a task name and category.';return}
  const btn=ed.querySelector('.inlineSave');btn.disabled=true;ed.querySelector('.taskEditMessage').textContent='Saving…';
- try{await api('task_save',{leader_id:selected,day:$('day').value,id:task.id,title,category,frequency,category_order:task.category_order,task_order:task.task_order});await load(true);say('✓ Task edited ONLY for '+$('day').value+'. Other dates unchanged.')}
+ try{await api('task_save',{leader_id:selected,day:$('day').value,id:task.id,title,category,frequency,category_order:task.category_order,task_order:task.task_order});ed.classList.add('hide');await load(false);say('✓ Task edited ONLY for '+$('day').value+'. Other dates unchanged.')}
  catch(e){ed.querySelector('.taskEditMessage').textContent=e.message}finally{btn.disabled=false}
 }
 async function removeTaskInline(card,task){
- // The Head confirms removal using the inline editor controls.
- try{await api('task_disable',{leader_id:selected,day:$('day').value,id:task.id});await load(true);say('✓ Task removed ONLY from '+$('day').value+'. Other dates preserved.')}catch(e){say('Removal failed: '+e.message)}
+ // Force a full redraw after the mutation. Quiet refresh intentionally preserves open editors,
+ // which previously made a deleted task look as though the Remove button did nothing.
+ const day=$('day').value,leaderId=selected,ed=card.querySelector('.inlineEditor');
+ const btn=ed.querySelector('.inlineRemoveYes'),message=ed.querySelector('.taskEditMessage');
+ if(btn.disabled)return;
+ btn.disabled=true;btn.textContent='Removing…';message.textContent='Removing task for '+day+'…';
+ try{
+  await api('task_disable',{leader_id:leaderId,day,id:task.id});
+  const verified=await api('load',{day});
+  if(verified.tasks.some(t=>t.id===task.id&&t.leader_id===leaderId)){
+   throw Error('The server still lists this task for '+day+'. Please retry.');
+  }
+  ed.classList.add('hide');
+  await load(false);
+  say('✓ Task removed from '+day+' only. Other dates and leaders preserved.');
+ }catch(e){
+  message.textContent='⚠ Removal failed: '+e.message;
+  say('Removal failed: '+e.message);
+ }finally{btn.disabled=false;btn.textContent='Yes, Remove Task'}
 }
 function wireTasks(isHead){document.querySelectorAll((isHead?'#tasks':'#myTasks')+' .task').forEach(card=>{
  const tid=card.dataset.task,task=data.tasks.find(t=>t.id===tid),workDay=taskDay(task,isHead?$('day').value:$('myDay').value),v=entry(isHead?selected:data.leaders[0]?.id,tid,workDay);
@@ -1006,7 +1023,7 @@ $('editLeader').onclick=async()=>{let l=data.leaders.find(x=>x.id===selected);if
 $('rotate').onclick=async()=>{if(!selected||!confirm('Reset this leader’s personal link? The old link will stop working.'))return;try{await api('rotate_link',{id:selected});await load(true);say('New personal link created. Forward the updated link to this leader.')}catch(e){say(e.message)}};
 $('manageToggle').onclick=()=>{$('manage').classList.toggle('hide');renderEditor();if(!$('manage').classList.contains('hide'))$('manage').scrollIntoView({behavior:'smooth'})};
 $('closeManage').onclick=()=>$('manage').classList.add('hide');
-function renderEditor(){if(!selected){$('taskEditor').innerHTML='<p>Select a leader to edit their duties.</p>';return;}$('taskEditor').innerHTML=leaderTasks(selected).map(t=>'<div class="editrow" data-edit="'+enc(t.id)+'"><input class="cat" aria-label="Category" value="'+enc(t.category)+'"><input class="title" aria-label="Task" value="'+enc(t.title)+'"><div class="actions"><select class="frequency"><option value="daily">Daily</option><option value="monthly">Monthly</option></select><button class="saveEdit main">Save changes</button><button class="deleteEdit">Remove</button></div></div>').join('');document.querySelectorAll('[data-edit]').forEach(row=>{let t=data.tasks.find(x=>x.id===row.dataset.edit);row.querySelector('.frequency').value=t.frequency||'daily';row.querySelector('.frequency').disabled=true;row.querySelector('.saveEdit').onclick=async()=>{try{await api('task_save',{leader_id:selected,day:$('day').value,id:t.id,category:row.querySelector('.cat').value,title:row.querySelector('.title').value,frequency:row.querySelector('.frequency').value,category_order:t.category_order,task_order:t.task_order});await load(true);say('✓ Only '+$('day').value+' updated for this leader.')}catch(e){say(e.message)}};row.querySelector('.deleteEdit').onclick=async()=>{if(!confirm('Remove this task ONLY for '+$('day').value+'? Other dates will stay unchanged.'))return;try{await api('task_disable',{id:t.id,leader_id:selected,day:$('day').value});await load(true);say('✓ Removed only from '+$('day').value+'.')}catch(e){say(e.message)}}})}
+function renderEditor(){if(!selected){$('taskEditor').innerHTML='<p>Select a leader to edit their duties.</p>';return;}$('taskEditor').innerHTML=leaderTasks(selected).map(t=>'<div class="editrow" data-edit="'+enc(t.id)+'"><input class="cat" aria-label="Category" value="'+enc(t.category)+'"><input class="title" aria-label="Task" value="'+enc(t.title)+'"><div class="actions"><select class="frequency"><option value="daily">Daily</option><option value="monthly">Monthly</option></select><button class="saveEdit main">Save changes</button><button class="deleteEdit">Remove</button></div></div>').join('');document.querySelectorAll('[data-edit]').forEach(row=>{let t=data.tasks.find(x=>x.id===row.dataset.edit);row.querySelector('.frequency').value=t.frequency||'daily';row.querySelector('.frequency').disabled=true;row.querySelector('.saveEdit').onclick=async()=>{try{await api('task_save',{leader_id:selected,day:$('day').value,id:t.id,category:row.querySelector('.cat').value,title:row.querySelector('.title').value,frequency:row.querySelector('.frequency').value,category_order:t.category_order,task_order:t.task_order});await load(true);say('✓ Only '+$('day').value+' updated for this leader.')}catch(e){say(e.message)}};row.querySelector('.deleteEdit').onclick=async()=>{if(!confirm('Remove this task ONLY for '+$('day').value+'? Other dates will stay unchanged.'))return;try{await api('task_disable',{id:t.id,leader_id:selected,day:$('day').value});await load(false);say('✓ Removed only from '+$('day').value+'.')}catch(e){say(e.message)}}})}
 $('openAddTask').onclick=()=>{if(!selected||isViewer)return;$('addTaskBoard').classList.remove('hide');$('addDateLabel').textContent=$('day').value;$('newTaskTitle').focus()};
 $('addTask').onclick=()=>$('openAddTask').click();
 $('cancelNewTask').onclick=()=>$('addTaskBoard').classList.add('hide');
