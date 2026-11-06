@@ -269,6 +269,11 @@ input:focus,select:focus,textarea:focus{border-color:#906571}
 /* Mobile retry button is revealed only while photos are selected or need retry */
 #leaderView .task.hasFiles .taskFooter .upload{display:block;min-height:49px;background:#f3f6fb;color:#284b71;border:1px solid #ccd9e8;border-radius:12px;width:100%}
 #leaderView .task.hasFiles .taskFooter .upload:disabled{opacity:.55}
+/* iPhone-friendly file selector, with strong visual ready state */
+#leaderView .fileInput{display:block;width:100%;min-height:65px;background:#f5fafc;border:2px dashed #95abc4;border-radius:14px;padding:13px 10px;cursor:pointer}
+#leaderView .fileInput::file-selector-button{background:#eff4fb;color:#264a70;border:1px solid #bacce2;border-radius:10px;padding:12px;font-weight:750}
+#leaderView .task.hasFiles .selectedFiles{border:1px solid #b8dfc9;background:#f1fcf6}
+#leaderView .task.hasFiles .uploadStatus.waiting{border-color:#b8dfc9;background:#edfaf2;color:#176842}
 /* Multiple photo upload progress · small iPhone-safe list rather than memory-heavy thumbnails */
 .batchFiles{display:grid;gap:6px;margin:9px 0}
 .batchFile{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 10px;background:#fff;border:1px solid #e5e9ee;border-radius:10px;font-size:12px}
@@ -316,6 +321,14 @@ const END='https://lwjeroszacnqibggxair.supabase.co/functions/v1/leader-checklis
 const $=id=>document.getElementById(id),enc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
 const today=()=>{let p=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Manila',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());let o=Object.fromEntries(p.map(x=>[x.type,x.value]));return o.year+'-'+o.month+'-'+o.day};
 let headToken=sessionStorage.getItem('vg-head-checklist-token')||'',ceoToken='',isViewer=false,leaderToken='',data={leaders:[],tasks:[],entries:[],files:[]},selected='',mode='head',loading=false,reportMode='leader',historyLeader='',historyMonth='',historyYear='';
+let galleryPickerOpen=false, galleryReturnTimer=null;
+function setGalleryPickerOpen(open){
+ galleryPickerOpen=!!open;
+ if(galleryReturnTimer){clearTimeout(galleryReturnTimer);galleryReturnTimer=null}
+}
+window.addEventListener('focus',()=>{if(galleryPickerOpen)galleryReturnTimer=setTimeout(()=>setGalleryPickerOpen(false),2500)});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&galleryPickerOpen)galleryReturnTimer=setTimeout(()=>setGalleryPickerOpen(false),2500)});
+
 const params=new URLSearchParams(location.search);if(params.has('ceo')){isViewer=true;mode='head';ceoToken=new URLSearchParams(location.hash.replace(/^#/,'' )).get('key')||'';headToken='';document.body.classList.add('viewerMode')}else if(params.has('leader')){mode='leader';leaderToken=new URLSearchParams(location.hash.replace(/^#/,'' )).get('key')||'';}
 $('day').value=today();$('myDay').value=today();
 const api=async(action,payload={})=>{const r=await fetch(END,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,headToken:mode==='head'&&!isViewer?headToken:undefined,ceoToken:isViewer?ceoToken:undefined,leader:mode==='leader'?leaderToken:undefined,...payload})});let x;try{x=await r.json()}catch{throw Error('Server unavailable')};if(!r.ok||x.error)throw Error(x.error||'Request failed');return x};
@@ -332,7 +345,7 @@ const link=l=>ROOT+'?leader='+encodeURIComponent(l.id)+'#key='+encodeURIComponen
 const say=(msg)=>{$(mode==='head'?'message':'myMessage').textContent=msg};
 function syncState(ok){let el=$(mode==='head'?'syncBadge':'leaderSync');if(el){el.classList.toggle('offline',!ok);el.textContent=ok?'● Live sync · 12 sec':'● Offline / retry refresh'}}
 function quietLiveRefresh(){
- if(loading||document.querySelector('.task[data-uploading="1"]'))return;
+ if(loading||document.hidden||galleryPickerOpen||document.querySelector('.task[data-uploading="1"]'))return;
  loading=true;
  const day=mode==='head'?$('day').value:$('myDay').value;
  api('load',{day}).then(fresh=>{
@@ -391,7 +404,7 @@ function quietLiveRefresh(){
  }).catch(()=>syncState(false)).finally(()=>{loading=false});
 }
 
-function hasUnsavedChanges(){return !!document.querySelector('#myTasks .task[data-dirty="1"]')||!!document.querySelector('#myTasks .task[data-uploading="1"]')||!!document.querySelector('#headView .task[data-uploading="1"]')||[...document.querySelectorAll('#headView .fileInput,#leaderView .fileInput')].some(el=>el.files?.length)||!!document.querySelector('#headView .task[data-dirty="1"]')||!$('evidenceViewer').classList.contains('hide')||!!document.querySelector('#tasks .inlineEditor:not(.hide)')||!$('addTaskBoard').classList.contains('hide');}
+function hasUnsavedChanges(){return galleryPickerOpen||!!document.querySelector('#myTasks .task[data-dirty="1"]')||!!document.querySelector('#myTasks .task[data-uploading="1"]')||!!document.querySelector('#headView .task[data-uploading="1"]')||[...document.querySelectorAll('#headView .fileInput,#leaderView .fileInput')].some(el=>el.files?.length)||!!document.querySelector('#headView .task[data-dirty="1"]')||!$('evidenceViewer').classList.contains('hide')||!!document.querySelector('#tasks .inlineEditor:not(.hide)')||!$('addTaskBoard').classList.contains('hide');}
 // Session-only backup of text/selection, never file bytes or private tokens.
 const draftKey=(leaderId,day,taskId)=>'vg-task-draft-v2:'+leaderId+':'+day+':'+taskId;
 function saveTaskDraft(card,leaderId,day,taskId,isHead){
@@ -418,7 +431,14 @@ function restoreHeadDrafts(d){
  d.values.forEach(v=>{const card=[...document.querySelectorAll('#tasks .task')].find(x=>x.dataset.task===v.id);if(!card)return;card.querySelector('.review').value=v.status;card.querySelector('.note').value=v.note;card.dataset.dirty='1'});
 }
 
-async function load(quiet=false){if(loading)return;loading=true;try{let old=selected,drafts=headDrafts();data=await api('load',{day:mode==='head'?$('day').value:$('myDay').value});if(mode==='head'){selected=data.leaders.some(l=>l.id===old)?old:(data.leaders.find(l=>l.active!==false)?.id||data.leaders[0]?.id||'');renderHead();restoreHeadDrafts(drafts);previousHeadDate=$('day').value}else renderLeader();syncState(true);if(!quiet){say('Updated '+new Date().toLocaleTimeString('en-PH'));if(mode==='head')renderHistory()}}catch(e){syncState(false);if(!quiet)say(e.message);if(mode==='head'&&/sign in/i.test(e.message))logout()}finally{loading=false}}
+async function load(quiet=false){
+ if(loading)return;
+ // Never replace a live iOS file picker or a form that has unsaved photo selections.
+ if(quiet&&(galleryPickerOpen||hasUnsavedChanges())){
+  quietLiveRefresh();
+  return;
+ }
+ loading=true;try{let old=selected,drafts=headDrafts();data=await api('load',{day:mode==='head'?$('day').value:$('myDay').value});if(mode==='head'){selected=data.leaders.some(l=>l.id===old)?old:(data.leaders.find(l=>l.active!==false)?.id||data.leaders[0]?.id||'');renderHead();restoreHeadDrafts(drafts);previousHeadDate=$('day').value}else renderLeader();syncState(true);if(!quiet){say('Updated '+new Date().toLocaleTimeString('en-PH'));if(mode==='head')renderHistory()}}catch(e){syncState(false);if(!quiet)say(e.message);if(mode==='head'&&/sign in/i.test(e.message))logout()}finally{loading=false}}
 function openHead(){$('headLogin').classList.add('hide');$('headView').classList.remove('hide');$('signout').classList.remove('hide');$('sessionTitle').textContent='Head Review Board';load();}
 function logout(){headToken='';sessionStorage.removeItem('vg-head-checklist-token');$('headView').classList.add('hide');$('headLogin').classList.remove('hide');$('signout').classList.add('hide')}
 $('signout').onclick=logout;
@@ -635,18 +655,46 @@ function wireTasks(isHead){document.querySelectorAll((isHead?'#tasks':'#myTasks'
    (uploadedPaths.has(f)?'✓ Saved':fileStates.get(f)==='failed'?'⚠ Retry needed':fileStates.get(f)==='uploading'?'⏳ Uploading': 'Ready')+'</span></div>').join('');
   chosen.innerHTML='<strong>'+saved+'/'+pendingFiles.length+' photos uploaded'+(failed?' · '+failed+' failed':'')+'</strong>'+
    '<div class="batchFiles">'+rows+'</div>'+
-   '<small>'+(failed?'Tap Retry Failed Photos; saved photos will not be uploaded again.':queued?'Tap SUBMIT & SAVE TASK to upload all photos.':'All selected photos have been saved.')+'</small>';
+   '<small>'+(failed?'Retry Failed Photos only uploads missing files.':queued?'You can select more photos from the gallery before submitting.':'All selected photos have been saved.')+'</small>';
   upload.textContent=failed?'↻ Retry Failed Photos':'＋ Upload Selected Photos';
  }
  function releasePreviews(){previews.forEach(URL.revokeObjectURL);previews=[];}
- function selectedPreview(){
-  releasePreviews();pendingFiles=[...picker.files];upload.disabled=!pendingFiles.length;
-  if(!pendingFiles.length){chosen.textContent='No files selected';return}
-  // Avoid decoding 8-12 full-resolution iPhone photos simultaneously: that can close Safari.
+ function selectedPreview(newFiles){
+  if(!newFiles.length){
+   if(!pendingFiles.length)chosen.textContent='No files selected';
+   return;
+  }
+  // Keep previously selected photos: iOS replaces input.files after every gallery selection.
+  const keys=new Set(pendingFiles.map(fileKey));
+  for(const file of newFiles){
+   if(pendingFiles.length>=12)break;
+   const key=fileKey(file);
+   if(!keys.has(key)){pendingFiles.push(file);keys.add(key)}
+  }
+  upload.disabled=!pendingFiles.length;
+  card.classList.toggle('hasFiles',pendingFiles.length>0);
+  if(pendingFiles.length)card.dataset.dirty='1';
   renderBatch();
+  phase('waiting',pendingFiles.length+' photo(s) ready · tap SUBMIT & SAVE TASK');
+  card.querySelector('.result').textContent='✓ '+pendingFiles.length+' selected. Photos stay queued while you add more.';
  }
- picker.addEventListener('click',()=>{card.querySelector('.result').textContent='Choose a photo or video from your device.';});
- picker.onchange=()=>{uploadedPaths.clear();uploadIds.clear();fileStates.clear();selectedPreview();card.classList.toggle('hasFiles',pendingFiles.length>0);card.dataset.dirty='1';phase(pendingFiles.length?'waiting':'waiting',pendingFiles.length?pendingFiles.length+' photo(s) selected — tap SUBMIT & SAVE':'Ready to submit');card.querySelector('.result').textContent=pendingFiles.length?'✓ '+pendingFiles.length+' gallery/camera photo(s) ready. Tap SUBMIT & SAVE.':'No photo selected.';};upload.disabled=true;
+ picker.addEventListener('click',()=>{
+  if(card.dataset.uploading==='1')return;
+  setGalleryPickerOpen(true);
+  // Re-selecting the same photo must fire change on iPhone Safari.
+  // Existing queued Files remain in pendingFiles, not in input.files.
+  picker.value='';
+  card.querySelector('.result').textContent='Opening gallery… selected photos will remain queued.';
+ });
+ picker.addEventListener('cancel',()=>{setGalleryPickerOpen(false);phase('waiting',pendingFiles.length?pendingFiles.length+' photo(s) still ready':'No photos selected');});
+ picker.onchange=()=>{
+  setGalleryPickerOpen(false);
+  const fresh=[...picker.files];
+  selectedPreview(fresh);
+  picker.value=''; // permit the same photo or another group to be chosen next
+ };
+ upload.disabled=true;
+
  card.querySelector('.save').onclick=()=>perform(card,async()=>{
  const hadFiles=pendingFiles.length>0;
  // The green action explicitly submits a completed task, rather than saving a pending draft.
@@ -1166,8 +1214,8 @@ else if(isViewer&&ceoToken){$('headLogin').classList.add('hide');$('headView').c
 else if(headToken)openHead();
 window.addEventListener('beforeunload',e=>{if(hasUnsavedChanges()){e.preventDefault();e.returnValue=''}});
 setInterval(()=>{if(mode==='leader'&&leaderToken&&$('myDay').value!==today()&&!hasUnsavedChanges()&&!document.querySelector('input:focus,textarea:focus,select:focus')){$('myDay').value=today();load(true);say('New day: checklist reset for '+today()+'. Older reports remain saved.');return;}if(mode==='leader'&&leaderToken||mode==='head'&&(headToken||isViewer&&ceoToken)){
- if(!hasUnsavedChanges()&&!document.querySelector('input:focus,textarea:focus,select:focus'))load(true);
- else quietLiveRefresh();
+ // Background sync updates counters/photos without rebuilding native iOS input elements.
+ quietLiveRefresh();
 }},12000);
 })();
 </script></body></html>
