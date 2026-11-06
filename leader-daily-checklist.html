@@ -292,12 +292,45 @@ input:focus,select:focus,textarea:focus{border-color:#906571}
 .evidenceDeleteActions .confirmDeleteEvidence{background:#a32f3d;color:white}
 .evidenceDeleteActions .cancelDeleteEvidence{background:white;color:#603b40;border:1px solid #dfc8c8}
 body.viewerMode .removeEvidence{display:none!important}
+/* Clean photo-first gallery. Filenames are accessible to screen readers, not displayed. */
+.visuallyHidden{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+.taskEvidence .savedGallery .evidence{min-width:0;overflow:visible;border-radius:13px;padding:6px;background:#fff;gap:3px;box-shadow:0 2px 8px #23334e0b}
+.taskEvidence .savedGallery .evidenceThumb{display:block;width:100%;height:165px;object-fit:cover;border:0;border-radius:9px;background:#eff2f6}
+.taskEvidence .savedGallery .evidencePreview{width:100%;border:0;padding:0;background:transparent}
+.taskEvidence .savedGallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(125px,1fr));gap:9px}
+.taskEvidence .savedGallery .evidence .removeEvidence{min-height:37px;margin-top:4px;background:#fff5f5;color:#93333e;font-size:11px;box-shadow:none}
+.leaderExport{display:flex;gap:16px;padding:23px;background:linear-gradient(125deg,#fff,#fbf7f9);border:1px solid #e6dce1;border-radius:20px;margin:20px 0 26px;box-shadow:0 9px 30px #392f4e0d}
+.leaderExport.ready{border-color:#b8ddc7;background:linear-gradient(125deg,#f3fcf6,#fff)}
+.leaderExport .exportIcon{flex:0 0 52px;height:52px;display:grid;place-items:center;border-radius:14px;background:#f2e8ed;font-size:24px}
+.leaderExport h3{margin:0 0 6px;font-size:20px;color:#2d3443;letter-spacing:-.03em}
+.leaderExport p{line-height:1.55;font-size:13px;margin:5px 0 12px;color:#657080}
+.leaderExport .exportBody{min-width:0;flex:1}
+.leaderExport .leaderExportButton{width:100%;min-height:56px;border-radius:13px;background:#168052;color:white;font-weight:800;font-size:16px}
+.leaderExport .leaderExportButton:disabled{background:#dfe5e6;color:#77818a;cursor:not-allowed}
+.leaderExport #leaderExportMessage{font-size:13px;margin:10px 0 0;color:#2b7451}
+.leaderExportPreview{margin-top:13px;border:1px solid #dde5e0;border-radius:12px;padding:10px;background:white}
+.leaderExportPreview img{width:100%;max-width:560px;height:auto;display:block;margin:auto;border-radius:8px;box-shadow:0 3px 12px #0001}
+@media(max-width:600px){.leaderExport{padding:17px 14px;gap:10px;border-radius:16px}.leaderExport .exportIcon{flex-basis:43px;height:43px;font-size:20px}.leaderExport h3{font-size:18px}.taskEvidence .savedGallery{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.taskEvidence .savedGallery .evidenceThumb{height:140px}}
 </style></head><body><header><small>NATIONAL RETAIL HEAD • VARDA GROUP</small><h1>LEADER TASK CHECKLIST</h1><div class="headnav"><a href="index.html">← VG Support Home</a><span id="sessionTitle">Shared daily output monitoring</span><button id="signout" class="hide">Sign out</button></div></header>
 <main><section id="headLogin" class="login panel"><h2>National Retail Head</h2><p class="muted">Sign in with your existing Generals & Missions / Retail Audit head password.</p><form id="loginForm"><label>Head password <input id="password" type="password" autocomplete="current-password" required style="width:100%;display:block;margin:8px 0"></label><button class="main" type="submit">Open checking board</button></form><p id="loginError" class="pending"></p></section>
 <section id="headView" class="hide"><div class="toolbar"><div class="actions"><label>Evaluation date<input id="day" type="date"></label><label>Region<select id="region"><option value="">All regions</option></select></label><button id="headToday" class="main" type="button">Today / Show All</button><button id="refresh">↻ Refresh</button><span class="syncBadge" id="syncBadge">● Live sync</span></div><div class="actions"><button id="manageToggle">⚙ Edit Task List</button><span id="ceoLinkControls" class="actions"><button type="button" id="createCEO" title="Create a private CEO view-only link">🔗 Create CEO View Link</button><button type="button" id="resetCEO" title="Disable previous CEO link and make a new one">Reset CEO Link</button></span><button id="individualReport" class="main">Print Leader A4</button><button id="jpegLeaderReport" class="main" title="Download one-page JPEG report with photos and comments">📷 Save 1-Page JPEG</button><button id="allReport">All Leaders Daily Summary A4</button><button id="monthReport">Monthly Summary A4</button></div></div>
 <div id="headActivity" class="headActivity"></div><div class="layout"><aside class="panel"><div class="heading"><h2>Leaders</h2><button id="addLeader" class="main">+ Add</button></div><p class="muted">Select a leader to review outputs. Copy their private personal link for phone submissions.</p><label class="muted" style="display:flex;align-items:center;gap:8px;margin:10px 0"><input type="checkbox" id="showArchivedLeaders"> Show archived leaders</label><div class="people" id="people"></div><button id="archiveLeader" class="danger" style="margin-top:10px">Archive selected leader</button><button id="editLeader" style="margin-top:10px">Edit selected leader</button><button id="rotate" style="margin-top:10px">Reset personal link</button></aside><section class="panel"><div class="heading"><div><h2 id="leaderName">Select leader</h2><div id="leaderMeta" class="muted"></div></div><div class="actions"><button type="button" id="openAddTask" class="main">＋ Add Task</button><button id="copyLink" class="main">Copy personal link</button></div></div><div id="stats" class="kpis"></div><div id="headSelectedSummary" class="headSelectedSummary"></div><p class="viewerReadOnly muted">View-only access · Editing and grading are disabled. Private reports are for authorized management viewing.</p><div id="addTaskBoard" class="addTaskBoard hide"><h3 style="margin:0">Add task for selected leader</h3><label>Task name<input id="newTaskTitle" placeholder="Describe the daily duty"></label><label>Category<input id="newTaskCategory" placeholder="Example: Operations"></label><label>Repeat<select id="newTaskFrequency"><option value="daily">Every day</option><option value="monthly">Monthly</option></select></label><div class="inlineActions"><button type="button" class="main" id="submitNewTask">Save New Task</button><button type="button" id="cancelNewTask">Cancel</button></div><small id="newTaskMessage" class="muted"></small></div><div id="tasks" class="tasks"><p class="muted">Select a leader.</p></div><div id="historyPanel" class="history"><div class="heading"><h3>Saved reports by date</h3><button id="historyRefresh">Load History</button></div><div class="archiveControls"><label>Year<select id="archiveYear"></select></label><label>Month<select id="archiveMonth"></select></label><button id="archiveToday">Today</button><button id="deleteReportDay" class="danger">Delete Selected Day</button></div><p class="muted">Saved automatically by Year → Month → Date. Select any date to view its report and attached proof.</p><div id="archiveSummary" class="archiveSummary"></div><div id="historyDays" class="calendarDays"></div><p class="muted">Green = submitted, yellow = partial, red = no daily report, faded = future. Deletion is permanent and reserved for the National Retail Head.</p></div><p id="message" role="status"></p></section></div>
 <section id="manage" class="panel manage hide"><div class="heading"><h2>Customize selected leader's checklist</h2><button id="addTask" class="main">+ Add output task</button></div><p class="muted">Add, edit or remove duties for the selected leader only. Other leaders' forms do not change. Earlier submissions stay in their records.</p><div id="taskEditor"></div><button id="closeManage">Done editing</button></section></section>
-<section id="leaderView" class="hide"><div class="panel leaderBanner"><small>MY PERSONAL DAILY DASHBOARD</small><h2 id="myName"></h2><p class="muted" id="myMeta"></p><div class="toolbar"><label>Work date<input id="myDay" type="date"></label><button id="myToday">Today / New Daily Checklist</button><button id="myRefresh">↻ Refresh</button></div><div class="leaderSteps"><span>① Isulat ang ginawa mo</span><span>② Piliin ang photo proof</span><span>③ Tap SUBMIT &amp; SAVE</span></div><p class="hint">📱 <b>Madali lang:</b> Ilagay ang remarks at pictures ng actual work. Tap ang green <b>SUBMIT &amp; SAVE TASK</b>. Makikita mo ang Uploading at Verified status. Automatic ding makikita ng Head ang naisave.</p><div id="leaderProgress" aria-live="polite"></div><button type="button" id="approvedOpenAgain" class="approvedReportAgain hide">✓ View 100% Completed Daily Report</button><p class="syncBadge" id="leaderSync">● Live sync</p></div><div id="myTasks" class="tasks"></div><p id="myMessage" role="status"></p></section>
+<section id="leaderView" class="hide"><div class="panel leaderBanner"><small>MY PERSONAL DAILY DASHBOARD</small><h2 id="myName"></h2><p class="muted" id="myMeta"></p><div class="toolbar"><label>Work date<input id="myDay" type="date"></label><button id="myToday">Today / New Daily Checklist</button><button id="myRefresh">↻ Refresh</button></div><div class="leaderSteps"><span>① Isulat ang ginawa mo</span><span>② Piliin ang photo proof</span><span>③ Tap SUBMIT &amp; SAVE</span></div><p class="hint">📱 <b>Madali lang:</b> Ilagay ang remarks at pictures ng actual work. Tap ang green <b>SUBMIT &amp; SAVE TASK</b>. Makikita mo ang Uploading at Verified status. Automatic ding makikita ng Head ang naisave.</p><div id="leaderProgress" aria-live="polite"></div><button type="button" id="approvedOpenAgain" class="approvedReportAgain hide">✓ View 100% Completed Daily Report</button><p class="syncBadge" id="leaderSync">● Live sync</p></div><div id="myTasks" class="tasks"></div>
+<section class="leaderExport" aria-labelledby="leaderExportTitle">
+ <div class="exportIcon" aria-hidden="true">📄</div>
+ <div class="exportBody">
+  <h3 id="leaderExportTitle">My Daily A4 Report</h3>
+  <p id="leaderExportHint">Submit all tasks to unlock your one-page JPEG report with photos and remarks.</p>
+  <button type="button" id="leaderSaveA4" class="leaderExportButton" disabled>⬇ Save My A4 JPEG Report</button>
+  <p id="leaderExportMessage" role="status" aria-live="polite"></p>
+  <div id="leaderExportPreview" class="leaderExportPreview hide">
+   <p>Report preview — on iPhone, touch and hold the image to save it to Photos.</p>
+   <img id="leaderExportImage" alt="My complete A4 daily output report preview">
+  </div>
+ </div>
+</section>
+<p id="myMessage" role="status"></p></section>
 <div id="approvedPopup" class="approvedBackdrop hide" role="presentation">
   <div class="approvedDialog" role="dialog" aria-modal="true" aria-labelledby="approvedTitle">
     <div class="approvedStatus">✓ HEAD REVIEW COMPLETE · 100%</div>
@@ -377,6 +410,7 @@ function quietLiveRefresh(){
    if(leader){
     const c=taskSubmission(leader.id,day);
     $('leaderProgress').innerHTML='<b>'+c.submitted+'/'+c.total+' formally submitted</b> · '+c.received+'/'+c.total+' tasks with saved photo proof · Synced with Supabase';
+    updateLeaderExportState(c);
     $('myTasks').querySelectorAll('.task').forEach(card=>{
      if(card.dataset.dirty==='1'||card.dataset.uploading==='1')return;
      const task=data.tasks.find(t=>t.id===card.dataset.task);
@@ -491,7 +525,7 @@ function evidence(entryId){
   return '<span class="evidence" data-file-id="'+enc(f.id)+'">'+
    (f.mime?.startsWith('image/')?'<button type="button" class="evidencePreview" data-evidence-id="'+enc(f.id)+'" aria-label="Preview '+enc(f.original_name)+'"><img loading="lazy" class="evidenceThumb" src="'+enc(f.url||'')+'" alt="'+enc(f.original_name)+'"></button>':
     f.mime?.startsWith('video/')?'<button type="button" class="evidencePreview" data-evidence-id="'+enc(f.id)+'" aria-label="Preview video '+enc(f.original_name)+'">▶ View video</button>':'📎')+
-   '<span title="'+enc(f.original_name)+'">'+enc(f.original_name)+'</span> '+Math.max(1,Math.round(f.bytes/1024))+' KB'+
+   '<span class="visuallyHidden">'+enc(f.original_name)+'</span>'+
    (canDelete?'<button type="button" class="removeEvidence" data-file-id="'+enc(f.id)+'" aria-label="Remove wrong upload '+enc(f.original_name)+'">🗑 Remove</button>':'')+
    '</span>';
  }).join('');
@@ -713,6 +747,7 @@ function wireTasks(isHead){document.querySelectorAll((isHead?'#tasks':'#myTasks'
  if(confirmation?.[isHead?'head_status':'leader_status']!==newStatus)throw Error('Saved status is not yet visible from the shared server. Refresh and check before retrying.');
  // Use the actual server state for the completion count.
  data=latest;
+ if(!isHead)updateLeaderExportState(taskSubmission(currentLeader,workDay));
  clearTaskDraft(card,currentLeader,workDay,tid);
  const otherPending=[...document.querySelectorAll((isHead?'#tasks':'#myTasks')+' .task')].some(other=>other!==card&&(other.querySelector('.fileInput')?.files?.length||other.dataset.dirty==='1'));
  const count=taskSubmission(currentLeader,workDay);
@@ -929,7 +964,8 @@ $('deleteReportDay').onclick=async()=>{
  if(prompt('Type DELETE to confirm permanent deletion:')!=='DELETE')return say('Deletion cancelled.');
  try{const result=await api('report_delete_day',{leader_id:selected,day});await load(true);await renderHistory();say('Deleted '+result.deleted+' saved task records for '+leader.name+' on '+day+'.')}catch(e){say('Deletion failed: '+e.message)}
 };
-function renderLeader(){let l=data.leaders[0];if(!l){$('myName').textContent='Access unavailable';return;}$('myName').textContent=l.name;$('myMeta').textContent=l.position+' • '+l.area+' • '+$('myDay').value;const tasks=leaderTasks(l.id),totals=taskSubmission(l.id,$('myDay').value),done=totals.submitted;$('leaderProgress').innerHTML='<b>'+done+' of '+tasks.length+' formally submitted</b> · <strong>'+totals.received+'/'+tasks.length+' with saved proof</strong> · '+(done===tasks.length?'✓ Completed for selected date':'Photos may already be saved even when the task needs final submission.');$('myTasks').innerHTML=tasks.map((t,i)=>{const v=entry(l.id,t.id,taskDay(t,$('myDay').value));return taskCard(t,v,false).replace('<article class="task"','<article class="task"').replace('<div class="taskHeading"><h3>','<div class="taskHeading"><h3>'+(i+1)+'. ').replace('</h3></div><div class="taskContent">','</h3></div><div class="taskState '+enc(v.leader_status||'pending')+'">'+enc(v.leader_status==='submitted'?'✓ Submitted':v.leader_status==='working'?'In progress':'Not yet submitted')+'</div><div class="taskContent">')}).join('')||'<p>No active tasks.</p>';wireTasks(false);approvalState()}
+function renderLeader(){let l=data.leaders[0];if(!l){$('myName').textContent='Access unavailable';return;}$('myName').textContent=l.name;$('myMeta').textContent=l.position+' • '+l.area+' • '+$('myDay').value;const tasks=leaderTasks(l.id),totals=taskSubmission(l.id,$('myDay').value),done=totals.submitted;
+ updateLeaderExportState(totals);$('leaderProgress').innerHTML='<b>'+done+' of '+tasks.length+' formally submitted</b> · <strong>'+totals.received+'/'+tasks.length+' with saved proof</strong> · '+(done===tasks.length?'✓ Completed for selected date':'Photos may already be saved even when the task needs final submission.');$('myTasks').innerHTML=tasks.map((t,i)=>{const v=entry(l.id,t.id,taskDay(t,$('myDay').value));return taskCard(t,v,false).replace('<article class="task"','<article class="task"').replace('<div class="taskHeading"><h3>','<div class="taskHeading"><h3>'+(i+1)+'. ').replace('</h3></div><div class="taskContent">','</h3></div><div class="taskState '+enc(v.leader_status||'pending')+'">'+enc(v.leader_status==='submitted'?'✓ Submitted':v.leader_status==='working'?'In progress':'Not yet submitted')+'</div><div class="taskContent">')}).join('')||'<p>No active tasks.</p>';wireTasks(false);approvalState()}
 $('headToday').onclick=()=>{
  if(hasUnsavedChanges()&&!confirm('You have unsaved changes. Switch to today and all regions?'))return;
  $('day').value=today();$('region').value='';$('showArchivedLeaders').checked=false;selected='';load();
@@ -1126,6 +1162,50 @@ async function buildLeaderJpegBlob(l,day){
   if(!blob)throw Error('Could not generate JPEG');
   return blob;
 }
+
+// Leader-owned A4 export: unlocked only when every active task is server-confirmed.
+let leaderExportPreviewUrl='';
+function updateLeaderExportState(counts){
+ const button=$('leaderSaveA4'),hint=$('leaderExportHint');
+ if(!button||mode!=='leader')return;
+ const done=counts.total>0&&counts.submitted===counts.total;
+ button.disabled=!done;
+ hint.textContent=done?'✓ '+counts.total+'/'+counts.total+' tasks submitted. Your A4 report is ready to save.':'Complete '+counts.submitted+'/'+counts.total+' tasks to unlock the A4 JPEG report.';
+ const section=button.closest('.leaderExport');
+ if(section)section.classList.toggle('ready',done);
+}
+async function saveMyLeaderA4(){
+ const button=$('leaderSaveA4'),message=$('leaderExportMessage'),preview=$('leaderExportPreview');
+ const leader=data.leaders[0],day=$('myDay').value;
+ if(!leader)return;
+ if(hasUnsavedChanges()){
+  message.textContent='Submit your pending remarks and photos before downloading the final report.';
+  return;
+ }
+ button.disabled=true;button.textContent='Preparing A4 report…';
+ message.textContent='Checking your completed tasks and collecting saved photos…';
+ try{
+  const fresh=await api('load',{day});
+  data=fresh;
+  const actual=fresh.leaders[0],counts=taskSubmission(actual.id,day);
+  if(!counts.total||counts.submitted!==counts.total)throw Error('Only '+counts.submitted+'/'+counts.total+' tasks are submitted. Submit every task first.');
+  message.textContent='Building your A4 JPEG with all saved photos…';
+  const blob=await buildLeaderJpegBlob(actual,day);
+  if(leaderExportPreviewUrl)URL.revokeObjectURL(leaderExportPreviewUrl);
+  leaderExportPreviewUrl=URL.createObjectURL(blob);
+  $('leaderExportImage').src=leaderExportPreviewUrl;
+  preview.classList.remove('hide');
+  downloadLeaderBlob(blob,actual,day);
+  message.textContent='✓ A4 JPEG prepared and download started. On iPhone, you can also touch and hold the preview to Save to Photos.';
+ }catch(error){
+  message.textContent='⚠ Unable to save yet: '+error.message;
+ }finally{
+  button.textContent='⬇ Save My A4 JPEG Report';
+  const counts=data.leaders[0]?taskSubmission(data.leaders[0].id,$('myDay').value):{total:0,submitted:0};
+  updateLeaderExportState(counts);
+ }
+}
+$('leaderSaveA4').onclick=saveMyLeaderA4;
 
 function leaderJpegFilename(l,day){return 'Varda_Leader_'+l.name.replace(/[^a-z0-9]+/gi,'_').slice(0,50)+'_'+day+'_Complete.jpg'}
 function downloadLeaderBlob(blob,l,day){
