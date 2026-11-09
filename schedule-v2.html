@@ -212,7 +212,7 @@ $('staffUpload').onchange=async e=>{
  const f=e.target.files&&e.target.files[0];if(!f)return;
  importMessage('Reading '+f.name+'…');
  try{
-  if(!/\\.(xlsx|xls|csv)$/i.test(f.name))throw Error('Select an Excel .xlsx, .xls, or .csv file.');
+  if(!/\.(xlsx|xls|csv)$/i.test(f.name))throw Error('Select an Excel .xlsx, .xls, or .csv file.');
   if(f.size>10000000)throw Error('Use a file smaller than 10 MB.');
   if(!window.XLSX)throw Error('Excel reader unavailable. Refresh the page or use Paste names / Excel.');
   const data=await f.arrayBuffer();
