@@ -368,10 +368,22 @@ body.viewerMode .removeEvidence{display:none!important}
 .rpDot{display:inline-block;width:10px;height:10px;border-radius:3px}
 .rpLeaderTotals{font-size:11px;margin-top:9px;color:#52565f}
 @media print{.rpCalendarGrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.rpLeaderCalendar{padding:9px}.rpCalCell{min-height:31px}.rpCalCell small{font-size:7px}.rpLeaderCalendar h3{font-size:13px}.rpCalCell.done,.rpCalCell.partial,.rpCalCell.missing{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+
+.rpMasterPage{box-sizing:border-box;background:white;color:#27313b;padding:5mm;width:100%;max-width:194mm;margin:0 auto 15px;border:1px solid #ddd;break-after:page;page-break-after:always}
+.rpMasterPage:last-child{break-after:auto;page-break-after:auto}
+.rpMasterHead{border-bottom:2px solid #79282d;padding-bottom:6px}.rpMasterHead h2{margin:5px 0!important;font-size:19px!important;color:#79282d}.rpMasterHead small{color:#626975}
+.rpMasterStats{display:flex;gap:8px;margin:8px 0;flex-wrap:wrap;font-size:10px}.rpMasterStats span{background:#f7eeec;padding:5px 8px;border-radius:5px}
+.rpMasterPage .rpCalendarGrid{display:block;margin:0}.rpMasterPage .rpLeaderCalendar{padding:0;border:none;background:none}
+.rpMasterPage .rpLeaderCalendar h3,.rpMasterPage .rpLeaderCalendar .rpArea,.rpMasterPage .rpLeaderTotals{display:none}
+.rpMasterPage .rpCalLegend{margin:5px 0}.rpMasterPage .rpCalCell{min-height:25px}
+.rpMasterPhotos{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}.rpMasterPhoto{margin:0;padding:4px;border:1px solid #e5e5e5;border-radius:5px;background:#f7f8fa;break-inside:avoid}
+.rpMasterPhoto img{width:100%;height:88px;object-fit:contain;background:white}.rpMasterPhoto figcaption{font-size:9px;margin-top:3px}
+.rpMasterFoot{margin-top:10px;padding-top:6px;border-top:1px solid #ddd;font-size:9px;color:#65707a}
+@media print{.rpMasterPage{height:277mm;max-height:277mm;width:100%;max-width:none;padding:3mm;margin:0;border:0;overflow:hidden}.rpMasterPhoto img{height:24mm}.rpMasterPage .rpCalCell{min-height:7mm}.rpMasterPhoto,.rpMasterStats span{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
 </style></head><body><header><small>NATIONAL RETAIL HEAD • VARDA GROUP</small><h1>LEADER TASK CHECKLIST</h1><div class="headnav"><a href="index.html">← VG Support Home</a><span id="sessionTitle">Shared daily output monitoring</span><button id="signout" class="hide">Sign out</button></div></header>
 <main><section id="headLogin" class="login panel"><h2>National Retail Head</h2><p class="muted">Sign in with your existing Generals & Missions / Retail Audit head password.</p><form id="loginForm"><label>Head password <input id="password" type="password" autocomplete="current-password" required style="width:100%;display:block;margin:8px 0"></label><button class="main" type="submit">Open checking board</button></form><p id="loginError" class="pending"></p></section>
 <section id="headView" class="hide"><div class="toolbar"><div class="actions"><label>Evaluation date<input id="day" type="date"></label><label>Region<select id="region"><option value="">All regions</option></select></label><button id="headToday" class="main" type="button">Today / Show All</button><button id="refresh">↻ Refresh</button><span class="syncBadge" id="syncBadge">● Live sync</span></div><div class="actions"><button id="manageToggle">⚙ Edit Task List</button><span id="ceoLinkControls" class="actions"><button type="button" id="createCEO" title="Create a private CEO view-only link">🔗 Create CEO View Link</button><button type="button" id="resetCEO" title="Disable previous CEO link and make a new one">Reset CEO Link</button></span><button id="individualReport" class="main">Print Leader A4</button><button id="jpegLeaderReport" class="main" title="Download one-page JPEG report with photos and comments">📷 Save 1-Page JPEG</button><button id="allReport">All Leaders Daily Summary A4</button><button id="monthReport">Monthly Summary A4</button></div></div>
-<section class="reportPicker" id="reportPicker"><h3>📊 Custom Leader Reports · CEO Presentation</h3><p class="rpNote">Choose leaders and a date range. Generate an overall summary or a separate daily report for each leader. Past days with no submitted record appear as No Report.</p><div class="rpLine"><label>From date<input type="date" id="rpFrom"></label><label>To date<input type="date" id="rpTo"></label><label>Report format<select id="rpFormat"><option value="summary">CEO Overview · Leader Calendars</option><option value="detail">Individual Leader · Per Day Details</option></select></label></div><div class="rpLine"><button type="button" id="rpAll">Select All Leaders</button><button type="button" id="rpNone">Clear Selection</button><span id="rpSelection" class="rpNote"></span></div><div id="rpPeople" class="rpPeople"></div><div class="rpLine"><button type="button" class="main" id="rpRun">Generate Report</button><button type="button" id="rpPrint" disabled>Print / Save as PDF</button><button type="button" id="rpCSV" disabled>Export CSV</button><span id="rpStatus" class="rpNote"></span></div><div id="rpResult" class="rpPreview"></div></section>
+<section class="reportPicker" id="reportPicker"><h3>📊 Custom Leader Reports · CEO Presentation</h3><p class="rpNote">Choose leaders and a date range. Generate an overall summary or a separate daily report for each leader. Past days with no submitted record appear as No Report.</p><div class="rpLine"><label>From date<input type="date" id="rpFrom"></label><label>To date<input type="date" id="rpTo"></label><label>Report format<select id="rpFormat"><option value="master" selected>One-Page Master · Calendar + Dated Photos</option><option value="summary">CEO Overview · Leader Calendars</option><option value="detail">Individual Leader · Per Day Details</option></select></label></div><div class="rpLine"><button type="button" id="rpAll">Select All Leaders</button><button type="button" id="rpNone">Clear Selection</button><span id="rpSelection" class="rpNote"></span></div><div id="rpPeople" class="rpPeople"></div><div class="rpLine"><button type="button" class="main" id="rpRun">Generate Report</button><button type="button" id="rpPrint" disabled>Print / Save as PDF</button><button type="button" id="rpCSV" disabled>Export CSV</button><span id="rpStatus" class="rpNote"></span></div><div id="rpResult" class="rpPreview"></div></section>
 <section id="storagePanel" class="storagePanel" aria-label="Supabase storage usage">
  <div class="storageTitle"><h3>☁ Supabase Storage Monitor</h3><button type="button" id="refreshStorage">↻ Refresh Storage</button></div>
  <div id="storageMain" class="storageMain">Checking storage…</div>
@@ -1562,11 +1574,41 @@ function rpCalendar(rows){
  }).join('');
  return legend+'<div class="rpCalendarGrid">'+cards+'</div><p class="small">Calendars show stored checklist submissions only; red is not proof of absence. Check duty schedules, leave, and non-working days separately.</p>'
 }
+
+async function rpHistoricalPhotos(rows,report){
+ const mapping=new Map();rows.forEach(r=>r.entries.forEach(e=>{if(e.id)mapping.set(String(e.id),r)}));
+ const found=new Map();
+ function add(files){for(const file of files||[]){if(!(file.mime||file.content_type||'').startsWith('image/')||!file.url)continue;const row=mapping.get(String(file.entry_id));if(!row)continue;found.set(String(file.id||file.url),{...file,leaderId:row.leader.id,date:row.date})}}
+ add(report.files);
+ const days=[...new Set(rows.filter(r=>r.entries.some(e=>e.id)).map(r=>r.date))];
+ let failed=0;
+ for(let i=0;i<days.length;i+=4){
+  const results=await Promise.all(days.slice(i,i+4).map(async day=>{try{return await api('load',{day})}catch{return null}}));
+  results.forEach(r=>{if(r)add(r.files);else failed++})
+ }
+ return {photos:[...found.values()],failed}
+}
+function rpMaster(rows,photos,from,to){
+ const groups=new Map();rows.forEach(r=>{if(!groups.has(r.leader.id))groups.set(r.leader.id,[]);groups.get(r.leader.id).push(r)});
+ return [...groups.values()].map(group=>{
+  const leader=group[0].leader,all=photos.filter(f=>f.leaderId===leader.id).sort((a,b)=>a.date.localeCompare(b.date));
+  const chosen=[],dates=new Set();
+  for(const photo of all){if(!dates.has(photo.date)&&chosen.length<8){chosen.push(photo);dates.add(photo.date)}}
+  for(const photo of all){if(chosen.length>=8)break;if(!chosen.includes(photo))chosen.push(photo)}
+  chosen.sort((a,b)=>a.date.localeCompare(b.date));
+  const submitted=group.filter(r=>r.date<=today()&&r.status==='Submitted').length;
+  const partial=group.filter(r=>r.date<=today()&&['Partial','Draft / Incomplete'].includes(r.status)).length;
+  const missing=group.filter(r=>r.date<=today()&&r.status==='No Report').length;
+  const photoMarkup=chosen.length?'<div class="rpMasterPhotos">'+chosen.map(photo=>'<figure class="rpMasterPhoto"><img src="'+enc(photo.url)+'" alt="Photo evidence '+enc(photo.date)+'"><figcaption><b>'+enc(photo.date)+'</b></figcaption></figure>').join('')+'</div>':'<p class="rpNote">No accessible photos found for this reporting period.</p>';
+  return '<div class="page rpMasterPage"><div class="rpMasterHead"><b>VARDA GROUP · MASTER LEADER REPORT</b><h2>'+enc(leader.name)+'</h2><small>'+enc(leader.position||'Leader')+' · '+enc(leader.area||'Branch not specified')+' · '+enc(from)+' to '+enc(to)+'</small></div><div class="rpMasterStats"><span>Submitted: <b>'+submitted+'</b></span><span>Partial / draft: <b>'+partial+'</b></span><span>No saved report: <b>'+missing+'</b></span></div>'+rpCalendar(group)+'<h3 style="margin:9px 0 7px">DAILY PHOTO EVIDENCE <small>('+chosen.length+' displayed / '+all.length+' saved)</small></h3>'+photoMarkup+'<div class="rpMasterFoot">One A4 page per leader. Photos labeled by report date. '+(all.length>chosen.length?all.length-chosen.length+' additional photo(s) in online records. ':'')+'No report does not establish absence; verify duty schedules and approved leave.</div></div>'
+ }).join('')
+}
+
 function rpIndividual(rows){return rows.map(r=>'<div class="page rpReportPage"><h2>VARDA GROUP · LEADER DAILY OUTPUT</h2><p>'+enc(r.date)+'</p><h3>'+enc(r.leader.name)+' · '+enc(r.leader.area||'')+'</h3><p>Status: <b>'+enc(r.status)+'</b> &nbsp; Submitted: '+r.submitted+'/'+r.entries.length+' &nbsp; Head score: '+enc(r.score)+'</p>'+(r.entries.length?'<table><thead><tr><th>Task / Output</th><th>Leader</th><th>Head review</th><th>Remarks</th></tr></thead><tbody>'+r.entries.map(e=>{let task=data.tasks.find(t=>t.id===e.task_id);return '<tr><td>'+enc(task?.title||task?.name||task?.task_name||e.task_id)+'</td><td>'+enc(e.leader_status||'—')+'</td><td>'+enc(e.head_status||'Pending')+'</td><td>'+enc([e.remarks,e.leader_remarks,e.head_remarks,e.head_comment].filter(Boolean).join(' / ')||'—')+'</td></tr>'}).join('')+'</tbody></table>':'<p><b>No saved task submissions for this day.</b></p>')+'<p class="small">Source: saved checklist records. For historical photos/videos, open the leader’s Saved reports by date in the online board. A missing submission is not an automatic attendance determination.</p></div>').join('')}
 $('rpRun').onclick=async()=>{
  let from=$('rpFrom').value,to=$('rpTo').value,btn=$('rpRun');
  if(!from||!to||to<from){$('rpStatus').textContent='Choose a valid date range.';return}
- const days=rpDates(from,to);if(!days.length||days.length>366){$('rpStatus').textContent='Choose up to 366 days.';return}
+ const days=rpDates(from,to);if(!days.length||days.length>366){$('rpStatus').textContent='Choose up to 366 days.';return}if($('rpFormat').value==='master'&&days.length>31){$('rpStatus').textContent='For one A4 master page, choose no more than 31 days.';return}
  const leaders=data.leaders.filter(l=>rpSelected.has(l.id));
  if(!leaders.length){$('rpStatus').textContent='Select at least one leader.';return}
  btn.disabled=true;$('rpStatus').textContent='Loading saved records…';rpReady=false;
@@ -1576,14 +1618,16 @@ $('rpRun').onclick=async()=>{
  rpRows=leaders.flatMap(l=>days.map(date=>{const entries=records.filter(e=>e.leader_id===l.id&&e.work_date===date);return {leader:l,date,entries,status:rpStatusFor(entries),submitted:entries.filter(e=>e.leader_status==='submitted').length,reviewed:entries.filter(e=>e.head_status&&!['pending','na'].includes(e.head_status)).length,score:rpPercent(entries)}}));
  const noReport=rpRows.filter(r=>r.status==='No Report').length;
  const overview='<h2>VARDA GROUP · CEO LEADER OUTPUT REPORT</h2><p>'+enc(from)+' to '+enc(to)+' · '+leaders.length+' leaders · '+days.length+' days</p><p><b>'+rpRows.filter(r=>r.status==='Submitted').length+'</b> fully submitted leader-days &nbsp; <b>'+noReport+'</b> days without saved submissions</p>';
- const detail=$('rpFormat').value==='detail';
- rpPrinted=detail?rpIndividual(rpRows):'<div class="page">'+overview+rpCalendar(rpRows)+'</div>';
- $('rpResult').innerHTML='<div class="rpMetrics"><b>'+leaders.length+' leaders</b><b>'+days.length+' days</b><b>'+noReport+' no-report leader-days</b></div>'+ (detail?'<p>Individual day-by-day pages prepared for printing. First 20 rows shown below.</p>':'')+rpTable(detail?rpRows.slice(0,20):rpRows);
- $('rpStatus').textContent=rpRows.length+' daily records ready. Print to share a PDF with the CEO.';
+ const detail=$('rpFormat').value==='detail',master=$('rpFormat').value==='master';
+ let photos=[];
+ if(master){$('rpStatus').textContent='Collecting dated photo evidence…';const evidence=await rpHistoricalPhotos(rpRows,response);photos=evidence.photos;if(evidence.failed)$('rpStatus').textContent=evidence.failed+' report dates could not load historical images.'}
+ rpPrinted=master?rpMaster(rpRows,photos,from,to):detail?rpIndividual(rpRows):'<div class="page">'+overview+rpCalendar(rpRows)+'</div>';
+ $('rpResult').innerHTML='<div class="rpMetrics"><b>'+leaders.length+' leaders</b><b>'+days.length+' days</b><b>'+noReport+' no-report leader-days</b>'+(master?'<b>'+photos.length+' evidence photos</b>':'')+'</div>'+(master?rpPrinted:detail?'<p>Individual day-by-day pages prepared for printing.</p>'+rpTable(rpRows.slice(0,20)):rpCalendar(rpRows));
+ $('rpStatus').textContent=master?leaders.length+' leader master pages prepared; one A4 page per leader.':rpRows.length+' daily records ready.';
  $('rpPrint').disabled=false;$('rpCSV').disabled=false;rpReady=true;
  }catch(e){$('rpStatus').textContent='Could not load reports: '+e.message}finally{btn.disabled=false}
 };
-$('rpPrint').onclick=()=>{if(!rpReady)return;$('report').innerHTML=rpPrinted;window.print()};
+$('rpPrint').onclick=async()=>{if(!rpReady)return;$('report').innerHTML=rpPrinted;const b=$('rpPrint');b.disabled=true;try{await waitReportImages();window.print()}finally{b.disabled=false}};
 $('rpCSV').onclick=()=>{if(!rpReady)return;downloadCSV('varda-leader-report-'+$('rpFrom').value+'-to-'+$('rpTo').value+'.csv',[['Leader','Branch','Date','Status','Tasks Submitted','Tasks Recorded','Head Reviewed','Score'],...rpRows.map(r=>[r.leader.name,r.leader.area||'',r.date,r.status,r.submitted,r.entries.length,r.reviewed,r.score])])};
 
 $('monthReport').onclick=async()=>{try{let month=$('day').value.slice(0,7),from=month+'-01',to=month+'-31',result=await api('report',{from,to}),records=result.entries||[],rows=data.leaders.map(l=>{let r=records.filter(x=>x.leader_id===l.id),reviewed=r.filter(x=>!['pending','na'].includes(x.head_status)),score=reviewed.length?Math.round(reviewed.reduce((n,x)=>n+(x.head_status==='complete'?1:x.head_status==='incomplete'?.5:0),0)/reviewed.length*100)+'%':'—';return '<tr><td>'+enc(l.name)+'</td><td>'+enc(l.area)+'</td><td>'+new Set(r.map(x=>x.work_date)).size+'</td><td>'+r.filter(x=>x.leader_status==='submitted').length+'</td><td>'+reviewed.length+'</td><td>'+score+'</td></tr>'}).join('');$('report').innerHTML='<div class="page"><h2>VARDA GROUP • MONTHLY LEADER SUMMARY</h2><p>'+enc(month)+'</p><table><thead><tr><th>Leader</th><th>Region</th><th>Recorded Dates</th><th>Submitted</th><th>Reviewed</th><th>Score</th></tr></thead><tbody>'+rows+'</tbody></table><p class="small">Score based on reviewed items only; monthly tasks recorded once per month.</p></div>';window.print()}catch(e){say(e.message)}};
