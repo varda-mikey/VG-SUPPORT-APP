@@ -336,6 +336,13 @@ body.viewerMode .removeEvidence{display:none!important}
 .pendingActions{display:grid;gap:10px;margin-top:13px}.pendingActions button{padding:13px;font-size:14px;font-weight:750}
 .pendingNotice{border-radius:9px;background:#fff2dd;padding:10px;color:#82501a}
 .storageWarning{background:#fff4e5;border:1px solid #e8bc70;border-radius:10px;padding:12px;margin-top:12px;color:#7c4c0d}
+.pendingChoiceHelp{font-size:12px;line-height:1.5;color:#59665e;margin:0;padding:0 3px 4px}
+.pendingChoiceBlock{display:grid;gap:5px;padding:11px;border-radius:11px;border:1px solid #e0e7e0;background:#f9fbf9}
+.pendingChoiceBlock.warningChoice{background:#fffaf3;border-color:#ebdcc1}
+.pendingResultStatus{text-align:center;font-size:42px;line-height:1;margin-bottom:9px}
+.pendingResultDialog h2{color:#193f30}
+.pendingResultDialog .main{width:100%;padding:14px;font-weight:800}
+@media(max-width:600px){.pendingDialog{padding:18px}.pendingChoiceBlock{padding:10px}}
 </style></head><body><header><small>NATIONAL RETAIL HEAD • VARDA GROUP</small><h1>LEADER TASK CHECKLIST</h1><div class="headnav"><a href="index.html">← VG Support Home</a><span id="sessionTitle">Shared daily output monitoring</span><button id="signout" class="hide">Sign out</button></div></header>
 <main><section id="headLogin" class="login panel"><h2>National Retail Head</h2><p class="muted">Sign in with your existing Generals & Missions / Retail Audit head password.</p><form id="loginForm"><label>Head password <input id="password" type="password" autocomplete="current-password" required style="width:100%;display:block;margin:8px 0"></label><button class="main" type="submit">Open checking board</button></form><p id="loginError" class="pending"></p></section>
 <section id="headView" class="hide"><div class="toolbar"><div class="actions"><label>Evaluation date<input id="day" type="date"></label><label>Region<select id="region"><option value="">All regions</option></select></label><button id="headToday" class="main" type="button">Today / Show All</button><button id="refresh">↻ Refresh</button><span class="syncBadge" id="syncBadge">● Live sync</span></div><div class="actions"><button id="manageToggle">⚙ Edit Task List</button><span id="ceoLinkControls" class="actions"><button type="button" id="createCEO" title="Create a private CEO view-only link">🔗 Create CEO View Link</button><button type="button" id="resetCEO" title="Disable previous CEO link and make a new one">Reset CEO Link</button></span><button id="individualReport" class="main">Print Leader A4</button><button id="jpegLeaderReport" class="main" title="Download one-page JPEG report with photos and comments">📷 Save 1-Page JPEG</button><button id="allReport">All Leaders Daily Summary A4</button><button id="monthReport">Monthly Summary A4</button></div></div>
@@ -375,10 +382,25 @@ body.viewerMode .removeEvidence{display:none!important}
   <label for="pendingReason"><b>State your reason here (remarks)</b></label>
   <textarea id="pendingReason" placeholder="Explain why the required work or proof was not submitted."></textarea>
   <p id="pendingError" role="status" style="color:#ab3c2b"></p>
+  <p class="pendingChoiceHelp"><b>Choose carefully:</b> Your choice and remarks will be recorded. Completing a report means submitting real work evidence, not just acknowledging it. The Head/HR will review delayed or incomplete outputs before making any attendance decision.</p>
   <div class="pendingActions">
-   <button type="button" id="pendingFinish" class="main">✓ I'll finish it — Open yesterday's tasks</button>
-   <button type="button" id="pendingAcknowledge">I acknowledge unfinished duties — Submit reason to Head</button>
+   <div class="pendingChoiceBlock">
+    <button type="button" id="pendingFinish" class="main">✓ I'll Finish It — Open Yesterday's Tasks</button>
+    <p class="pendingChoiceHelp">Go back to yesterday. Upload the missing photo proof and select <b>SUBMIT &amp; SAVE TASK</b> for every pending duty. You can proceed to today's tasks after all required evidence is saved.</p>
+   </div>
+   <div class="pendingChoiceBlock warningChoice">
+    <button type="button" id="pendingAcknowledge">⚠ Acknowledge Unfinished Duties &amp; Submit Reason</button>
+    <p class="pendingChoiceHelp">Your explanation will be saved, unfinished tasks will be marked <b>Incomplete</b> for Head review, and the record may affect attendance validation after HR checks your actual work and attendance. <b>This does not automatically mark you absent.</b> You may proceed to today's checklist after acknowledgement.</p>
+   </div>
   </div>
+ </div>
+</div><div id="pendingResultPopup" class="pendingBackdrop hide" role="dialog" aria-modal="true" aria-labelledby="pendingResultTitle">
+ <div class="pendingDialog pendingResultDialog">
+  <div id="pendingResultIcon" class="pendingResultStatus">✓</div>
+  <h2 id="pendingResultTitle">Acknowledgement saved</h2>
+  <p id="pendingResultText">Your remarks were recorded for National Retail Head review.</p>
+  <p class="pendingNotice">Head/HR will validate incomplete duties against attendance records. Submission or acknowledgement does not automatically approve the work or determine attendance.</p>
+  <button type="button" id="pendingProceedToday" class="main">Proceed to Today's Checklist →</button>
  </div>
 </div><div id="approvedPopup" class="approvedBackdrop hide" role="presentation">
   <div class="approvedDialog" role="dialog" aria-modal="true" aria-labelledby="approvedTitle">
@@ -467,7 +489,34 @@ async function refreshStorage(){
  }catch(e){main.textContent='Storage status unavailable';meta.textContent=e.message||'Please refresh storage';rows.innerHTML=''}
 }
 $('refreshStorage').onclick=refreshStorage;
-let pendingDay='',pendingReviewBusy=false,lastPendingReview='';
+let pendingDay='',pendingReviewBusy=false,lastPendingReview='',pendingTasksToFinish=[],pendingResultType='';
+function showPendingResult(type,detail){
+ pendingResultType=type;
+ $('pendingResultIcon').textContent=type==='completed'?'✓':'!';
+ $('pendingResultIcon').style.color=type==='completed'?'#168052':'#b16d27';
+ $('pendingResultTitle').textContent=type==='completed'?'Yesterday\'s Pending Duties Submitted!':'Acknowledgement Saved';
+ $('pendingResultText').textContent=detail;
+ $('pendingPopup').classList.add('hide');
+ $('pendingResultPopup').classList.remove('hide');
+}
+$('pendingProceedToday').onclick=async()=>{
+ $('pendingResultPopup').classList.add('hide');
+ if(hasUnsavedChanges()){say('Please save or submit any unsaved task information before moving to today.');return}
+ $('myDay').value=today();
+ pendingTasksToFinish=[];
+ await load();
+};
+function checkPendingFinished(){
+ if(mode!=='leader'||!pendingTasksToFinish.length||$('myDay').value!==pendingDay||!data.leaders[0]||!$('pendingResultPopup').classList.contains('hide'))return;
+ const lid=data.leaders[0].id;
+ const allDone=pendingTasksToFinish.every(id=>{const e=entry(lid,id,pendingDay);return e.id&&e.leader_status==='submitted'&&data.files.some(f=>f.entry_id===e.id)});
+ if(allDone){
+  pendingTasksToFinish=[];
+  lastPendingReview=today();
+  showPendingResult('completed','All previously missing duties have now been submitted with saved evidence for Head review. You may continue to today\'s checklist.');
+ }
+}
+
 async function checkPendingYesterday(force=false){
  if(mode!=='leader'||!leaderToken||pendingReviewBusy||$('myDay').value!==today())return;
  const stamp=today();if(!force&&lastPendingReview===stamp)return;
@@ -476,13 +525,14 @@ async function checkPendingYesterday(force=false){
   const d=await api('pending_yesterday');pendingDay=d.day;
   const missing=(d.pending||[]).filter(x=>!x.acknowledged);
   $('pendingPopup').classList.toggle('hide',!missing.length);
-  $('pendingList').innerHTML=missing.map((t,i)=>'<div><b>'+(i+1)+'. '+enc(t.title)+'</b> <small>('+enc(t.category)+')</small></div>').join('');
+  $('pendingList').innerHTML=missing.map((t,i)=>'<div data-pending-task="'+enc(t.id)+'"><b>'+(i+1)+'. '+enc(t.title)+'</b> <small>('+enc(t.category)+')</small></div>').join('');
   $('pendingIntro').textContent='Work date: '+d.day+' · '+missing.length+' duty/task(s) have missing submission or saved photo proof.';
-  if(missing.length){lastPendingReview='';}else{lastPendingReview=stamp;$('pendingReason').value='';}
+  if(missing.length){lastPendingReview='';$('pendingError').textContent='';}else{lastPendingReview=stamp;$('pendingReason').value='';}
  }catch(e){$('pendingError').textContent='Unable to verify yesterday\'s duty: '+e.message}finally{pendingReviewBusy=false}
 }
 $('pendingFinish').onclick=async()=>{
  if(!pendingDay)return;
+ pendingTasksToFinish=[...$('pendingList').querySelectorAll('[data-pending-task]')].map(x=>x.dataset.pendingTask);
  $('pendingPopup').classList.add('hide');$('myDay').value=pendingDay;lastPendingReview='';
  await load();
  say('Complete yesterday\'s missing task(s): upload photo proof and tap SUBMIT & SAVE for each. Return to Today when finished.');
@@ -491,7 +541,7 @@ $('pendingAcknowledge').onclick=async()=>{
  const reason=$('pendingReason').value.trim();
  if(reason.length<5){$('pendingError').textContent='Please explain the unfinished task(s) in at least five characters.';return}
  const btn=$('pendingAcknowledge');btn.disabled=true;$('pendingError').textContent='Saving acknowledgement to Head…';
- try{const d=await api('pending_ack',{reason});$('pendingPopup').classList.add('hide');lastPendingReview=today();say('Acknowledgement saved: '+d.acknowledged+' unfinished duty records available to Head for review.');}
+ try{const d=await api('pending_ack',{reason});lastPendingReview=today();pendingTasksToFinish=[];showPendingResult('acknowledged',d.acknowledged+' unfinished duty record(s) were marked Incomplete and your written reason was saved for National Retail Head review. You can now proceed to today.');}
  catch(e){$('pendingError').textContent='Not saved: '+e.message}finally{btn.disabled=false}
 };
 const status=x=>({pending:'Not reviewed',complete:'Complete',incomplete:'Incomplete','no-output':'No output',na:'N/A',working:'In progress',submitted:'Submitted'})[x]||x;
@@ -1111,7 +1161,7 @@ $('deleteReportDay').onclick=async()=>{
  try{const result=await api('report_delete_day',{leader_id:selected,day});await load(true);await renderHistory();say('Deleted '+result.deleted+' saved task records for '+leader.name+' on '+day+'.')}catch(e){say('Deletion failed: '+e.message)}
 };
 function renderLeader(){let l=data.leaders[0];if(!l){$('myName').textContent='Access unavailable';return;}$('myName').textContent=l.name;$('myMeta').textContent=l.position+' • '+l.area+' • '+$('myDay').value;const tasks=leaderTasks(l.id),totals=taskSubmission(l.id,$('myDay').value),done=totals.submitted;
- updateLeaderExportState(totals);$('leaderProgress').innerHTML='<b>'+done+' of '+tasks.length+' formally submitted</b> · <strong>'+totals.received+'/'+tasks.length+' with saved proof</strong> · '+(done===tasks.length?'✓ Completed for selected date':'Photos may already be saved even when the task needs final submission.');$('myTasks').innerHTML=tasks.map((t,i)=>{const v=entry(l.id,t.id,taskDay(t,$('myDay').value));return taskCard(t,v,false).replace('<article class="task"','<article class="task"').replace('<div class="taskHeading"><h3>','<div class="taskHeading"><h3>'+(i+1)+'. ').replace('</h3></div><div class="taskContent">','</h3></div><div class="taskState '+enc(v.leader_status||'pending')+'">'+enc(v.leader_status==='submitted'?'✓ Submitted':v.leader_status==='working'?'In progress':'Not yet submitted')+'</div><div class="taskContent">')}).join('')||'<p>No active tasks.</p>';wireTasks(false);approvalState()}
+ updateLeaderExportState(totals);$('leaderProgress').innerHTML='<b>'+done+' of '+tasks.length+' formally submitted</b> · <strong>'+totals.received+'/'+tasks.length+' with saved proof</strong> · '+(done===tasks.length?'✓ Completed for selected date':'Photos may already be saved even when the task needs final submission.');$('myTasks').innerHTML=tasks.map((t,i)=>{const v=entry(l.id,t.id,taskDay(t,$('myDay').value));return taskCard(t,v,false).replace('<article class="task"','<article class="task"').replace('<div class="taskHeading"><h3>','<div class="taskHeading"><h3>'+(i+1)+'. ').replace('</h3></div><div class="taskContent">','</h3></div><div class="taskState '+enc(v.leader_status||'pending')+'">'+enc(v.leader_status==='submitted'?'✓ Submitted':v.leader_status==='working'?'In progress':'Not yet submitted')+'</div><div class="taskContent">')}).join('')||'<p>No active tasks.</p>';wireTasks(false);approvalState();checkPendingFinished()}
 $('headToday').onclick=()=>{
  if(hasUnsavedChanges()&&!confirm('You have unsaved changes. Switch to today and all regions?'))return;
  $('day').value=today();$('region').value='';$('showArchivedLeaders').checked=false;selected='';load();
