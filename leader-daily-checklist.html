@@ -327,6 +327,15 @@ body.viewerMode .removeEvidence{display:none!important}
 .storagePanel .storageBucket b{display:block;font-size:15px;color:#233c31;margin:4px 0}
 .storagePanel button{font-size:12px}
 @media(max-width:600px){.storagePanel{padding:13px}.storagePanel .storageMain{font-size:22px}}
+.pendingBackdrop{position:fixed;inset:0;z-index:100000;background:#0d1c17b9;display:flex;align-items:center;justify-content:center;padding:15px;overflow:auto}
+.pendingBackdrop.hide{display:none!important}
+.pendingDialog{background:#fff;border-radius:20px;width:min(570px,100%);padding:25px;box-shadow:0 22px 70px #0004;max-height:94vh;overflow:auto}
+.pendingDialog h2{color:#9b3e1b;margin:8px 0}.pendingDialog p{font-size:14px;line-height:1.55}
+.pendingList{max-height:175px;overflow:auto;border:1px solid #e9dfd4;background:#fffaf3;border-radius:10px;padding:12px;margin:12px 0;font-size:13px}
+.pendingDialog textarea{box-sizing:border-box;display:block;width:100%;min-height:95px;border-radius:10px;padding:12px;border:1px solid #cad2cc}
+.pendingActions{display:grid;gap:10px;margin-top:13px}.pendingActions button{padding:13px;font-size:14px;font-weight:750}
+.pendingNotice{border-radius:9px;background:#fff2dd;padding:10px;color:#82501a}
+.storageWarning{background:#fff4e5;border:1px solid #e8bc70;border-radius:10px;padding:12px;margin-top:12px;color:#7c4c0d}
 </style></head><body><header><small>NATIONAL RETAIL HEAD • VARDA GROUP</small><h1>LEADER TASK CHECKLIST</h1><div class="headnav"><a href="index.html">← VG Support Home</a><span id="sessionTitle">Shared daily output monitoring</span><button id="signout" class="hide">Sign out</button></div></header>
 <main><section id="headLogin" class="login panel"><h2>National Retail Head</h2><p class="muted">Sign in with your existing Generals & Missions / Retail Audit head password.</p><form id="loginForm"><label>Head password <input id="password" type="password" autocomplete="current-password" required style="width:100%;display:block;margin:8px 0"></label><button class="main" type="submit">Open checking board</button></form><p id="loginError" class="pending"></p></section>
 <section id="headView" class="hide"><div class="toolbar"><div class="actions"><label>Evaluation date<input id="day" type="date"></label><label>Region<select id="region"><option value="">All regions</option></select></label><button id="headToday" class="main" type="button">Today / Show All</button><button id="refresh">↻ Refresh</button><span class="syncBadge" id="syncBadge">● Live sync</span></div><div class="actions"><button id="manageToggle">⚙ Edit Task List</button><span id="ceoLinkControls" class="actions"><button type="button" id="createCEO" title="Create a private CEO view-only link">🔗 Create CEO View Link</button><button type="button" id="resetCEO" title="Disable previous CEO link and make a new one">Reset CEO Link</button></span><button id="individualReport" class="main">Print Leader A4</button><button id="jpegLeaderReport" class="main" title="Download one-page JPEG report with photos and comments">📷 Save 1-Page JPEG</button><button id="allReport">All Leaders Daily Summary A4</button><button id="monthReport">Monthly Summary A4</button></div></div>
@@ -335,7 +344,7 @@ body.viewerMode .removeEvidence{display:none!important}
  <div id="storageMain" class="storageMain">Checking storage…</div>
  <div id="storageMeta" class="storageMeta">Storage usage is available to the National Retail Head only.</div>
  <div class="storageTrack" role="progressbar" aria-label="Storage usage against Free-plan 1 GB reference" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="storageFill" class="storageFill"></div></div>
- <div id="storageRows" class="storageRows"></div>
+ <div id="storageRows" class="storageRows"></div><div id="storageWarning" class="storageWarning hide"></div>
  <p class="storageMeta">1 GB is the Supabase Free-plan storage reference, not a confirmed quota for your account. Uploaded files only; database size and billing-period averages are separate.</p>
  </section><div id="headActivity" class="headActivity"></div><div class="layout"><aside class="panel"><div class="heading"><h2>Leaders</h2><button id="addLeader" class="main">+ Add</button></div><p class="muted">Select a leader to review outputs. Copy their private personal link for phone submissions.</p><label class="muted" style="display:flex;align-items:center;gap:8px;margin:10px 0"><input type="checkbox" id="showArchivedLeaders"> Show archived leaders</label><div class="people" id="people"></div><button id="archiveLeader" class="danger" style="margin-top:10px">Archive selected leader</button><button id="editLeader" style="margin-top:10px">Edit selected leader</button><button id="rotate" style="margin-top:10px">Reset personal link</button></aside><section class="panel"><div class="heading"><div><h2 id="leaderName">Select leader</h2><div id="leaderMeta" class="muted"></div></div><div class="actions"><button type="button" id="openAddTask" class="main">＋ Add Task</button><button id="copyLink" class="main">Copy personal link</button></div></div><div id="stats" class="kpis"></div><div id="headSelectedSummary" class="headSelectedSummary"></div><p class="viewerReadOnly muted">View-only access · Editing and grading are disabled. Private reports are for authorized management viewing.</p><div id="addTaskBoard" class="addTaskBoard hide"><h3 style="margin:0">Add task for selected leader</h3><label>Task name<input id="newTaskTitle" placeholder="Describe the daily duty"></label><label>Category<input id="newTaskCategory" placeholder="Example: Operations"></label><div class="dateOnlyNotice">📅 This task will appear ONLY on <strong id="addDateLabel">the selected date</strong>. Other dates will stay unchanged.</div><input type="hidden" id="newTaskFrequency" value="daily"><div class="inlineActions"><button type="button" class="main" id="submitNewTask">Save New Task</button><button type="button" id="cancelNewTask">Cancel</button></div><small id="newTaskMessage" class="muted"></small></div><div id="tasks" class="tasks"><p class="muted">Select a leader.</p></div><div id="historyPanel" class="history"><div class="heading"><h3>Saved reports by date</h3><button id="historyRefresh">Load History</button></div><div class="archiveControls"><label>Year<select id="archiveYear"></select></label><label>Month<select id="archiveMonth"></select></label><button id="archiveToday">Today</button><button id="deleteReportDay" class="danger">Delete Selected Day</button></div><p class="muted">Saved automatically by Year → Month → Date. Select any date to view its report and attached proof.</p><div id="archiveSummary" class="archiveSummary"></div><div id="historyDays" class="calendarDays"></div><p class="muted">Green = submitted, yellow = partial, red = no daily report, faded = future. Deletion is permanent and reserved for the National Retail Head.</p></div><p id="message" role="status"></p></section></div>
 <section id="manage" class="panel manage hide"><div class="heading"><h2>Customize selected leader's checklist</h2><button id="addTask" class="main">+ Add output task</button></div><p class="muted">Add, edit or remove duties for the selected leader only. Other leaders' forms do not change. Earlier submissions stay in their records.</p><div id="taskEditor"></div><button id="closeManage">Done editing</button></section></section>
@@ -354,7 +363,22 @@ body.viewerMode .removeEvidence{display:none!important}
  </div>
 </section>
 <p id="myMessage" role="status"></p></section>
-<div id="approvedPopup" class="approvedBackdrop hide" role="presentation">
+<div id="pendingPopup" class="pendingBackdrop hide" role="dialog" aria-modal="true" aria-labelledby="pendingTitle">
+ <div class="pendingDialog">
+  <small style="font-weight:800;color:#9b5d22">PREVIOUS-DAY DUTY REVIEW</small>
+  <h2 id="pendingTitle">You have pending duties from yesterday</h2>
+  <p id="pendingIntro">Please review the tasks you did not submit or that have no saved photo proof.</p>
+  <div id="pendingList" class="pendingList"></div>
+  <p class="pendingNotice"><b>Attendance reminder:</b> Unfinished or undocumented duties will be visible to the National Retail Head for HR attendance validation. An incomplete checklist alone is not automatic proof of absence; Head/HR must review your circumstances and other attendance records.</p>
+  <label for="pendingReason"><b>State your reason here (remarks)</b></label>
+  <textarea id="pendingReason" placeholder="Explain why the required work or proof was not submitted."></textarea>
+  <p id="pendingError" role="status" style="color:#ab3c2b"></p>
+  <div class="pendingActions">
+   <button type="button" id="pendingFinish" class="main">✓ I'll finish it — Open yesterday's tasks</button>
+   <button type="button" id="pendingAcknowledge">I acknowledge unfinished duties — Submit reason to Head</button>
+  </div>
+ </div>
+</div><div id="approvedPopup" class="approvedBackdrop hide" role="presentation">
   <div class="approvedDialog" role="dialog" aria-modal="true" aria-labelledby="approvedTitle">
     <div class="approvedStatus">✓ HEAD REVIEW COMPLETE · 100%</div>
     <h2 id="approvedTitle">Your daily report is complete!</h2>
@@ -401,10 +425,38 @@ async function refreshStorage(){
   const fill=$('storageFill');fill.style.width=Math.min(100,percent)+'%';fill.className='storageFill'+(percent>=90?' critical':percent>=75?' warning':'');
   $('storagePanel').querySelector('[role="progressbar"]').setAttribute('aria-valuenow',String(Math.min(100,Math.round(percent))));
   const names={'vg-leader-evidence':'Leader Checklist','retail-audit-evidence':'Retail Audit','vscore-training':'Training','vpoints-profile-photos':'Profile Photos'};
+  const warning=$('storageWarning');warning.classList.toggle('hide',percent<75);if(percent>=75)warning.innerHTML='<b>⚠ Storage warning: '+percent.toFixed(1)+'% of the 1 GB reference.</b> Download and verify a complete independent archive of reports and photos before considering any deletion. Files are not removed automatically. The quota may differ on your current Supabase plan.';
   rows.innerHTML=(usage.buckets||[]).map(b=>'<div class="storageBucket">'+enc(names[b.name]||b.name)+'<b>'+enc(formatStorage(b.bytes))+'</b>'+Number(b.files||0).toLocaleString()+' files</div>').join('');
  }catch(e){main.textContent='Storage status unavailable';meta.textContent=e.message||'Please refresh storage';rows.innerHTML=''}
 }
 $('refreshStorage').onclick=refreshStorage;
+let pendingDay='',pendingReviewBusy=false,lastPendingReview='';
+async function checkPendingYesterday(force=false){
+ if(mode!=='leader'||!leaderToken||pendingReviewBusy||$('myDay').value!==today())return;
+ const stamp=today();if(!force&&lastPendingReview===stamp)return;
+ pendingReviewBusy=true;
+ try{
+  const d=await api('pending_yesterday');pendingDay=d.day;
+  const missing=(d.pending||[]).filter(x=>!x.acknowledged);
+  $('pendingPopup').classList.toggle('hide',!missing.length);
+  $('pendingList').innerHTML=missing.map((t,i)=>'<div><b>'+(i+1)+'. '+enc(t.title)+'</b> <small>('+enc(t.category)+')</small></div>').join('');
+  $('pendingIntro').textContent='Work date: '+d.day+' · '+missing.length+' duty/task(s) have missing submission or saved photo proof.';
+  if(missing.length){lastPendingReview='';}else{lastPendingReview=stamp;$('pendingReason').value='';}
+ }catch(e){$('pendingError').textContent='Unable to verify yesterday\'s duty: '+e.message}finally{pendingReviewBusy=false}
+}
+$('pendingFinish').onclick=async()=>{
+ if(!pendingDay)return;
+ $('pendingPopup').classList.add('hide');$('myDay').value=pendingDay;lastPendingReview='';
+ await load();
+ say('Complete yesterday\'s missing task(s): upload photo proof and tap SUBMIT & SAVE for each. Return to Today when finished.');
+};
+$('pendingAcknowledge').onclick=async()=>{
+ const reason=$('pendingReason').value.trim();
+ if(reason.length<5){$('pendingError').textContent='Please explain the unfinished task(s) in at least five characters.';return}
+ const btn=$('pendingAcknowledge');btn.disabled=true;$('pendingError').textContent='Saving acknowledgement to Head…';
+ try{const d=await api('pending_ack',{reason});$('pendingPopup').classList.add('hide');lastPendingReview=today();say('Acknowledgement saved: '+d.acknowledged+' unfinished duty records available to Head for review.');}
+ catch(e){$('pendingError').textContent='Not saved: '+e.message}finally{btn.disabled=false}
+};
 const status=x=>({pending:'Not reviewed',complete:'Complete',incomplete:'Incomplete','no-output':'No output',na:'N/A',working:'In progress',submitted:'Submitted'})[x]||x;
 const leaderTasks=(id)=>data.tasks.filter(t=>t.leader_id===id);
 const taskDay=(task,day)=>task?.work_date?day:task?.frequency==='monthly'?day.slice(0,7)+'-01':day;
@@ -512,7 +564,7 @@ async function load(quiet=false){
   quietLiveRefresh();
   return;
  }
- loading=true;try{let old=selected,drafts=headDrafts();data=await api('load',{day:mode==='head'?$('day').value:$('myDay').value});if(mode==='head'){selected=data.leaders.some(l=>l.id===old)?old:(data.leaders.find(l=>l.active!==false)?.id||data.leaders[0]?.id||'');renderHead();restoreHeadDrafts(drafts);previousHeadDate=$('day').value}else renderLeader();syncState(true);if(!quiet){say('Updated '+new Date().toLocaleTimeString('en-PH'));if(mode==='head')renderHistory()}}catch(e){syncState(false);if(!quiet)say(e.message);if(mode==='head'&&/sign in/i.test(e.message))logout()}finally{loading=false}}
+ loading=true;try{let old=selected,drafts=headDrafts();data=await api('load',{day:mode==='head'?$('day').value:$('myDay').value});if(mode==='head'){selected=data.leaders.some(l=>l.id===old)?old:(data.leaders.find(l=>l.active!==false)?.id||data.leaders[0]?.id||'');renderHead();restoreHeadDrafts(drafts);previousHeadDate=$('day').value}else{renderLeader();if($('myDay').value===today())checkPendingYesterday()}syncState(true);if(!quiet){say('Updated '+new Date().toLocaleTimeString('en-PH'));if(mode==='head')renderHistory()}}catch(e){syncState(false);if(!quiet)say(e.message);if(mode==='head'&&/sign in/i.test(e.message))logout()}finally{loading=false}}
 function openHead(){refreshStorage();$('headLogin').classList.add('hide');$('headView').classList.remove('hide');$('signout').classList.remove('hide');$('sessionTitle').textContent='Head Review Board';load();}
 function logout(){headToken='';sessionStorage.removeItem('vg-head-checklist-token');$('headView').classList.add('hide');$('headLogin').classList.remove('hide');$('signout').classList.add('hide')}
 $('signout').onclick=logout;
