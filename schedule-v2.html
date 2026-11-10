@@ -50,6 +50,66 @@ label{font-size:12px}.hint{font-size:12px}.staffList{max-height:300px}.staffItem
 .otSignatures div{border-top:1px solid #445363;padding-top:1.3mm;font-size:9px}
 .otPageFooter{font-size:9px;color:#657180;text-align:center;margin-top:auto}
 @media(max-width:900px){.otPage{width:100%;min-height:0;padding:12px}.otForm{height:auto;min-height:315px}}
+
+/* 2026-11-10: Unified clean-preview, print and HD image layout */
+.preview{--sheet-width:1120px;width:var(--sheet-width);max-width:none;overflow:visible}
+.preview .hero{padding:13px 16px}
+.preview .meta{grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.preview .meta>div{min-width:0;overflow-wrap:anywhere}
+.preview .table{width:100%;table-layout:fixed;border-collapse:collapse}
+.preview .table th{font-size:10px;line-height:1.35;overflow-wrap:normal;word-break:normal;hyphens:none;padding:9px 4px}
+.preview .table td{height:60px;padding:7px 5px;font-size:10px;line-height:1.4;overflow-wrap:normal;word-break:normal;hyphens:none}
+.preview .table td button[data-edit-day]{line-height:1.5;min-height:36px}
+.preview .namecol{width:196px}
+.preview .ackcol{width:150px}
+.preview .homeBranchTag{font-size:9px;line-height:1.4;max-width:100%;width:fit-content;overflow-wrap:anywhere;white-space:normal}
+.preview .name [data-name]{display:block;font-size:11px;line-height:1.3}
+.preview .name small{line-height:1.35}
+.preview .locationTag{max-width:100%;white-space:normal;overflow-wrap:anywhere;line-height:1.25}
+.exportMode .preview .homeBranchTag input[data-home-branch],
+.captureMode .preview .homeBranchTag input[data-home-branch]{display:none!important}
+.exportMode .preview .homeBranchPrint,
+.captureMode .preview .homeBranchPrint{display:inline!important}
+.exportMode .preview [contenteditable],
+.captureMode .preview [contenteditable]{cursor:default!important;outline:none!important;box-shadow:none!important}
+.exportMode .preview .table button,
+.captureMode .preview .table button{pointer-events:none;background:transparent!important}
+.exportMode .preview .daySelected,
+.captureMode .preview .daySelected{outline:0!important;box-shadow:none!important}
+.exportMode .preview .dragHandle,
+.captureMode .preview .dragHandle{display:none!important}
+.preview .ackStatement{font-size:10px;line-height:1.5}
+.panel .box{border-radius:12px;border-color:#dce3eb}
+.panel .box h3{font-size:12px}
+.panel input,.panel select{font-size:13px;min-height:38px}
+.panel .btn{min-height:36px}
+.panel .hint{line-height:1.55}
+.toolbar{background:#fff;border:1px solid #dce3eb;border-radius:10px;padding:9px}
+@media print{
+ @page{size:A4 landscape;margin:5mm}
+ html,body{width:auto!important;margin:0!important;padding:0!important;background:#fff!important;print-color-adjust:exact;-webkit-print-color-adjust:exact}
+ .panel,.toolbar,.adminPanel,.adminOnly,.rangeToolbar,.otScreen,.reportControls{display:none!important}
+ .app{display:block!important;min-height:0!important}
+ .previewWrap{display:block!important;overflow:visible!important;padding:0!important;margin:0!important}
+ .preview{width:1120px!important;max-width:none!important;transform:none!important;zoom:.91!important;box-shadow:none!important;margin:0!important}
+ .preview .hero{padding:13px 16px!important}
+ .preview .hero h1{font-size:23px!important}
+ .preview .meta{font-size:10px!important;padding:7px 10px!important}
+ .preview .table th{font-size:10px!important;padding:9px 4px!important}
+ .preview .table td{height:60px!important;padding:7px 5px!important;font-size:10px!important}
+ .preview .namecol{width:196px!important}
+ .preview .ackcol{width:150px!important}
+ .preview .name small{font-size:8px!important}
+ .preview .outputOnly{display:table-cell!important}
+ .preview .ackStatement{display:block!important;font-size:10px!important}
+ .preview .homeBranchTag input[data-home-branch]{display:none!important}
+ .preview .homeBranchPrint{display:inline!important}
+ .preview tr{break-inside:avoid;page-break-inside:avoid}
+ .preview .table td button small{display:none!important}
+ .preview .table td button{padding:3px!important}
+ .preview .footer{font-size:9px!important}
+}
+
 </style>
 </head>
 <body>
@@ -356,8 +416,12 @@ $('staffList').onclick=e=>{const b=e.target.closest('button');if(!b)return;if(b.
 $('add').onclick=()=>{sync();const n=$('newName').value.trim();if(!n)return;staff.push(normalize({id:uid(),name:n,position:$('newPos').value.trim()||'Staff',department:$('newDept').value.trim()||'GENERAL',homeBranch:$('branch').value.trim(),shifts:[]}));$('newName').value='';$('newPos').value='';$('newDept').value='';render();save(false);focusStaff(staff.length-1)};
 $('samples').onclick=()=>{if(confirm('Replace current schedule with sample staff?')){staff=cloneSamples();render();save(false)}};
 $('save').onclick=()=>openDashboard('save');$('browseBranches').onclick=()=>openDashboard('browse');$('closeDashboard').onclick=()=>$('branchDashboard').close();$('confirmBranchSave').onclick=saveToBranch;$('dashboardBranch').oninput=renderDashboard;$('branchCards').onclick=e=>{const b=e.target.closest('[data-branch]');if(b){$('dashboardBranch').value=b.dataset.branch;renderDashboard()}};$('dashboardRecords').onclick=e=>{const b=e.target.closest('[data-open-record]');if(b&&openArchived(b.dataset.openRecord))$('branchDashboard').close();renderPay()};$('clear').onclick=()=>{if(confirm('Clear all staff from this schedule?')){staff=[];render();save(false)}};
-$('outputView').onclick=()=>{const clean=document.body.classList.toggle('exportMode');$('outputView').textContent=clean?'Back to editor':'View clean schedule'};
-$('print').onclick=()=>{save(false);window.print()};
+function scheduleCleanMode(on){document.body.classList.toggle('exportMode',on);document.body.classList.toggle('captureMode',on);$('outputView').textContent=on?'Back to editor':'View clean schedule';$('outputView').setAttribute('aria-pressed',String(on));}
+$('outputView').onclick=()=>{sync();scheduleCleanMode(!document.body.classList.contains('exportMode'))};
+let beforePrintWasClean=false;
+window.addEventListener('beforeprint',()=>{sync();beforePrintWasClean=document.body.classList.contains('exportMode');scheduleCleanMode(true)});
+window.addEventListener('afterprint',()=>{scheduleCleanMode(beforePrintWasClean)});
+$('print').onclick=()=>{sync();save(false);window.print()};
 let exportingSchedule=false;
 async function exportScheduleImage(format){
  if(exportingSchedule)return;
