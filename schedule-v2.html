@@ -338,21 +338,7 @@ function printOTSheet(){
  if(!popup){$('status').textContent='Allow pop-ups to print OT forms, or use your browser print settings.';return}
  const printableStyles=`@page{size:A4 portrait;margin:0}*{box-sizing:border-box}body{margin:0;background:#eee;font:Arial,sans-serif}.printButton{position:sticky;top:0;background:#253247;color:white;padding:12px;text-align:center;z-index:2}.printButton button{font-size:15px;padding:9px 20px;cursor:pointer}.otPage{width:210mm;height:297mm;padding:10mm 11mm;background:#fff;margin:12px auto;display:flex;flex-direction:column;gap:4mm;break-after:page;page-break-after:always}.otPage:last-child{break-after:auto;page-break-after:auto}.otForm{height:86mm;flex-shrink:0;border:1.5px solid #34465c;padding:4mm 5mm;display:flex;flex-direction:column;gap:2mm;break-inside:avoid;font:10px Arial,sans-serif;color:#172536}.otFormHeader{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #b6c1ce;padding-bottom:2mm}.otFormHeader strong{font-size:12px;letter-spacing:.5px}.otFormHeader span{font-size:9px;color:#5d6979}.otFormGrid{display:grid;grid-template-columns:1fr 1fr;gap:1.5mm 6mm}.otFormGrid b{font-size:10px}.otFormTable{width:100%;border-collapse:collapse;font-size:9px}.otFormTable th,.otFormTable td{border:1px solid #b3bdc6;text-align:left;padding:1mm 1.6mm}.otFormTable th{background:#edf1f6}.otFormTotals{display:flex;gap:7mm;font-weight:700;background:#f0f3f7;padding:2mm 2.5mm}.otPurpose{padding-top:1mm}.otSignatures{display:grid;grid-template-columns:repeat(3,1fr);gap:5mm;margin-top:auto;text-align:center}.otSignatures div{border-top:1px solid #445363;padding-top:1.3mm;font-size:9px}.otPageFooter{font-size:9px;color:#657180;text-align:center;margin-top:auto}@media print{body{background:#fff}.printButton{display:none}.otPage{margin:0;box-shadow:none;overflow:hidden}}`;
  popup.document.open();
- popup.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Varda Group - OT Forms</title><style>'+printableStyles+'</style></head><body><div class="printButton"><button onclick="window.print()">Print / Save PDF · A4 portrait</button> · '+entries.length+' OT forms</div>'+otPagesHtml(entries)+'<script>
-(function(){
- const panel=document.querySelector('.panel');
- if(!panel)return;
- for(const [id,title] of [['bulkStaffBox','Import staff / Excel tools'],['savedBranch','Saved schedules & backups'],['theme','Appearance / themes']]){
-   const el=document.getElementById(id);const box=el?.closest('.box');if(!box||box.closest('details'))continue;
-   const details=document.createElement('details');details.className='toolGroup';
-   const summary=document.createElement('summary');summary.textContent=title;
-   box.parentNode.insertBefore(details,box);details.append(summary,box);
- }
- const guide=document.querySelector('#adminToggle')?.closest('.box');
- if(guide){const details=document.createElement('details');details.className='toolGroup';details.innerHTML='<summary>Advanced planner & labor controls</summary>';guide.parentNode.insertBefore(details,guide);details.append(guide);}
-})();
-</script>
-</body></html>');
+ popup.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Varda Group - OT Forms</title><style>'+printableStyles+'</style></head><body><div class="printButton"><button onclick="window.print()">Print / Save PDF · A4 portrait</button> · '+entries.length+' OT forms</div>'+otPagesHtml(entries)+'</body></html>');
  popup.document.close();
  popup.focus();
 }
@@ -550,6 +536,21 @@ $('pbranch').addEventListener('input',()=>{$('branch').value=$('pbranch').textCo
 $('pbranch').addEventListener('blur',()=>{const value=$('pbranch').textContent.replace(/\s+/g,' ').trim();$('branch').value=value;meta();save(false);renderPay();});
 $('pbranch').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('pbranch').blur();}});
 ['title','branch','period','prepared','approval','approved'].forEach(id=>$(id).oninput=()=>{meta();save(false);renderPay();renderOT()});$('theme').onchange=()=>{theme();save(false)};$('zoom').oninput=view;$('font').oninput=view;$('minus').onclick=()=>{$('zoom').value=Math.max(60,+$('zoom').value-10);view()};$('plus').onclick=()=>{$('zoom').value=Math.min(140,+$('zoom').value+10);view()};$('reset').onclick=()=>{$('zoom').value=100;$('font').value=100;view()};$('rows').oninput=()=>{sync();save(false);renderPay()};load();renderOT();
+</script>
+<script>
+(function(){
+ const panel=document.querySelector('.panel');
+ if(!panel)return;
+ for(const [id,title] of [['bulkStaffBox','Import staff / Excel tools'],['savedBranch','Saved schedules & backups'],['theme','Appearance / themes']]){
+   const el=document.getElementById(id),box=el?.closest('.box');
+   if(!box||box.closest('details'))continue;
+   const details=document.createElement('details');details.className='toolGroup';
+   const summary=document.createElement('summary');summary.textContent=title;
+   box.parentNode.insertBefore(details,box);details.append(summary,box);
+ }
+ const guide=document.querySelector('#adminToggle')?.closest('.box');
+ if(guide){const details=document.createElement('details');details.className='toolGroup';details.innerHTML='<summary>Advanced planner & labor controls</summary>';guide.parentNode.insertBefore(details,guide);details.append(guide);}
+})();
 </script>
 </body>
 </html>
