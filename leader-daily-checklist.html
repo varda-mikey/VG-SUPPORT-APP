@@ -414,7 +414,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&galleryPi
 const params=new URLSearchParams(location.search);if(params.has('ceo')){isViewer=true;mode='head';ceoToken=new URLSearchParams(location.hash.replace(/^#/,'' )).get('key')||'';headToken='';document.body.classList.add('viewerMode')}else if(params.has('leader')){mode='leader';leaderToken=new URLSearchParams(location.hash.replace(/^#/,'' )).get('key')||'';}
 $('day').value=today();$('myDay').value=today();
 const api=async(action,payload={})=>{const r=await fetch(END,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,headToken:mode==='head'&&!isViewer?headToken:undefined,ceoToken:isViewer?ceoToken:undefined,leader:mode==='leader'?leaderToken:undefined,...payload})});let x;try{x=await r.json()}catch{throw Error('Server unavailable')};if(!r.ok||x.error)throw Error(x.error||'Request failed');return x};
-function csvEscape(v){const t=String(v??'');return '"'+t.replace(/"/g,'""')+'"'}
+function csvEscape(v){let t=String(v??'');if(/^[=+@-]/.test(t))t="'"+t;return '"'+t.replace(/"/g,'""')+'"'}
 function downloadCSV(name,rows){const csv='\uFEFF'+rows.map(row=>row.map(csvEscape).join(',')).join('\r\n');const blob=new Blob([csv],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000)}
 $('downloadStorageSummary').onclick=async()=>{
  const btn=$('downloadStorageSummary');btn.disabled=true;btn.textContent='Preparing report summary…';
@@ -601,7 +601,7 @@ async function load(quiet=false){
   quietLiveRefresh();
   return;
  }
- loading=true;try{let old=selected,drafts=headDrafts();data=await api('load',{day:mode==='head'?$('day').value:$('myDay').value});if(mode==='head'){selected=data.leaders.some(l=>l.id===old)?old:(data.leaders.find(l=>l.active!==false)?.id||data.leaders[0]?.id||'');renderHead();restoreHeadDrafts(drafts);previousHeadDate=$('day').value}else{renderLeader();if($('myDay').value===today())checkPendingYesterday()}syncState(true);if(!quiet){say('Updated '+new Date().toLocaleTimeString('en-PH'));if(mode==='head')renderHistory()}}catch(e){syncState(false);if(!quiet)say(e.message);if(mode==='head'&&/sign in/i.test(e.message))logout()}finally{loading=false}}
+ loading=true;try{let old=selected,drafts=headDrafts();data=await api('load',{day:mode==='head'?$('day').value:$('myDay').value});if(mode==='head'){selected=data.leaders.some(l=>l.id===old)?old:(data.leaders.find(l=>l.active!==false)?.id||data.leaders[0]?.id||'');renderHead();if(!quiet)refreshHeadPendingReasons();restoreHeadDrafts(drafts);previousHeadDate=$('day').value}else{renderLeader();if($('myDay').value===today())checkPendingYesterday()}syncState(true);if(!quiet){say('Updated '+new Date().toLocaleTimeString('en-PH'));if(mode==='head')renderHistory()}}catch(e){syncState(false);if(!quiet)say(e.message);if(mode==='head'&&/sign in/i.test(e.message))logout()}finally{loading=false}}
 function openHead(){refreshStorage();setTimeout(refreshHeadPendingReasons,2000);$('headLogin').classList.add('hide');$('headView').classList.remove('hide');$('signout').classList.remove('hide');$('sessionTitle').textContent='Head Review Board';load();}
 function logout(){headToken='';sessionStorage.removeItem('vg-head-checklist-token');$('headView').classList.add('hide');$('headLogin').classList.remove('hide');$('signout').classList.add('hide')}
 $('signout').onclick=logout;
