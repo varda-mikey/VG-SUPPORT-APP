@@ -343,9 +343,14 @@ body.viewerMode .removeEvidence{display:none!important}
 .pendingResultDialog h2{color:#193f30}
 .pendingResultDialog .main{width:100%;padding:14px;font-weight:800}
 @media(max-width:600px){.pendingDialog{padding:18px}.pendingChoiceBlock{padding:10px}}
+
+/* Selective reporting dashboard */
+.reportPicker{background:#fff;border:1px solid #e5d6d3;border-radius:14px;padding:16px;margin:12px 0 18px;box-shadow:0 2px 10px #4222  }
+.reportPicker h3{margin:0 0 6px;color:#75242a}.reportPicker .rpLine{display:flex;gap:10px;flex-wrap:wrap;align-items:end;margin:12px 0}.reportPicker label{font-weight:700;display:flex;flex-direction:column;gap:5px}.reportPicker input[type=date]{border:1px solid #d8c6c1;border-radius:8px;padding:9px;background:white}.rpPeople{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:7px;max-height:220px;overflow:auto;padding:8px;background:#faf6f4;border-radius:10px}.rpPeople label{display:flex;flex-direction:row;align-items:center;gap:8px;padding:8px;border-radius:8px;background:#fff;font-weight:500}.rpPeople input{accent-color:#80252d}.rpPreview{overflow-x:auto}.rpPreview table{width:100%;border-collapse:collapse;font-size:12px}.rpPreview th,.rpPreview td{border-bottom:1px solid #e9e0de;padding:9px;text-align:left}.rpPreview th{background:#f4e9e6}.rpPreview .rpDanger{color:#a22d2d;font-weight:700}.rpPreview .rpGood{color:#196b48;font-weight:700}.rpPreview .rpDay{white-space:nowrap}.rpNote{font-size:12px;color:#776767}.rpMetrics{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}.rpMetrics b{background:#f5eeeb;padding:10px;border-radius:9px}.rpReportPage{page-break-after:always}.rpReportPage:last-child{page-break-after:auto}
 </style></head><body><header><small>NATIONAL RETAIL HEAD • VARDA GROUP</small><h1>LEADER TASK CHECKLIST</h1><div class="headnav"><a href="index.html">← VG Support Home</a><span id="sessionTitle">Shared daily output monitoring</span><button id="signout" class="hide">Sign out</button></div></header>
 <main><section id="headLogin" class="login panel"><h2>National Retail Head</h2><p class="muted">Sign in with your existing Generals & Missions / Retail Audit head password.</p><form id="loginForm"><label>Head password <input id="password" type="password" autocomplete="current-password" required style="width:100%;display:block;margin:8px 0"></label><button class="main" type="submit">Open checking board</button></form><p id="loginError" class="pending"></p></section>
 <section id="headView" class="hide"><div class="toolbar"><div class="actions"><label>Evaluation date<input id="day" type="date"></label><label>Region<select id="region"><option value="">All regions</option></select></label><button id="headToday" class="main" type="button">Today / Show All</button><button id="refresh">↻ Refresh</button><span class="syncBadge" id="syncBadge">● Live sync</span></div><div class="actions"><button id="manageToggle">⚙ Edit Task List</button><span id="ceoLinkControls" class="actions"><button type="button" id="createCEO" title="Create a private CEO view-only link">🔗 Create CEO View Link</button><button type="button" id="resetCEO" title="Disable previous CEO link and make a new one">Reset CEO Link</button></span><button id="individualReport" class="main">Print Leader A4</button><button id="jpegLeaderReport" class="main" title="Download one-page JPEG report with photos and comments">📷 Save 1-Page JPEG</button><button id="allReport">All Leaders Daily Summary A4</button><button id="monthReport">Monthly Summary A4</button></div></div>
+<section class="reportPicker" id="reportPicker"><h3>📊 Custom Leader Reports · CEO Presentation</h3><p class="rpNote">Choose leaders and a date range. Generate an overall summary or a separate daily report for each leader. Past days with no submitted record appear as No Report.</p><div class="rpLine"><label>From date<input type="date" id="rpFrom"></label><label>To date<input type="date" id="rpTo"></label><label>Report format<select id="rpFormat"><option value="summary">CEO Overview · Daily Matrix</option><option value="detail">Individual Leader · Per Day Details</option></select></label></div><div class="rpLine"><button type="button" id="rpAll">Select All Leaders</button><button type="button" id="rpNone">Clear Selection</button><span id="rpSelection" class="rpNote"></span></div><div id="rpPeople" class="rpPeople"></div><div class="rpLine"><button type="button" class="main" id="rpRun">Generate Report</button><button type="button" id="rpPrint" disabled>Print / Save as PDF</button><button type="button" id="rpCSV" disabled>Export CSV</button><span id="rpStatus" class="rpNote"></span></div><div id="rpResult" class="rpPreview"></div></section>
 <section id="storagePanel" class="storagePanel" aria-label="Supabase storage usage">
  <div class="storageTitle"><h3>☁ Supabase Storage Monitor</h3><button type="button" id="refreshStorage">↻ Refresh Storage</button></div>
  <div id="storageMain" class="storageMain">Checking storage…</div>
@@ -667,6 +672,7 @@ function leaderDailyCounts(l,day){
  return {total:tasks.length,submitted,received:taskCounts.received,saved,files,photos,lastUpdate};
 }
 function renderHead(){
+ renderReportPicker();
  let areas=[...new Set(data.leaders.filter(l=>l.active!==false).map(l=>l.area).filter(Boolean))].sort(),region=$('region').value;
  $('region').innerHTML='<option value="">All regions</option>'+areas.map(a=>'<option value="'+enc(a)+'">'+enc(a)+'</option>').join('');
  $('region').value=areas.includes(region)?region:'';
@@ -1487,6 +1493,56 @@ $('jpegLeaderReport').onclick=saveLeaderJpeg;
 
 $('individualReport').onclick=()=>printReport(false);
 $('allReport').onclick=()=>printReport(true);
+
+/* CEO custom reports — uses the existing authenticated report endpoint; does not change stored tasks. */
+let rpSelected=null,rpRows=[],rpPrinted='',rpReady=false;
+function renderReportPicker(){
+ const root=$('rpPeople');if(!root)return;
+ const roster=data.leaders||[];
+ const ids=new Set(roster.map(l=>l.id));
+ if(rpSelected===null)rpSelected=new Set(roster.filter(l=>l.active!==false).map(l=>l.id));
+ else rpSelected=new Set([...rpSelected].filter(id=>ids.has(id)));
+ root.innerHTML=roster.map(l=>'<label><input type="checkbox" data-rpleader="'+enc(l.id)+'" '+(rpSelected.has(l.id)?'checked':'')+'><span>'+enc(l.name)+(l.active===false?' (archived)':'')+'<small style="display:block;color:#776767">'+enc(l.area||'')+'</small></span></label>').join('');
+ root.querySelectorAll('[data-rpleader]').forEach(c=>c.onchange=()=>{c.checked?rpSelected.add(c.dataset.rpleader):rpSelected.delete(c.dataset.rpleader);updateRpCount()});
+ updateRpCount();
+}
+function updateRpCount(){$('rpSelection').textContent=(rpSelected?.size||0)+' leader(s) selected'}
+$('rpFrom').value=today().slice(0,7)+'-01';$('rpTo').value=today();
+$('rpAll').onclick=()=>{rpSelected=new Set(data.leaders.filter(l=>l.active!==false).map(l=>l.id));renderReportPicker()};
+$('rpNone').onclick=()=>{rpSelected=new Set();renderReportPicker()};
+function rpDates(a,b){let out=[],d=new Date(a+'T12:00:00'),last=new Date(b+'T12:00:00');for(let i=0;d<=last&&i<366;i++,d.setDate(d.getDate()+1))out.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'));return out}
+function rpStatusFor(entries){
+ if(!entries.length)return 'No Report';
+ const submitted=entries.filter(e=>e.leader_status==='submitted').length;
+ if(!submitted)return 'Draft / Incomplete';
+ return submitted===entries.length?'Submitted':'Partial';
+}
+function rpPercent(entries){const reviewed=entries.filter(e=>!['pending','na',null,undefined,''].includes(e.head_status));return reviewed.length?Math.round(reviewed.reduce((n,e)=>n+(e.head_status==='complete'?1:e.head_status==='incomplete'?.5:0),0)/reviewed.length*100)+'%':'—'}
+function rpTable(rows){return '<table><thead><tr><th>Leader / Branch</th><th>Day</th><th>Status</th><th>Submitted Tasks</th><th>Reviewed</th><th>Score</th></tr></thead><tbody>'+rows.map(r=>'<tr><td>'+enc(r.leader.name)+'<small style="display:block">'+enc(r.leader.area||'')+'</small></td><td class="rpDay">'+enc(r.date)+'</td><td class="'+(r.status==='No Report'?'rpDanger':r.status==='Submitted'?'rpGood':'')+'">'+enc(r.status)+'</td><td>'+r.submitted+'/'+r.entries.length+'</td><td>'+r.reviewed+'</td><td>'+enc(r.score)+'</td></tr>').join('')+'</tbody></table>'}
+function rpIndividual(rows){return rows.map(r=>'<div class="page rpReportPage"><h2>VARDA GROUP · LEADER DAILY OUTPUT</h2><p>'+enc(r.date)+'</p><h3>'+enc(r.leader.name)+' · '+enc(r.leader.area||'')+'</h3><p>Status: <b>'+enc(r.status)+'</b> &nbsp; Submitted: '+r.submitted+'/'+r.entries.length+' &nbsp; Head score: '+enc(r.score)+'</p>'+(r.entries.length?'<table><thead><tr><th>Task / Output</th><th>Leader</th><th>Head review</th><th>Remarks</th></tr></thead><tbody>'+r.entries.map(e=>{let task=data.tasks.find(t=>t.id===e.task_id);return '<tr><td>'+enc(task?.title||task?.name||task?.task_name||e.task_id)+'</td><td>'+enc(e.leader_status||'—')+'</td><td>'+enc(e.head_status||'Pending')+'</td><td>'+enc([e.remarks,e.leader_remarks,e.head_remarks,e.head_comment].filter(Boolean).join(' / ')||'—')+'</td></tr>'}).join('')+'</tbody></table>':'<p><b>No saved task submissions for this day.</b></p>')+'<p class="small">Source: saved checklist records. For historical photos/videos, open the leader’s Saved reports by date in the online board. A missing submission is not an automatic attendance determination.</p></div>').join('')}
+$('rpRun').onclick=async()=>{
+ let from=$('rpFrom').value,to=$('rpTo').value,btn=$('rpRun');
+ if(!from||!to||to<from){$('rpStatus').textContent='Choose a valid date range.';return}
+ const days=rpDates(from,to);if(!days.length||days.length>366){$('rpStatus').textContent='Choose up to 366 days.';return}
+ const leaders=data.leaders.filter(l=>rpSelected.has(l.id));
+ if(!leaders.length){$('rpStatus').textContent='Select at least one leader.';return}
+ btn.disabled=true;$('rpStatus').textContent='Loading saved records…';rpReady=false;
+ $('rpPrint').disabled=true;$('rpCSV').disabled=true;
+ try{
+ const response=await api('report',{from,to}),records=(response.entries||[]);
+ rpRows=leaders.flatMap(l=>days.map(date=>{const entries=records.filter(e=>e.leader_id===l.id&&e.work_date===date);return {leader:l,date,entries,status:rpStatusFor(entries),submitted:entries.filter(e=>e.leader_status==='submitted').length,reviewed:entries.filter(e=>e.head_status&&!['pending','na'].includes(e.head_status)).length,score:rpPercent(entries)}}));
+ const noReport=rpRows.filter(r=>r.status==='No Report').length;
+ const overview='<h2>VARDA GROUP · CEO LEADER OUTPUT REPORT</h2><p>'+enc(from)+' to '+enc(to)+' · '+leaders.length+' leaders · '+days.length+' days</p><p><b>'+rpRows.filter(r=>r.status==='Submitted').length+'</b> fully submitted leader-days &nbsp; <b>'+noReport+'</b> days without saved submissions</p>';
+ const detail=$('rpFormat').value==='detail';
+ rpPrinted=detail?rpIndividual(rpRows):'<div class="page">'+overview+rpTable(rpRows)+'<p class="small">No Report = no saved submission for the day; verify scheduled duties, leave, and attendance before HR decisions. Head scores cover reviewed items only.</p></div>';
+ $('rpResult').innerHTML='<div class="rpMetrics"><b>'+leaders.length+' leaders</b><b>'+days.length+' days</b><b>'+noReport+' no-report leader-days</b></div>'+ (detail?'<p>Individual day-by-day pages prepared for printing. First 20 rows shown below.</p>':'')+rpTable(detail?rpRows.slice(0,20):rpRows);
+ $('rpStatus').textContent=rpRows.length+' daily records ready. Print to share a PDF with the CEO.';
+ $('rpPrint').disabled=false;$('rpCSV').disabled=false;rpReady=true;
+ }catch(e){$('rpStatus').textContent='Could not load reports: '+e.message}finally{btn.disabled=false}
+};
+$('rpPrint').onclick=()=>{if(!rpReady)return;$('report').innerHTML=rpPrinted;window.print()};
+$('rpCSV').onclick=()=>{if(!rpReady)return;downloadCSV('varda-leader-report-'+$('rpFrom').value+'-to-'+$('rpTo').value+'.csv',[['Leader','Branch','Date','Status','Tasks Submitted','Tasks Recorded','Head Reviewed','Score'],...rpRows.map(r=>[r.leader.name,r.leader.area||'',r.date,r.status,r.submitted,r.entries.length,r.reviewed,r.score])])};
+
 $('monthReport').onclick=async()=>{try{let month=$('day').value.slice(0,7),from=month+'-01',to=month+'-31',result=await api('report',{from,to}),records=result.entries||[],rows=data.leaders.map(l=>{let r=records.filter(x=>x.leader_id===l.id),reviewed=r.filter(x=>!['pending','na'].includes(x.head_status)),score=reviewed.length?Math.round(reviewed.reduce((n,x)=>n+(x.head_status==='complete'?1:x.head_status==='incomplete'?.5:0),0)/reviewed.length*100)+'%':'—';return '<tr><td>'+enc(l.name)+'</td><td>'+enc(l.area)+'</td><td>'+new Set(r.map(x=>x.work_date)).size+'</td><td>'+r.filter(x=>x.leader_status==='submitted').length+'</td><td>'+reviewed.length+'</td><td>'+score+'</td></tr>'}).join('');$('report').innerHTML='<div class="page"><h2>VARDA GROUP • MONTHLY LEADER SUMMARY</h2><p>'+enc(month)+'</p><table><thead><tr><th>Leader</th><th>Region</th><th>Recorded Dates</th><th>Submitted</th><th>Reviewed</th><th>Score</th></tr></thead><tbody>'+rows+'</tbody></table><p class="small">Score based on reviewed items only; monthly tasks recorded once per month.</p></div>';window.print()}catch(e){say(e.message)}};
 if(mode==='leader'){$('headLogin').classList.add('hide');$('leaderView').classList.remove('hide');$('sessionTitle').textContent='Leader Personal Dashboard';if(!leaderToken){$('myName').textContent='Missing personal link key';$('myMessage').textContent='Ask your Head to send your complete link.'}else load();}
 else if(isViewer&&ceoToken){$('headLogin').classList.add('hide');$('headView').classList.remove('hide');$('sessionTitle').textContent='CEO • View-Only Reports';load()}
