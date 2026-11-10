@@ -345,6 +345,8 @@ body.viewerMode .removeEvidence{display:none!important}
  <div id="storageMeta" class="storageMeta">Storage usage is available to the National Retail Head only.</div>
  <div class="storageTrack" role="progressbar" aria-label="Storage usage against Free-plan 1 GB reference" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="storageFill" class="storageFill"></div></div>
  <div id="storageRows" class="storageRows"></div><div id="storageWarning" class="storageWarning hide"></div>
+ <div style="margin-top:10px"><button type="button" id="downloadStorageSummary">⬇ Download All Report Records (CSV)</button><small class="storageMeta" style="display:block;margin-top:5px">CSV includes task submissions, remarks, acknowledgement reasons, and file inventory. Photos/videos are NOT included. Keep separate verified copies before deleting evidence.</small></div>
+ <div id="headPendingReasons" style="margin-top:14px"></div>
  <p class="storageMeta">1 GB is the Supabase Free-plan storage reference, not a confirmed quota for your account. Uploaded files only; database size and billing-period averages are separate.</p>
  </section><div id="headActivity" class="headActivity"></div><div class="layout"><aside class="panel"><div class="heading"><h2>Leaders</h2><button id="addLeader" class="main">+ Add</button></div><p class="muted">Select a leader to review outputs. Copy their private personal link for phone submissions.</p><label class="muted" style="display:flex;align-items:center;gap:8px;margin:10px 0"><input type="checkbox" id="showArchivedLeaders"> Show archived leaders</label><div class="people" id="people"></div><button id="archiveLeader" class="danger" style="margin-top:10px">Archive selected leader</button><button id="editLeader" style="margin-top:10px">Edit selected leader</button><button id="rotate" style="margin-top:10px">Reset personal link</button></aside><section class="panel"><div class="heading"><div><h2 id="leaderName">Select leader</h2><div id="leaderMeta" class="muted"></div></div><div class="actions"><button type="button" id="openAddTask" class="main">＋ Add Task</button><button id="copyLink" class="main">Copy personal link</button></div></div><div id="stats" class="kpis"></div><div id="headSelectedSummary" class="headSelectedSummary"></div><p class="viewerReadOnly muted">View-only access · Editing and grading are disabled. Private reports are for authorized management viewing.</p><div id="addTaskBoard" class="addTaskBoard hide"><h3 style="margin:0">Add task for selected leader</h3><label>Task name<input id="newTaskTitle" placeholder="Describe the daily duty"></label><label>Category<input id="newTaskCategory" placeholder="Example: Operations"></label><div class="dateOnlyNotice">📅 This task will appear ONLY on <strong id="addDateLabel">the selected date</strong>. Other dates will stay unchanged.</div><input type="hidden" id="newTaskFrequency" value="daily"><div class="inlineActions"><button type="button" class="main" id="submitNewTask">Save New Task</button><button type="button" id="cancelNewTask">Cancel</button></div><small id="newTaskMessage" class="muted"></small></div><div id="tasks" class="tasks"><p class="muted">Select a leader.</p></div><div id="historyPanel" class="history"><div class="heading"><h3>Saved reports by date</h3><button id="historyRefresh">Load History</button></div><div class="archiveControls"><label>Year<select id="archiveYear"></select></label><label>Month<select id="archiveMonth"></select></label><button id="archiveToday">Today</button><button id="deleteReportDay" class="danger">Delete Selected Day</button></div><p class="muted">Saved automatically by Year → Month → Date. Select any date to view its report and attached proof.</p><div id="archiveSummary" class="archiveSummary"></div><div id="historyDays" class="calendarDays"></div><p class="muted">Green = submitted, yellow = partial, red = no daily report, faded = future. Deletion is permanent and reserved for the National Retail Head.</p></div><p id="message" role="status"></p></section></div>
 <section id="manage" class="panel manage hide"><div class="heading"><h2>Customize selected leader's checklist</h2><button id="addTask" class="main">+ Add output task</button></div><p class="muted">Add, edit or remove duties for the selected leader only. Other leaders' forms do not change. Earlier submissions stay in their records.</p><div id="taskEditor"></div><button id="closeManage">Done editing</button></section></section>
@@ -412,6 +414,41 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&galleryPi
 const params=new URLSearchParams(location.search);if(params.has('ceo')){isViewer=true;mode='head';ceoToken=new URLSearchParams(location.hash.replace(/^#/,'' )).get('key')||'';headToken='';document.body.classList.add('viewerMode')}else if(params.has('leader')){mode='leader';leaderToken=new URLSearchParams(location.hash.replace(/^#/,'' )).get('key')||'';}
 $('day').value=today();$('myDay').value=today();
 const api=async(action,payload={})=>{const r=await fetch(END,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,headToken:mode==='head'&&!isViewer?headToken:undefined,ceoToken:isViewer?ceoToken:undefined,leader:mode==='leader'?leaderToken:undefined,...payload})});let x;try{x=await r.json()}catch{throw Error('Server unavailable')};if(!r.ok||x.error)throw Error(x.error||'Request failed');return x};
+function csvEscape(v){const t=String(v??'');return '"'+t.replace(/"/g,'""')+'"'}
+function downloadCSV(name,rows){const csv='\uFEFF'+rows.map(row=>row.map(csvEscape).join(',')).join('\r\n');const blob=new Blob([csv],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000)}
+$('downloadStorageSummary').onclick=async()=>{
+ const btn=$('downloadStorageSummary');btn.disabled=true;btn.textContent='Preparing report summary…';
+ try{
+  const result=await api('download_summary'),d=result.summary;
+  const names=new Map((d.vg_checklist_leaders||[]).map(x=>[x.id,x.name]));
+  const taskMap=new Map((d.vg_checklist_tasks||[]).map(x=>[x.id,x]));
+  const evidence=new Map();
+  for(const f of d.vg_checklist_files||[]){const list=evidence.get(f.entry_id)||[];list.push(f);evidence.set(f.entry_id,list)}
+  const ackMap=new Map((d.vg_checklist_pending_ack||[]).map(x=>[x.leader_id+'|'+x.task_id+'|'+x.work_date,x]));
+  const rows=[['Date','Leader','Task','Category','Leader Status','Leader Remarks','Head Rating','Head Remarks','Submitted At','File Count','Evidence Storage Paths','Incomplete Acknowledgement Reason','Acknowledged At']];
+  for(const e of d.vg_checklist_entries||[]){const t=taskMap.get(e.task_id)||{},files=evidence.get(e.id)||[],ack=ackMap.get(e.leader_id+'|'+e.task_id+'|'+e.work_date)||{};
+   rows.push([e.work_date,names.get(e.leader_id)||e.leader_id,t.title||e.task_id,t.category||'',e.leader_status||'',e.leader_note||'',e.head_status||'',e.head_note||'',e.submitted_at||'',files.length,files.map(f=>f.storage_path).join(' | '),ack.reason||'',ack.acknowledged_at||'']);
+  }
+  for(const a of d.vg_checklist_pending_ack||[]){if((d.vg_checklist_entries||[]).some(e=>e.leader_id===a.leader_id&&e.task_id===a.task_id&&e.work_date===a.work_date))continue;const t=taskMap.get(a.task_id)||{};
+   rows.push([a.work_date,names.get(a.leader_id)||a.leader_id,t.title||a.task_id,t.category||'','Not submitted','','','','',0,'',a.reason||'',a.acknowledged_at||'']);
+  }
+  downloadCSV('Varda-Leader-Reports-Summary-'+today()+'.csv',rows);
+  say('Report summary downloaded ('+(rows.length-1)+' rows). IMPORTANT: This is not a backup of the actual photos and videos.');
+ }catch(e){say('Summary download failed: '+e.message)}finally{btn.disabled=false;btn.textContent='⬇ Download All Report Records (CSV)'}
+};
+async function refreshHeadPendingReasons(){
+ if(mode!=='head'||isViewer||!headToken)return;
+ const date=new Date(today()+'T12:00:00Z');date.setUTCDate(date.getUTCDate()-1);
+ const yesterday=date.toISOString().slice(0,10);
+ try{
+  const d=await api('pending_ack_report',{day:yesterday});
+  const items=d.acknowledgements||[],box=$('headPendingReasons');
+  box.innerHTML='<b>Yesterday\'s Unfinished Duty Acknowledgements ('+items.length+')</b> <small>'+enc(yesterday)+'</small>'+
+   (items.length?'<div style="margin-top:8px;display:grid;gap:8px">'+items.map(a=>{const leader=data.leaders.find(l=>l.id===a.leader_id),task=data.tasks.find(t=>t.id===a.task_id);
+    return '<div class="storageBucket"><b>'+enc(leader?.name||'Leader')+' — '+enc(task?.title||'Task ID: '+a.task_id)+'</b><span>'+enc(a.reason)+'</span><small style="display:block">'+enc(new Date(a.acknowledged_at).toLocaleString('en-PH'))+'</small></div>'
+   }).join('')+'</div>':'<p class="storageMeta">No acknowledged unfinished tasks for yesterday yet.</p>');
+ }catch(e){$('headPendingReasons').textContent='Unable to load yesterday\'s acknowledgements: '+e.message}
+}
 const formatStorage=n=>{const v=Number(n)||0;return v>=1073741824?(v/1073741824).toFixed(2)+' GB':v>=1048576?(v/1048576).toFixed(1)+' MB':(v/1024).toFixed(1)+' KB'};
 async function refreshStorage(){
  if(mode!=='head'||isViewer||!headToken)return;
@@ -565,7 +602,7 @@ async function load(quiet=false){
   return;
  }
  loading=true;try{let old=selected,drafts=headDrafts();data=await api('load',{day:mode==='head'?$('day').value:$('myDay').value});if(mode==='head'){selected=data.leaders.some(l=>l.id===old)?old:(data.leaders.find(l=>l.active!==false)?.id||data.leaders[0]?.id||'');renderHead();restoreHeadDrafts(drafts);previousHeadDate=$('day').value}else{renderLeader();if($('myDay').value===today())checkPendingYesterday()}syncState(true);if(!quiet){say('Updated '+new Date().toLocaleTimeString('en-PH'));if(mode==='head')renderHistory()}}catch(e){syncState(false);if(!quiet)say(e.message);if(mode==='head'&&/sign in/i.test(e.message))logout()}finally{loading=false}}
-function openHead(){refreshStorage();$('headLogin').classList.add('hide');$('headView').classList.remove('hide');$('signout').classList.remove('hide');$('sessionTitle').textContent='Head Review Board';load();}
+function openHead(){refreshStorage();setTimeout(refreshHeadPendingReasons,2000);$('headLogin').classList.add('hide');$('headView').classList.remove('hide');$('signout').classList.remove('hide');$('sessionTitle').textContent='Head Review Board';load();}
 function logout(){headToken='';sessionStorage.removeItem('vg-head-checklist-token');$('headView').classList.add('hide');$('headLogin').classList.remove('hide');$('signout').classList.add('hide')}
 $('signout').onclick=logout;
 $('loginForm').onsubmit=async ev=>{ev.preventDefault();$('loginError').textContent='Signing in…';try{let d=await api('head_login',{password:$('password').value});headToken=d.token;sessionStorage.setItem('vg-head-checklist-token',headToken);$('password').value='';$('loginError').textContent='';openHead()}catch(e){$('loginError').textContent=e.message}};
