@@ -7,3 +7,12 @@ body{background:#fff}header{background:#fff;color:var(--navy);padding:10px 18px;
 .batchBox{border:1px solid #bddde4;background:#f2fafb;padding:12px;border-radius:8px}.batchBox summary{font-weight:bold;cursor:pointer}.batchBox input[type=checkbox]{display:inline-block;width:auto;margin:0 5px 0 0;vertical-align:middle}.batchToggle{margin:12px 0}.batchMonths{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}.batchMonths label{background:white;border:1px solid var(--line);padding:8px;border-radius:5px}
 
 .cardHistorySummary{margin:0;padding:7px 10px;background:#f2fafb;font-size:11px;color:var(--muted)}.cardPaymentHistory{table-layout:fixed}.cardPaymentHistory th:first-child{width:32%}.cardPaymentHistory th:nth-child(2){width:29%}.cardPaymentHistory th:last-child{width:39%}.cardPaymentHistory td{vertical-align:top;white-space:normal;overflow-wrap:anywhere}.cardPaymentHistory td:nth-child(2){text-align:right;font-weight:bold;white-space:nowrap}.cardPaymentHistory td:last-child{text-align:left}.cardPaymentHistory td small{font-weight:normal;font-size:10px}.cardPaymentHistory td button,.cardPaymentHistory td a{font-size:10px;padding:4px;margin:2px;display:inline-block}.cardPaymentHistory time{font-size:11px}.cardPaymentHistory .empty{text-align:center;font-weight:normal}
+
+/* Kuya Pagawa inline payment history */
+.kuyaPaymentHistory{padding:4px 10px 10px}
+.kuyaPaymentEntry{padding:10px 0;border-bottom:1px solid #dce7ed;font-size:12px}
+.kuyaPaymentEntry:last-child{border-bottom:0}
+.kuyaPaymentDescription{line-height:1.55;overflow-wrap:anywhere;color:#1b3351}
+.kuyaPaymentButtons{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px;align-items:center}
+.kuyaPaymentButtons button,.kuyaPaymentButtons a{background:#fff;border:1px solid #d2dfe8;border-radius:5px;padding:5px 7px;font:600 11px Arial,sans-serif;color:#1b3351;text-decoration:none;cursor:pointer}
+.kuyaPaymentButtons button:hover,.kuyaPaymentButtons a:hover{background:#e8f3fb}
