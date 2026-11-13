@@ -440,7 +440,20 @@ body.viewerMode .removeEvidence{display:none!important}
   <p class="pendingNotice">Head/HR will validate incomplete duties against attendance records. Submission or acknowledgement does not automatically approve the work or determine attendance.</p>
   <button type="button" id="pendingProceedToday" class="main">Proceed to Today's Checklist →</button>
  </div>
-</div><div id="approvedPopup" class="approvedBackdrop hide" role="presentation">
+</div><div id="dailyA4Popup" class="approvedBackdrop hide" role="presentation">
+ <div class="approvedDialog" role="dialog" aria-modal="true" aria-labelledby="dailyA4Title">
+  <div class="approvedStatus">✓ ALL DAILY TASKS SUBMITTED</div>
+  <h2 id="dailyA4Title">Thank you for your work today!</h2>
+  <p>You have submitted all required tasks and photo proof. Your report is now pending Head review.</p>
+  <p><b>Download your A4 daily report and send it together with your time-out record.</b></p>
+  <p id="dailyA4Info" class="muted"></p>
+  <div class="approvedActions"><button type="button" id="dailyA4Download" class="main">⬇ Download My A4 Report</button></div>
+  <p id="dailyA4Message" role="status" aria-live="polite" class="muted">Save your report before closing this reminder.</p>
+  <button type="button" id="dailyA4Done" class="approvedClose" disabled>✓ I saved my report · Continue</button>
+  <p class="muted">Your Head can already review your submission. Downloading the report does not mean approval.</p>
+ </div>
+</div>
+<div id="approvedPopup" class="approvedBackdrop hide" role="presentation">
   <div class="approvedDialog" role="dialog" aria-modal="true" aria-labelledby="approvedTitle">
     <div class="approvedStatus">✓ HEAD REVIEW COMPLETE · 100%</div>
     <h2 id="approvedTitle">Your daily report is complete!</h2>
@@ -1202,7 +1215,7 @@ $('deleteReportDay').onclick=async()=>{
  try{const result=await api('report_delete_day',{leader_id:selected,day});await load(true);await renderHistory();say('Deleted '+result.deleted+' saved task records for '+leader.name+' on '+day+'.')}catch(e){say('Deletion failed: '+e.message)}
 };
 function renderLeader(){let l=data.leaders[0];if(!l){$('myName').textContent='Access unavailable';return;}$('myName').textContent=l.name;$('myMeta').textContent=l.position+' • '+l.area+' • '+$('myDay').value;const tasks=leaderTasks(l.id),totals=taskSubmission(l.id,$('myDay').value),done=totals.submitted;
- updateLeaderExportState(totals);$('leaderProgress').innerHTML='<b>'+done+' of '+tasks.length+' formally submitted</b> · <strong>'+totals.received+'/'+tasks.length+' with saved proof</strong> · '+(done===tasks.length?'✓ Completed for selected date':'Photos may already be saved even when the task needs final submission.');$('myTasks').innerHTML=tasks.map((t,i)=>{const v=entry(l.id,t.id,taskDay(t,$('myDay').value));return taskCard(t,v,false).replace('<article class="task"','<article class="task"').replace('<div class="taskHeading"><h3>','<div class="taskHeading"><h3>'+(i+1)+'. ').replace('</h3></div><div class="taskContent">','</h3></div><div class="taskState '+enc(v.leader_status||'pending')+'">'+enc(v.leader_status==='submitted'?'✓ Submitted':v.leader_status==='working'?'In progress':'Not yet submitted')+'</div><div class="taskContent">')}).join('')||'<p>No active tasks.</p>';wireTasks(false);approvalState();checkPendingFinished()}
+ updateLeaderExportState(totals);$('leaderProgress').innerHTML='<b>'+done+' of '+tasks.length+' formally submitted</b> · <strong>'+totals.received+'/'+tasks.length+' with saved proof</strong> · '+(done===tasks.length?'✓ Completed for selected date':'Photos may already be saved even when the task needs final submission.');$('myTasks').innerHTML=tasks.map((t,i)=>{const v=entry(l.id,t.id,taskDay(t,$('myDay').value));return taskCard(t,v,false).replace('<article class="task"','<article class="task"').replace('<div class="taskHeading"><h3>','<div class="taskHeading"><h3>'+(i+1)+'. ').replace('</h3></div><div class="taskContent">','</h3></div><div class="taskState '+enc(v.leader_status||'pending')+'">'+enc(v.leader_status==='submitted'?'✓ Submitted':v.leader_status==='working'?'In progress':'Not yet submitted')+'</div><div class="taskContent">')}).join('')||'<p>No active tasks.</p>';wireTasks(false);approvalState();checkPendingFinished();showDailyA4Reminder()}
 $('headToday').onclick=()=>{
  if(hasUnsavedChanges()&&!confirm('You have unsaved changes. Switch to today and all regions?'))return;
  $('day').value=today();$('region').value='';$('showArchivedLeaders').checked=false;selected='';load();
@@ -1402,12 +1415,26 @@ async function buildLeaderJpegBlob(l,day){
 
 // Leader-owned A4 export: unlocked only when every active task is server-confirmed.
 let leaderExportPreviewUrl='';
+function dailyA4Key(l,day){return 'vg-daily-a4-started:'+l.id+':'+day}
+function showDailyA4Reminder(){
+ if(mode!=='leader'||!$('dailyA4Popup').classList.contains('hide'))return;
+ const l=data.leaders[0],day=$('myDay').value;
+ if(!l||!day)return;
+ const count=taskSubmission(l.id,day);
+ if(count.total<1||count.submitted!==count.total||count.received!==count.total)return;
+ if(sessionStorage.getItem(dailyA4Key(l,day)))return;
+ if(!$('pendingPopup').classList.contains('hide')||!$('pendingResultPopup').classList.contains('hide'))return;
+ $('dailyA4Info').textContent=l.name+' · '+day+' · '+count.total+'/'+count.total+' tasks with saved proof.';
+ $('dailyA4Message').textContent='Download the A4 JPEG, save it on your device, then send it with your time-out.';
+ $('dailyA4Done').disabled=true;
+ $('dailyA4Popup').classList.remove('hide');
+}
 function updateLeaderExportState(counts){
  const button=$('leaderSaveA4'),hint=$('leaderExportHint');
  if(!button||mode!=='leader')return;
- const done=counts.total>0&&counts.submitted===counts.total;
+ const done=counts.total>0&&counts.submitted===counts.total&&counts.received===counts.total;
  button.disabled=!done;
- hint.textContent=done?'✓ '+counts.total+'/'+counts.total+' tasks submitted. Your A4 report is ready to save.':'Complete '+counts.submitted+'/'+counts.total+' tasks to unlock the A4 JPEG report.';
+ hint.textContent=done?'✓ All tasks and proof submitted. Download the A4 report to send with your time-out.':'Submit all tasks with saved photo proof ('+counts.submitted+'/'+counts.total+' submitted; '+counts.received+'/'+counts.total+' with proof).';
  const section=button.closest('.leaderExport');
  if(section)section.classList.toggle('ready',done);
 }
@@ -1425,7 +1452,7 @@ async function saveMyLeaderA4(){
   const fresh=await api('load',{day});
   data=fresh;
   const actual=fresh.leaders[0],counts=taskSubmission(actual.id,day);
-  if(!counts.total||counts.submitted!==counts.total)throw Error('Only '+counts.submitted+'/'+counts.total+' tasks are submitted. Submit every task first.');
+  if(!counts.total||counts.submitted!==counts.total||counts.received!==counts.total)throw Error('Submit every task with photo proof first. '+counts.submitted+'/'+counts.total+' submitted; '+counts.received+'/'+counts.total+' with proof.');
   message.textContent='Building your A4 JPEG with all saved photos…';
   const blob=await buildLeaderJpegBlob(actual,day);
   if(leaderExportPreviewUrl)URL.revokeObjectURL(leaderExportPreviewUrl);
@@ -1433,6 +1460,9 @@ async function saveMyLeaderA4(){
   $('leaderExportImage').src=leaderExportPreviewUrl;
   preview.classList.remove('hide');
   downloadLeaderBlob(blob,actual,day);
+  sessionStorage.setItem(dailyA4Key(actual,day),'1');
+  $('dailyA4Done').disabled=false;
+  $('dailyA4Message').textContent='✓ Download started. Check that the report was saved, then send it with your time-out.';
   message.textContent='✓ A4 JPEG prepared and download started. On iPhone, you can also touch and hold the preview to Save to Photos.';
  }catch(error){
   message.textContent='⚠ Unable to save yet: '+error.message;
@@ -1443,6 +1473,8 @@ async function saveMyLeaderA4(){
  }
 }
 $('leaderSaveA4').onclick=saveMyLeaderA4;
+$('dailyA4Download').onclick=async()=>{const b=$('dailyA4Download');b.disabled=true;try{await saveMyLeaderA4()}finally{b.disabled=false}};
+$('dailyA4Done').onclick=()=>{if($('dailyA4Done').disabled)return;$('dailyA4Popup').classList.add('hide')};
 
 function leaderJpegFilename(l,day){return 'Varda_Leader_'+l.name.replace(/[^a-z0-9]+/gi,'_').slice(0,50)+'_'+day+'_Complete.jpg'}
 function downloadLeaderBlob(blob,l,day){
