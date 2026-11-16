@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>VG Smart Print | Epson L121 / L110 Compatibility Test</title>
+<title>VG Smart Print | Universal Printer Mode — Epson L121 / L110 / L120</title>
 <style>
 :root{font-family:system-ui,-apple-system,Segoe UI,Arial,sans-serif;color:#172033;background:#f3f5f9}*{box-sizing:border-box}
 body{margin:0}header{background:linear-gradient(100deg,#701b23,#b52932);color:white;padding:21px max(18px,calc((100% - 1160px)/2))}
@@ -25,11 +25,11 @@ input[type=checkbox]{margin-top:3px}.status{font-size:12px;margin-top:9px;color:
 @media(max-width:800px){main{grid-template-columns:1fr}#preview{min-height:340px}#preview iframe{height:520px}}
 @media print{header,.controls,.print-actions,.notprint{display:none!important}main{display:block;margin:0;padding:0}.output{border:0;box-shadow:none;margin:0;padding:0}#preview{padding:0;background:white;border:0;display:block;min-height:0;overflow:visible}#preview img{width:100%;max-width:100%;box-shadow:none}#preview iframe{display:none}body{background:white}}
 </style></head>
-<body><header><h1>VG SMART PRINT <span style="font-size:12px;opacity:.85">BETA</span></h1><p>Epson L121 hardware • L110 Windows driver compatibility experiment</p></header>
+<body><header><h1>VG SMART PRINT <span style="font-size:12px;opacity:.85">BETA</span></h1><p>Universal document print hub • Epson L121 and other Windows printers</p></header>
 <main><div class="controls">
-<section><h2>1. Printer profile</h2><div class="notice">Your physical printer is <strong>Epson L121</strong>. Selecting “L110 test” here does <strong>not</strong> install the L110 driver or change Windows printer recognition. The profile is a test checklist only.</div>
-<label for="profile">Windows driver / print profile to test</label>
-<select id="profile"><option value="l121">Epson L121 — original (recommended)</option><option value="l110">Epson L110 — compatibility test (experimental)</option></select>
+<section><h2>1. Printer profile</h2><div class="notice">Universal mode works with printers available in the Windows print dialog. Your physical Epson remains <strong>L121</strong>. Selecting L110/L120 test <strong>does not</strong> change your Windows driver or printer identity. Only the OS/driver can select a printer and expose its supported quality settings.</div>
+<label for="profile">Print workflow / compatibility profile</label>
+<select id="profile"><option value="l121">Epson L121 — original (recommended)</option><option value="l110">Epson L110 — compatibility test (experimental)</option><option value="l120">Epson L120 — compatibility test (experimental)</option><option value="any">Any installed Windows printer — universal mode</option></select>
 <div class="status" id="driverstatus">Active app profile: L121. Actual Windows driver: not detectable by this website.</div>
 <label for="paper">Paper / output preset</label>
 <select id="paper"><option value="matte">Matte / presentation paper</option><option value="plain">Plain paper / sharp text</option><option value="photo">Photo paper (only if paper matches)</option></select>
@@ -50,11 +50,11 @@ input[type=checkbox]{margin-top:3px}.status{font-size:12px;margin-top:9px;color:
 </div>
 <div class="output"><section><h2>Document preview <span class="tag">Local only</span></h2><div id="preview"><div class="placeholder">Upload a PDF or image to preview and prepare it for printing.</div></div>
 <p class="notprint muted" id="previewnote">The preview is not proof of driver compatibility. The printer settings available in the Windows dialog are authoritative.</p></section>
-<section class="print-actions"><h2>What we are testing</h2><p><strong>Target:</strong> Check whether a separate Epson L110 Windows driver queue can operate an Epson L121 printer and expose better paper/quality settings. <strong>Not guaranteed:</strong> L110 and L121 may use different driver commands, and a driver cannot exceed hardware capabilities.</p><p class="notice info">This is a safe first-stage browser module. Automated driver management would require a separately installed, trusted Windows companion program.</p></section></div>
+<section class="print-actions"><h2>What we are testing</h2><p><strong>Target:</strong> Print PDFs and images on any installed Windows printer. Optionally test whether an L110/L120 driver queue works with Epson L121 while preserving the original L121 queue. <strong>Not guaranteed:</strong> L110 and L121 may use different driver commands, and a driver cannot exceed hardware capabilities.</p><p class="notice info">The browser can prepare images and call the Windows print dialog. It cannot detect the physical printer, auto-install drivers, choose a Windows printer queue, force unsupported DPI, or change driver paper options. Those require OS/driver integration, and some remain hardware-limited.</p></section></div>
 </main>
 <script>
 const $=id=>document.getElementById(id);let url=null,kind=null,original=null;
-$('profile').addEventListener('change',()=>{$('driverstatus').textContent=$('profile').value==='l110'?'Active app profile: L110 TEST. Windows driver is unchanged; verify Windows manually.':'Active app profile: L121. Actual Windows driver: not detectable by this website.'});
+$('profile').addEventListener('change',()=>{const p=$('profile').value; $('driverstatus').textContent= p==='any'?'Universal mode: choose ANY installed printer in Windows print dialog.':p==='l110'?'L110 TEST only: physical L121 unchanged; Windows driver unchanged.':p==='l120'?'L120 TEST only: physical L121 unchanged; Windows driver unchanged.':'L121 profile: select the working L121 queue in Windows print dialog.';});
 $('guide').addEventListener('click',()=>{$('instructions').hidden=!$('instructions').hidden});
 $('enhance').addEventListener('input',()=>{$('contrastval').textContent=$('enhance').value+'%';renderImage()});
 $('sharp').addEventListener('input',()=>{$('sharpval').textContent=['Off','Mild','Strong'][+$('sharp').value];renderImage()});
