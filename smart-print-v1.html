@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VG Smart Print | Epson L121 / L110 Compatibility Test</title>
+<style>
+:root{font-family:system-ui,-apple-system,Segoe UI,Arial,sans-serif;color:#172033;background:#f3f5f9}*{box-sizing:border-box}
+body{margin:0}header{background:linear-gradient(100deg,#701b23,#b52932);color:white;padding:21px max(18px,calc((100% - 1160px)/2))}
+header h1{margin:0;font-size:25px}header p{margin:6px 0 0;color:#ffe4e5;font-size:13px}
+main{max-width:1160px;margin:24px auto;padding:0 16px;display:grid;grid-template-columns:380px 1fr;gap:18px;align-items:start}
+section{background:white;padding:22px;border:1px solid #dfe4eb;border-radius:15px;box-shadow:0 5px 20px #1720330a;margin-bottom:16px}
+h2{margin:0 0 14px;font-size:17px}p,li{font-size:13px;line-height:1.6}.muted{color:#617086}
+label{display:block;font-weight:650;font-size:13px;margin:14px 0 6px}
+select,input[type=file],input[type=range]{width:100%}select,input[type=file]{padding:11px;border:1px solid #cbd5e1;border-radius:8px;background:#fff}
+button{padding:11px 15px;background:#a52330;border:0;color:white;border-radius:9px;font-weight:700;cursor:pointer}
+button.secondary{background:#eef1f6;color:#263044;border:1px solid #cbd5e1}button:disabled{opacity:.5;cursor:not-allowed}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.notice{background:#fff8e8;border:1px solid #f5dea2;color:#6c4c18;border-radius:9px;padding:11px;font-size:12px;line-height:1.55}
+.info{background:#edf7ff;border-color:#c7e7ff;color:#23527d}
+.tag{display:inline-block;background:#f2e8e9;color:#7d1b27;padding:5px 9px;border-radius:40px;font-size:11px;font-weight:700}
+#preview{min-height:470px;background:#e6eaf0;border:1px dashed #b4bdcb;border-radius:11px;display:grid;place-items:center;overflow:auto;padding:18px}
+#preview img{max-width:100%;height:auto;box-shadow:0 5px 14px #0002;background:white}
+#preview iframe{width:100%;height:650px;border:0;background:white}
+#preview .placeholder{text-align:center;max-width:300px;color:#667489;font-size:14px}
+.small{font-size:12px}.checks label{font-weight:400;display:flex;gap:8px;align-items:flex-start}
+input[type=checkbox]{margin-top:3px}.status{font-size:12px;margin-top:9px;color:#526078}
+@media(max-width:800px){main{grid-template-columns:1fr}#preview{min-height:340px}#preview iframe{height:520px}}
+@media print{header,.controls,.print-actions,.notprint{display:none!important}main{display:block;margin:0;padding:0}.output{border:0;box-shadow:none;margin:0;padding:0}#preview{padding:0;background:white;border:0;display:block;min-height:0;overflow:visible}#preview img{width:100%;max-width:100%;box-shadow:none}#preview iframe{display:none}body{background:white}}
+</style></head>
+<body><header><h1>VG SMART PRINT <span style="font-size:12px;opacity:.85">BETA</span></h1><p>Epson L121 hardware • L110 Windows driver compatibility experiment</p></header>
+<main><div class="controls">
+<section><h2>1. Printer profile</h2><div class="notice">Your physical printer is <strong>Epson L121</strong>. Selecting “L110 test” here does <strong>not</strong> install the L110 driver or change Windows printer recognition. The profile is a test checklist only.</div>
+<label for="profile">Windows driver / print profile to test</label>
+<select id="profile"><option value="l121">Epson L121 — original (recommended)</option><option value="l110">Epson L110 — compatibility test (experimental)</option></select>
+<div class="status" id="driverstatus">Active app profile: L121. Actual Windows driver: not detectable by this website.</div>
+<label for="paper">Paper / output preset</label>
+<select id="paper"><option value="matte">Matte / presentation paper</option><option value="plain">Plain paper / sharp text</option><option value="photo">Photo paper (only if paper matches)</option></select>
+<label for="enhance">Image contrast</label><input type="range" id="enhance" min="90" max="150" value="112"><span class="small muted" id="contrastval">112%</span>
+<label for="sharp">Image sharpening</label><input type="range" id="sharp" min="0" max="2" step="1" value="1"><span class="small muted" id="sharpval">Mild</span>
+<p class="muted">Adjustments apply to uploaded images only. PDF text, layout and vector detail remain untouched.</p></section>
+<section><h2>2. Upload a file</h2><input id="file" type="file" accept=".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx,application/pdf,image/*">
+<div id="filestatus" class="status">No file selected. Files stay on your device.</div>
+<div class="actions"><button id="print" disabled>Print / open Windows dialog</button><button class="secondary" id="reset">Reset</button></div>
+<p class="muted">For PDF, use the PDF viewer's print icon to preserve all pages and quality. For Word (.doc/.docx), open in Microsoft Word and choose Print or Save as PDF; this browser page cannot guarantee Word layout conversion.</p></section>
+<section><h2>3. Driver test checklist</h2>
+<div class="checks"><label><input type="checkbox">Printed an L121 original-driver baseline</label>
+<label><input type="checkbox">Created a Windows restore point / saved original driver</label>
+<label><input type="checkbox">Verified Windows offers the L110 driver for this printer</label>
+<label><input type="checkbox">Compared test print; confirmed no errors or missing colors</label></div>
+<button class="secondary" id="guide" style="margin-top:8px">Show Windows test instructions</button>
+<div id="instructions" hidden><ol><li>Keep the working Epson L121 driver installed. Do not delete it.</li><li>In Windows Settings → Printers & scanners, open the L121 printer properties and inspect its current driver.</li><li>If Windows allows adding a <em>separate</em> printer queue, you may test the Epson L110 driver on that separate queue. Drivers can reject incompatible models and may output errors.</li><li>Test only one page, and compare with the original L121 queue.</li><li>If anything fails, return to the original L121 queue immediately. Never flash firmware or force a mismatched driver.</li></ol><p>Note: the web page cannot discover USB printer identity, install drivers, select an exact Windows queue, or force high DPI. Windows printing dialog owns these settings.</p></div></section>
+</div>
+<div class="output"><section><h2>Document preview <span class="tag">Local only</span></h2><div id="preview"><div class="placeholder">Upload a PDF or image to preview and prepare it for printing.</div></div>
+<p class="notprint muted" id="previewnote">The preview is not proof of driver compatibility. The printer settings available in the Windows dialog are authoritative.</p></section>
+<section class="print-actions"><h2>What we are testing</h2><p><strong>Target:</strong> Check whether a separate Epson L110 Windows driver queue can operate an Epson L121 printer and expose better paper/quality settings. <strong>Not guaranteed:</strong> L110 and L121 may use different driver commands, and a driver cannot exceed hardware capabilities.</p><p class="notice info">This is a safe first-stage browser module. Automated driver management would require a separately installed, trusted Windows companion program.</p></section></div>
+</main>
+<script>
+const $=id=>document.getElementById(id);let url=null,kind=null,original=null;
+$('profile').addEventListener('change',()=>{$('driverstatus').textContent=$('profile').value==='l110'?'Active app profile: L110 TEST. Windows driver is unchanged; verify Windows manually.':'Active app profile: L121. Actual Windows driver: not detectable by this website.'});
+$('guide').addEventListener('click',()=>{$('instructions').hidden=!$('instructions').hidden});
+$('enhance').addEventListener('input',()=>{$('contrastval').textContent=$('enhance').value+'%';renderImage()});
+$('sharp').addEventListener('input',()=>{$('sharpval').textContent=['Off','Mild','Strong'][+$('sharp').value];renderImage()});
+function clean(){if(url){URL.revokeObjectURL(url);url=null}kind=null;original=null;$('preview').replaceChildren();$('print').disabled=true}
+$('reset').addEventListener('click',()=>{clean();$('file').value='';$('filestatus').textContent='No file selected.';$('preview').textContent='Upload a PDF or image to preview.'});
+$('file').addEventListener('change',async()=>{clean();const f=$('file').files[0];if(!f)return;$('filestatus').textContent=f.name+' ('+(f.size/1048576).toFixed(2)+' MB)';
+const ext=f.name.split('.').pop().toLowerCase();if(ext==='pdf'){kind='pdf';url=URL.createObjectURL(f);const frame=document.createElement('iframe');frame.title='PDF preview';frame.src=url+'#toolbar=1';$('preview').append(frame);$('print').disabled=false;$('filestatus').textContent+=' — print using the PDF viewer toolbar';}
+else if(['jpg','jpeg','png','webp'].includes(ext)){kind='image';original=new Image();original.onload=()=>{renderImage();$('print').disabled=false};original.onerror=()=>{$('preview').textContent='Could not open image.'};original.src=URL.createObjectURL(f);url=original.src;}
+else if(['doc','docx'].includes(ext)){kind='word';$('preview').textContent='Word file received. For accurate formatting, open this file in Word, save a PDF, and upload the PDF here.';$('filestatus').textContent+=' — PDF conversion required';}
+else{$('preview').textContent='Unsupported file type.'}});
+function renderImage(){if(kind!=='image'||!original||!original.complete||!original.naturalWidth)return;
+const canvas=document.createElement('canvas');canvas.width=original.naturalWidth;canvas.height=original.naturalHeight;
+const ctx=canvas.getContext('2d',{willReadFrequently:true});ctx.filter='contrast('+$('enhance').value+'%)';ctx.drawImage(original,0,0);
+if(+$('sharp').value>0 && canvas.width*canvas.height<16000000){const s=ctx.getImageData(0,0,canvas.width,canvas.height),d=s.data,copy=new Uint8ClampedArray(d),w=canvas.width,h=canvas.height,f=+$('sharp').value*.25;
+for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){const i=(y*w+x)*4;for(let c=0;c<3;c++){d[i+c]=Math.max(0,Math.min(255,copy[i+c]*(1+4*f)-f*(copy[i-4+c]+copy[i+4+c]+copy[i-w*4+c]+copy[i+w*4+c])))}}ctx.putImageData(s,0,0)}
+const img=document.createElement('img');img.alt='Enhanced image preview';img.src=canvas.toDataURL('image/png');$('preview').replaceChildren(img)}
+$('print').addEventListener('click',()=>{if(kind==='pdf'){alert('For PDF documents, use the printer icon inside the PDF preview so all pages are printed correctly. Select the desired Windows printer queue there.');return}if(kind==='image')window.print()});
+window.addEventListener('beforeunload',()=>{if(url)URL.revokeObjectURL(url)});
+</script></body></html>
