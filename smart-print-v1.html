@@ -36,11 +36,23 @@ input[type=checkbox]{margin-top:3px}.status{font-size:12px;margin-top:9px;color:
 <label for="enhance">Image contrast</label><input type="range" id="enhance" min="90" max="150" value="112"><span class="small muted" id="contrastval">112%</span>
 <label for="sharp">Image sharpening</label><input type="range" id="sharp" min="0" max="2" step="1" value="1"><span class="small muted" id="sharpval">Mild</span>
 <p class="muted">Adjustments apply to uploaded images only. PDF text, layout and vector detail remain untouched.</p></section>
-<section><h2>2. Upload a file</h2><input id="file" type="file" accept=".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx,application/pdf,image/*">
+<section><h2>2. Ink Rescue — no-black color remix</h2>
+<div class="notice"><strong>Image conversion only:</strong> turns near-black pixels into dark colored RGB values. It cannot force the printer to avoid black ink; the Epson driver may still use black ink or refuse printing. <strong>If your ink tank is below the minimum line, refill before printing to protect the printer.</strong></div>
+<label for="inkmode">Remix mode</label>
+<select id="inkmode"><option value="off">Normal — no remix</option><option value="soft">No Black Ink — Soft Composite</option><option value="strong">Strong Dark Remix — Posters</option><option value="text">Text Rescue — Dark Colored Text</option></select>
+<label for="tone">Dark color tone</label>
+<select id="tone"><option value="blue">Deep blue</option><option value="brown">Deep brown</option><option value="purple">Deep violet</option></select>
+<label for="strength">Remix strength</label><input type="range" id="strength" min="0" max="100" value="85"><span id="strengthval" class="small muted">85%</span>
+<label for="threshold">Dark pixel sensitivity</label><input type="range" id="threshold" min="60" max="210" value="155"><span id="thresholdval" class="small muted">155</span>
+<label style="display:flex;gap:9px;align-items:center;font-weight:500"><input type="checkbox" id="compare"> Show original instead of converted image</label>
+<div class="actions"><button class="secondary" id="download" disabled>Download Converted PNG</button></div>
+<div id="inkstatus" class="status">Upload an image to use Ink Rescue. PDF/Word conversion is not available in this version.</div>
+</section>
+<section><h2>3. Upload a file</h2><input id="file" type="file" accept=".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx,application/pdf,image/*">
 <div id="filestatus" class="status">No file selected. Files stay on your device.</div>
 <div class="actions"><button id="print" disabled>Print / open Windows dialog</button><button class="secondary" id="reset">Reset</button></div>
 <p class="muted">For PDF, use the PDF viewer's print icon to preserve all pages and quality. For Word (.doc/.docx), open in Microsoft Word and choose Print or Save as PDF; this browser page cannot guarantee Word layout conversion.</p></section>
-<section><h2>3. Printer maintenance</h2>
+<section><h2>4. Printer maintenance</h2>
 <div class="notice info"><strong>Auto-detect / one-click cleaning:</strong> requires the future Windows VG Print Connector. This website cannot identify installed USB printer models or send proprietary cleaning commands.</div>
 <label for="maintenance">Select maintenance action</label>
 <select id="maintenance"><option value="nozzle">Nozzle Check (start here)</option><option value="clean">Print Head Cleaning</option><option value="align">Print Head Alignment</option><option value="path">Clean Paper Path</option></select>
@@ -48,7 +60,7 @@ input[type=checkbox]{margin-top:3px}.status{font-size:12px;margin-top:9px;color:
 <div class="actions"><button class="secondary" id="maintHelp">Show safe procedure</button></div>
 <p class="muted">For Epson L121, launch the Epson maintenance utility from your installed printer driver. Other printer brands/models have different maintenance menus. Do not use L110/L120 driver cleaning commands on an L121 until compatibility is verified.</p>
 </section>
-<section><h2>4. Driver test checklist</h2>
+<section><h2>5. Driver test checklist</h2>
 <div class="checks"><label><input type="checkbox">Printed an L121 original-driver baseline</label>
 <label><input type="checkbox">Created a Windows restore point / saved original driver</label>
 <label><input type="checkbox">Verified Windows offers the L110 driver for this printer</label>
@@ -61,7 +73,7 @@ input[type=checkbox]{margin-top:3px}.status{font-size:12px;margin-top:9px;color:
 <section class="print-actions"><h2>What we are testing</h2><p><strong>Target:</strong> Print PDFs and images on any installed Windows printer. Optionally test whether an L110/L120 driver queue works with Epson L121 while preserving the original L121 queue. <strong>Not guaranteed:</strong> L110 and L121 may use different driver commands, and a driver cannot exceed hardware capabilities.</p><p class="notice info">The browser can prepare images and call the Windows print dialog. It cannot detect the physical printer, auto-install drivers, choose a Windows printer queue, force unsupported DPI, or change driver paper options. Those require OS/driver integration, and some remain hardware-limited.</p></section></div>
 </main>
 <script>
-const $=id=>document.getElementById(id);let url=null,kind=null,original=null;
+const $=id=>document.getElementById(id);let url=null,kind=null,original=null,latestCanvas=null;
 const maintenanceSteps={
 nozzle:'1. Load plain A4 paper. 2. Open Windows 11 Settings → Bluetooth & devices → Printers & scanners → your actual printer → Printing preferences. 3. Open the Epson Maintenance tab, if available. 4. Run Nozzle Check and inspect the printed pattern. Only clean if lines are missing.',
 clean:'1. Run Nozzle Check first. 2. If the pattern has gaps, use Head Cleaning in the original Epson L121 Maintenance utility. 3. Do not power off during cleaning. 4. Print another nozzle check. Cleaning consumes ink; avoid repeated unnecessary cycles.',
@@ -76,19 +88,55 @@ $('profile').addEventListener('change',()=>{const p=$('profile').value; $('drive
 $('guide').addEventListener('click',()=>{$('instructions').hidden=!$('instructions').hidden});
 $('enhance').addEventListener('input',()=>{$('contrastval').textContent=$('enhance').value+'%';renderImage()});
 $('sharp').addEventListener('input',()=>{$('sharpval').textContent=['Off','Mild','Strong'][+$('sharp').value];renderImage()});
-function clean(){if(url){URL.revokeObjectURL(url);url=null}kind=null;original=null;$('preview').replaceChildren();$('print').disabled=true}
+['inkmode','tone','strength','threshold','compare'].forEach(id=>$(id).addEventListener('input',()=>{$('strengthval').textContent=$('strength').value+'%';$('thresholdval').textContent=$('threshold').value;renderImage()}));
+$('download').addEventListener('click',()=>{if(!latestCanvas||kind!=='image')return;latestCanvas.toBlob(blob=>{if(!blob)return;const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download='VG-INK-RESCUE-'+Date.now()+'.png';a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)},'image/png')});
+function clean(){if(url){URL.revokeObjectURL(url);url=null}kind=null;original=null;latestCanvas=null;$('preview').replaceChildren();$('print').disabled=true;$('download').disabled=true;$('inkstatus').textContent='Upload an image to use Ink Rescue.'}
 $('reset').addEventListener('click',()=>{clean();$('file').value='';$('filestatus').textContent='No file selected.';$('preview').textContent='Upload a PDF or image to preview.'});
 $('file').addEventListener('change',async()=>{clean();const f=$('file').files[0];if(!f)return;$('filestatus').textContent=f.name+' ('+(f.size/1048576).toFixed(2)+' MB)';
 const ext=f.name.split('.').pop().toLowerCase();if(ext==='pdf'){kind='pdf';url=URL.createObjectURL(f);const frame=document.createElement('iframe');frame.title='PDF preview';frame.src=url+'#toolbar=1';$('preview').append(frame);$('print').disabled=false;$('filestatus').textContent+=' — print using the PDF viewer toolbar';}
-else if(['jpg','jpeg','png','webp'].includes(ext)){kind='image';original=new Image();original.onload=()=>{renderImage();$('print').disabled=false};original.onerror=()=>{$('preview').textContent='Could not open image.'};original.src=URL.createObjectURL(f);url=original.src;}
+else if(['jpg','jpeg','png','webp'].includes(ext)){kind='image';original=new Image();original.onload=()=>{renderImage();$('print').disabled=false;$('download').disabled=false};original.onerror=()=>{$('preview').textContent='Could not open image.'};original.src=URL.createObjectURL(f);url=original.src;}
 else if(['doc','docx'].includes(ext)){kind='word';$('preview').textContent='Word file received. For accurate formatting, open this file in Word, save a PDF, and upload the PDF here.';$('filestatus').textContent+=' — PDF conversion required';}
 else{$('preview').textContent='Unsupported file type.'}});
-function renderImage(){if(kind!=='image'||!original||!original.complete||!original.naturalWidth)return;
+function renderImage(){
+if(kind!=='image'||!original||!original.complete||!original.naturalWidth)return;
 const canvas=document.createElement('canvas');canvas.width=original.naturalWidth;canvas.height=original.naturalHeight;
 const ctx=canvas.getContext('2d',{willReadFrequently:true});ctx.filter='contrast('+$('enhance').value+'%)';ctx.drawImage(original,0,0);
-if(+$('sharp').value>0 && canvas.width*canvas.height<16000000){const s=ctx.getImageData(0,0,canvas.width,canvas.height),d=s.data,copy=new Uint8ClampedArray(d),w=canvas.width,h=canvas.height,f=+$('sharp').value*.25;
-for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){const i=(y*w+x)*4;for(let c=0;c<3;c++){d[i+c]=Math.max(0,Math.min(255,copy[i+c]*(1+4*f)-f*(copy[i-4+c]+copy[i+4+c]+copy[i-w*4+c]+copy[i+w*4+c])))}}ctx.putImageData(s,0,0)}
-const img=document.createElement('img');img.alt='Enhanced image preview';img.src=canvas.toDataURL('image/png');$('preview').replaceChildren(img)}
-$('print').addEventListener('click',()=>{if(kind==='pdf'){alert('For PDF documents, use the printer icon inside the PDF preview so all pages are printed correctly. Select the desired Windows printer queue there.');return}if(kind==='image')window.print()});
+const mode=$('inkmode').value;
+if(mode!=='off'){
+const pixels=ctx.getImageData(0,0,canvas.width,canvas.height),d=pixels.data,threshold=+$('threshold').value;
+const strength=+$('strength').value/100,tones={
+blue:[28,42,105],brown:[95,42,23],purple:[61,33,99]
+},target=tones[$('tone').value]||tones.blue;
+let changed=0;
+for(let i=0;i<d.length;i+=4){
+if(d[i+3]===0)continue;
+const r=d[i],g=d[i+1],b=d[i+2],lum=.2126*r+.7152*g+.0722*b;
+if(lum>=threshold)continue;
+const darkness=1-lum/threshold;
+const strengthWeight=strength*(mode==='soft'?.65:mode==='strong'?1:.95)*Math.pow(darkness,mode==='soft'?.65:.3);
+if(strengthWeight<=0)continue;
+// Colored ink-friendly RGB approximation only. Actual CMYK ink choices depend on the driver.
+// Darkest pixels receive a strongly colored tone; midtones preserve their image structure.
+const brightnessLift=Math.min(1,lum/threshold);
+for(let c=0;c<3;c++){
+const originalValue=d[i+c],coloredTarget=target[c]+brightnessLift*(255-target[c])*.42;
+d[i+c]=Math.round(originalValue*(1-strengthWeight)+coloredTarget*strengthWeight);
+}
+changed++;
+}
+ctx.putImageData(pixels,0,0);
+$('inkstatus').textContent='Remixed '+changed.toLocaleString()+' dark pixels. Color-ink-only printing is NOT guaranteed by the driver.';
+}else $('inkstatus').textContent='Normal image — no dark-color remix applied.';
+if(+$('sharp').value>0 && canvas.width*canvas.height<16000000){
+const s=ctx.getImageData(0,0,canvas.width,canvas.height),d=s.data,copy=new Uint8ClampedArray(d),w=canvas.width,h=canvas.height,f=+$('sharp').value*.25;
+for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){const i=(y*w+x)*4;for(let c=0;c<3;c++){d[i+c]=Math.max(0,Math.min(255,copy[i+c]*(1+4*f)-f*(copy[i-4+c]+copy[i+4+c]+copy[i-w*4+c]+copy[i+w*4+c])))}}ctx.putImageData(s,0,0)
+}
+latestCanvas=canvas;
+if($('compare').checked){
+const img=document.createElement('img');img.alt='Original image preview';img.src=original.src;$('preview').replaceChildren(img);
+}else{$('preview').replaceChildren(canvas)}
+}
+
+$('print').addEventListener('click',()=>{if(kind==='pdf'){alert('For PDF documents, use the printer icon inside the PDF preview so all pages are printed correctly. Select the desired Windows printer queue there.');return}if(kind==='image'){if($('compare').checked){$('compare').checked=false;renderImage()}window.print()}});
 window.addEventListener('beforeunload',()=>{if(url)URL.revokeObjectURL(url)});
 </script></body></html>
