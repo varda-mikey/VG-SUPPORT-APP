@@ -40,7 +40,15 @@ input[type=checkbox]{margin-top:3px}.status{font-size:12px;margin-top:9px;color:
 <div id="filestatus" class="status">No file selected. Files stay on your device.</div>
 <div class="actions"><button id="print" disabled>Print / open Windows dialog</button><button class="secondary" id="reset">Reset</button></div>
 <p class="muted">For PDF, use the PDF viewer's print icon to preserve all pages and quality. For Word (.doc/.docx), open in Microsoft Word and choose Print or Save as PDF; this browser page cannot guarantee Word layout conversion.</p></section>
-<section><h2>3. Driver test checklist</h2>
+<section><h2>3. Printer maintenance</h2>
+<div class="notice info"><strong>Auto-detect / one-click cleaning:</strong> requires the future Windows VG Print Connector. This website cannot identify installed USB printer models or send proprietary cleaning commands.</div>
+<label for="maintenance">Select maintenance action</label>
+<select id="maintenance"><option value="nozzle">Nozzle Check (start here)</option><option value="clean">Print Head Cleaning</option><option value="align">Print Head Alignment</option><option value="path">Clean Paper Path</option></select>
+<div id="maintenancesteps" class="notice" style="margin-top:12px"></div>
+<div class="actions"><button class="secondary" id="maintHelp">Show safe procedure</button></div>
+<p class="muted">For Epson L121, launch the Epson maintenance utility from your installed printer driver. Other printer brands/models have different maintenance menus. Do not use L110/L120 driver cleaning commands on an L121 until compatibility is verified.</p>
+</section>
+<section><h2>4. Driver test checklist</h2>
 <div class="checks"><label><input type="checkbox">Printed an L121 original-driver baseline</label>
 <label><input type="checkbox">Created a Windows restore point / saved original driver</label>
 <label><input type="checkbox">Verified Windows offers the L110 driver for this printer</label>
@@ -54,6 +62,16 @@ input[type=checkbox]{margin-top:3px}.status{font-size:12px;margin-top:9px;color:
 </main>
 <script>
 const $=id=>document.getElementById(id);let url=null,kind=null,original=null;
+const maintenanceSteps={
+nozzle:'1. Load plain A4 paper. 2. Open Windows 11 Settings → Bluetooth & devices → Printers & scanners → your actual printer → Printing preferences. 3. Open the Epson Maintenance tab, if available. 4. Run Nozzle Check and inspect the printed pattern. Only clean if lines are missing.',
+clean:'1. Run Nozzle Check first. 2. If the pattern has gaps, use Head Cleaning in the original Epson L121 Maintenance utility. 3. Do not power off during cleaning. 4. Print another nozzle check. Cleaning consumes ink; avoid repeated unnecessary cycles.',
+align:'Use Print Head Alignment in the original Epson driver maintenance utility, then follow the on-screen printed-pattern instructions.',
+path:'For paper-feed marks or smears, consult your printer model manual for its supported paper-path cleaning procedure. Do not put cleaning fluid inside the printer unless the manufacturer explicitly directs it.'
+};
+$('maintenancesteps').textContent=maintenanceSteps.nozzle;
+$('maintenance').addEventListener('change',()=>{$('maintenancesteps').textContent=maintenanceSteps[$('maintenance').value]});
+$('maintHelp').addEventListener('click',()=>{alert('Windows 11: Settings → Bluetooth & devices → Printers & scanners → your printer → Printing preferences → Maintenance (when provided by the manufacturer). This web page cannot directly start cleaning. Always use the ORIGINAL matching printer driver.')});
+
 $('profile').addEventListener('change',()=>{const p=$('profile').value; $('driverstatus').textContent= p==='any'?'Universal mode: choose ANY installed printer in Windows print dialog.':p==='l110'?'L110 TEST only: physical L121 unchanged; Windows driver unchanged.':p==='l120'?'L120 TEST only: physical L121 unchanged; Windows driver unchanged.':'L121 profile: select the working L121 queue in Windows print dialog.';});
 $('guide').addEventListener('click',()=>{$('instructions').hidden=!$('instructions').hidden});
 $('enhance').addEventListener('input',()=>{$('contrastval').textContent=$('enhance').value+'%';renderImage()});
