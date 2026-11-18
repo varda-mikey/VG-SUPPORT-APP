@@ -1018,7 +1018,6 @@ function wireTasks(isHead){document.querySelectorAll((isHead?'#tasks':'#myTasks'
   const saved=await api('entry_save',{day:workDay,leader_id:isHead?selected:undefined,task_id:tid,status:newStatus,note:newNote});
   if(saved.entry?.[isHead?'head_status':'leader_status']!==newStatus)throw Error('Server did not confirm task status. Please retry.');
  phase('uploading','✓ Record saved · Checking evidence…',85);
- if(hadFiles)await uploadSelected();
  const latest=await api('load',{day:workDay});
  const confirmation=latest.entries.find(x=>x.leader_id===currentLeader&&x.task_id===tid&&x.work_date===workDay);
  if(confirmation?.[isHead?'head_status':'leader_status']!==newStatus)throw Error('Saved status is not yet visible from the shared server. Refresh and check before retrying.');
