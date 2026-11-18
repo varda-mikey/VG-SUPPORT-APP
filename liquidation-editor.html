@@ -26,10 +26,16 @@ td.num,th.num{text-align:right}td.num input{text-align:right}.remove{border:0;ba
 .liquidatorSignature[hidden],.signatureUpload [hidden]{display:none!important}
 .footer{border-top:1px solid #ddd;margin-top:30px;padding-top:7px;display:flex;justify-content:space-between;color:#586272;font-size:calc(10px * var(--scale))}
 @media(max-width:850px){.sheet{margin:0}main{padding:10px}.toolbar{position:relative}.summary{grid-template-columns:1fr 240px}}
+.export-stage{position:fixed;left:-20000px;top:0;width:794px;z-index:-1;pointer-events:none}
+.export-stage .sheet{box-shadow:none;margin:0;width:794px;min-height:1123px;height:auto!important;overflow:visible!important}
+.export-stage .actioncol,.export-stage .signatureUpload,.export-stage .add,.export-stage .remove{display:none!important}
+.export-stage .edit{border-bottom:none!important}
+.export-stage .static-value{white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;line-height:1.5}
+.export-stage td .static-value{display:block;padding:4px 1px}
 @page{size:A4 portrait;margin:0}@media print{body{background:white}.toolbar,.helper,.add,.remove,.actioncol,.signatureUpload{display:none!important}main{padding:0;overflow:visible}.sheet{width:210mm;min-height:297mm;box-shadow:none;margin:0;print-color-adjust:exact;-webkit-print-color-adjust:exact}input{appearance:none}.edit{border-bottom:0!important}.field input[type=date]{border-bottom:0!important}tr{break-inside:avoid}td textarea{overflow:visible!important;resize:none!important;white-space:pre-wrap!important}}
 </style></head><body>
 <div class="toolbar"><h1>VG · Liquidation Editor</h1><label>Text size <input id="fontSlider" type="range" min="90" max="145" value="115" step="5"> <span id="fontLabel">115%</span></label>
-<button onclick="addRow()">+ Add Expense</button><button class="primary" onclick="sortRowsByDate()" title="Sort receipt dates from earliest to latest">📅 Auto Arrange Dates ↑</button><button class="primary" onclick="window.print()">Print / Save PDF</button><button onclick="exportData()">Save Editable JSON</button><button onclick="document.getElementById('importFile').click()">Load Saved</button><input id="importFile" type="file" accept=".json" hidden>
+<button onclick="addRow()">+ Add Expense</button><button class="primary" onclick="sortRowsByDate()" title="Sort receipt dates from earliest to latest">📅 Auto Arrange Dates ↑</button><button class="primary" id="imageSaveBtn" onclick="saveAsImage()">📷 Save as Image (HD PNG)</button><button class="primary" onclick="window.print()">Print / Save PDF</button><button onclick="exportData()">Save Editable JSON</button><button onclick="document.getElementById('importFile').click()">Load Saved</button><input id="importFile" type="file" accept=".json" hidden>
 <button onclick="document.getElementById('logoInput').click()">Change Logo</button><input id="logoInput" type="file" accept="image/*" hidden><button onclick="resetForm()">New Form</button></div>
 <div class="helper">Click or tap any text directly on the A4 preview to edit it. Dates and expense fields are editable in place. Totals update automatically. Changes save automatically in this browser.</div>
 <main><article class="sheet" id="sheet">
@@ -49,6 +55,7 @@ td.num,th.num{text-align:right}td.num input{text-align:right}.remove{border:0;ba
 <section><h3 class="edit" contenteditable="true" data-key="signTitle">Acknowledgment & Approval</h3><div class="signs"><div class="signature"><div class="signatureUpload"><button type="button" id="signatureUploadBtn" onclick="document.getElementById(&quot;liquidatorSignatureInput&quot;).click()">+ Upload Signature</button><button type="button" id="signatureRemoveBtn" onclick="clearLiquidatorSignature()" hidden>Remove</button><input type="file" id="liquidatorSignatureInput" accept="image/png,image/jpeg,image/webp,image/*" hidden></div><img id="liquidatorSignature" class="liquidatorSignature" alt="Liquidator signature" hidden><div class="edit" contenteditable="true" data-key="prepared">Employee Name</div><small class="edit" contenteditable="true" data-key="preparedLabel">Prepared / Liquidated By</small></div><div class="signature"><div class="edit" contenteditable="true" data-key="checked">Accounting Officer</div><small class="edit" contenteditable="true" data-key="checkedLabel">Checked By</small></div><div class="signature"><div class="edit" contenteditable="true" data-key="approved">Approving Officer</div><small class="edit" contenteditable="true" data-key="approvedLabel">Approved By</small></div></div></section>
 <div class="footer"><span class="edit" contenteditable="true" data-key="footnote">VG Support App • Internal Accounting Document</span><span class="edit" contenteditable="true" data-key="page">Page 1</span></div>
 </article></main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
 <script>
 const KEY='vg_liquidation_direct_edit_v1', $=id=>document.getElementById(id);let lineItems=[];
 const id=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
@@ -100,6 +107,55 @@ function setLiquidatorSignature(src){
 function clearLiquidatorSignature(){setLiquidatorSignature('');$('liquidatorSignatureInput').value='';save()}
 function setLogo(src){$('logo').src=src||'';$('logo').style.display=src?'block':'none';$('fallback').style.display=src?'none':'block'}
 function setFont(){document.documentElement.style.setProperty('--scale',Number($('fontSlider').value)/100);$('fontLabel').textContent=$('fontSlider').value+'%';requestAnimationFrame(autoGrowAll)}
+async function saveAsImage(){
+ const button=$('imageSaveBtn');
+ if(typeof html2canvas!=='function'){
+   alert('The image export library is not loaded. Please check your internet connection, refresh the page, and try again. You can still use Print / Save PDF.');
+   return;
+ }
+ button.disabled=true;button.textContent='Generating HD image...';
+ let stage=null;
+ try{
+   save();
+   // Capture a static copy without modifying the live editable form.
+   stage=document.createElement('div');stage.className='export-stage';
+   const copy=$('sheet').cloneNode(true);copy.removeAttribute('id');
+   stage.appendChild(copy);document.body.appendChild(stage);
+   const originals=$('sheet').querySelectorAll('input,textarea');
+   const controls=copy.querySelectorAll('input,textarea');
+   controls.forEach((control,index)=>{
+     const original=originals[index];
+     if(control.type==='file'){control.remove();return}
+     const span=document.createElement('span');span.className='static-value';
+     let v=original?original.value:control.value;
+     if(control.type==='date'&&v){
+       const parts=v.split('-');v=parts.length===3?parts[1]+'/'+parts[2]+'/'+parts[0]:v;
+     }
+     if(control.id==='fund')v=Number(v||0).toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2});
+     span.textContent=v||'';
+     control.replaceWith(span);
+   });
+   copy.querySelectorAll('[contenteditable]').forEach(el=>el.removeAttribute('contenteditable'));
+   copy.querySelectorAll('[hidden]').forEach(el=>el.style.display='none');
+   await document.fonts.ready;
+   const imgs=Array.from(copy.querySelectorAll('img:not([hidden])'));
+   await Promise.all(imgs.map(img=>img.complete?Promise.resolve():new Promise(resolve=>{img.onload=resolve;img.onerror=resolve})));
+   const canvas=await html2canvas(copy,{
+     backgroundColor:'#ffffff',scale:3,useCORS:true,logging:false,
+     width:copy.scrollWidth,height:Math.max(copy.scrollHeight,1123),
+     windowWidth:1200,scrollX:0,scrollY:0
+   });
+   const link=document.createElement('a');
+   link.download='VG-Liquidation-'+($('date').value||'draft')+'-HD.png';
+   link.href=canvas.toDataURL('image/png');document.body.appendChild(link);link.click();link.remove();
+ }catch(err){
+   console.error('Image export failed',err);
+   alert('Unable to save the image. Please try again or use Print / Save PDF.');
+ }finally{
+   if(stage)stage.remove();
+   button.disabled=false;button.textContent='📷 Save as Image (HD PNG)';
+ }
+}
 function exportData(){let b=new Blob([JSON.stringify(snapshot(),null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='VG-Liquidation-'+($('date').value||'draft')+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500)}
 function resetForm(){if(!confirm('Start a new liquidation form? Save the current form as JSON first if needed.'))return;localStorage.removeItem(KEY);location.reload()}
 $('rows').addEventListener('input',e=>{let el=e.target,row=el.closest('tr');if(!row||!el.dataset.field)return;let item=lineItems.find(x=>x.id===row.dataset.id);if(item){item[el.dataset.field]=el.value;if(el.tagName==='TEXTAREA')autoGrow(el);save()}});
