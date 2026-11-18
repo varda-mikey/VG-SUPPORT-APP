@@ -560,7 +560,7 @@ $('pendingProceedToday').onclick=async()=>{
 function checkPendingFinished(){
  if(mode!=='leader'||!pendingTasksToFinish.length||$('myDay').value!==pendingDay||!data.leaders[0]||!$('pendingResultPopup').classList.contains('hide'))return;
  const lid=data.leaders[0].id;
- const allDone=pendingTasksToFinish.every(id=>{const e=entry(lid,id,pendingDay);return e.id&&e.leader_status==='submitted'&&data.files.some(f=>f.entry_id===e.id)});
+ const allDone=pendingTasksToFinish.every(id=>{const e=entry(lid,id,pendingDay);return verifiedSubmission(e)});
  if(allDone){
   pendingTasksToFinish=[];
   lastPendingReview=today();
@@ -595,12 +595,27 @@ $('pendingAcknowledge').onclick=async()=>{
  try{const d=await api('pending_ack',{reason});lastPendingReview=today();pendingTasksToFinish=[];showPendingResult('acknowledged',d.acknowledged+' unfinished duty record(s) were marked Incomplete and your written reason was saved for National Retail Head review. You can now proceed to today.');}
  catch(e){$('pendingError').textContent='Not saved: '+e.message}finally{btn.disabled=false}
 };
+function requiredTaskPopup(missing,card){
+ let shade=document.getElementById('requiredTaskShade');
+ if(!shade){
+  shade=document.createElement('div');shade.id='requiredTaskShade';
+  shade.style.cssText='position:fixed;inset:0;z-index:99999;background:#24191cc9;display:flex;align-items:center;justify-content:center;padding:18px';
+  shade.innerHTML='<div role="alertdialog" aria-modal="true" aria-labelledby="reqTitle" style="background:white;border-radius:18px;max-width:440px;width:100%;padding:24px;box-shadow:0 18px 48px #0005"><h2 id="reqTitle" style="color:#842226;margin:0 0 12px">⚠ Submission requirements</h2><p>To mark this task <b>SUBMITTED</b>, complete:</p><ol id="reqList" style="line-height:1.7"></ol><p style="font-size:12px;color:#675b5b">Typed remarks and selected photos are preserved.</p><button type="button" id="reqContinue" class="main" style="width:100%;margin-top:12px">OK — Complete requirements</button></div>';
+  document.body.appendChild(shade);
+ }
+ shade.querySelector('#reqList').innerHTML=missing.map(x=>'<li>'+enc(x)+'</li>').join('');
+ shade.style.display='flex';
+ shade.querySelector('#reqContinue').onclick=()=>{shade.style.display='none';if(missing.some(x=>/write|remarks/i.test(x)))card.querySelector('.note')?.focus();else card.querySelector('.fileInput')?.focus()};
+ shade.querySelector('#reqContinue').focus();
+}
 const status=x=>({pending:'Not reviewed',complete:'Complete',incomplete:'Incomplete','no-output':'No output',na:'N/A',working:'In progress',submitted:'Submitted'})[x]||x;
 const leaderTasks=(id)=>data.tasks.filter(t=>t.leader_id===id);
 const taskDay=(task,day)=>task?.work_date?day:task?.frequency==='monthly'?day.slice(0,7)+'-01':day;
+const verifiedSubmission=(e,files=data.files)=>!!(e?.id&&e.leader_status==='submitted'&&String(e.leader_note||'').trim()&&files.some(f=>f.entry_id===e.id));
+const effectiveLeaderStatus=e=>e?.leader_status==='submitted'&&!verifiedSubmission(e)?'working':(e?.leader_status||'pending');
 const taskSubmission=(leaderId,day)=>{
  const tasks=leaderTasks(leaderId),entries=tasks.map(t=>entry(leaderId,t.id,taskDay(t,day)));
- return {total:tasks.length,submitted:entries.filter(e=>e.leader_status==='submitted').length,received:entries.filter(e=>e.id&&data.files.some(f=>f.entry_id===e.id)).length};
+ return {total:tasks.length,submitted:entries.filter(e=>verifiedSubmission(e)).length,received:entries.filter(e=>e.id&&data.files.some(f=>f.entry_id===e.id)).length};
 };
 
 const entry=(leader,task,day)=>data.entries.find(e=>e.leader_id===leader&&e.task_id===task&&e.work_date===day)||{};
@@ -645,7 +660,7 @@ function quietLiveRefresh(){
      if(card.dataset.dirty==='1'||card.dataset.uploading==='1')return;
      const task=data.tasks.find(t=>t.id===card.dataset.task);
      const record=entry(leader.id,card.dataset.task,taskDay(task,day)),state=card.querySelector('.taskState');
-     if(state){state.className='taskState '+enc(record.leader_status||'pending');state.textContent=record.leader_status==='submitted'?'✓ Submitted':record.leader_status==='working'?'In progress':'Not yet submitted'}
+     if(state){state.className='taskState '+enc(effectiveLeaderStatus(record));state.textContent=verifiedSubmission(record)?'✓ Submitted':record.leader_status==='submitted'?'⚠ Missing proof/remarks':record.leader_status==='working'?'In progress':'Not yet submitted'}
     });
    }
   }
@@ -860,7 +875,7 @@ $('evidenceViewer').addEventListener('touchend',e=>{if(viewerStartX===null)retur
 document.addEventListener('keydown',e=>{if($('evidenceViewer').classList.contains('hide'))return;if(e.key==='Escape')viewerClose();else if(e.key==='ArrowLeft')viewerShow(viewerIndex-1);else if(e.key==='ArrowRight')viewerShow(viewerIndex+1)});
 document.addEventListener('click',e=>{const target=e.target.closest?.('#headView .evidencePreview');if(target){e.preventDefault();viewerOpen(target.dataset.evidenceId)}});
 
-function taskCard(t,v,isHead){return '<article class="task" data-task="'+enc(t.id)+'"><div class="taskHeading"><div class="category">'+enc(t.category)+'<span class="period">'+enc((t.frequency||'daily').toUpperCase())+'</span></div>'+(isHead?'<button type="button" class="editPencil editCategory" title="Edit category name" aria-label="Edit category '+enc(t.category)+'">✎ Category</button>':'')+'</div><div class="taskHeading"><h3>'+enc(t.title)+'</h3>'+(isHead?'<button type="button" class="editPencil editTitle" title="Edit this checklist task" aria-label="Edit task '+enc(t.title)+'">✎ Edit Task</button><button type="button" class="editPencil editDelete" aria-label="Remove task '+enc(t.title)+'">− Remove</button>':'')+'</div><div class="inlineEditor hide" aria-label="Task editor"><label>Task name<input class="taskNameInput" value="'+enc(t.title)+'"></label><label>Category<input class="taskCategoryInput" value="'+enc(t.category)+'"></label><label>Repeat<select class="taskFrequencyInput"><option value="daily">Daily</option><option value="monthly">Monthly</option></select></label><div class="inlineActions"><button type="button" class="main inlineSave">Save Changes</button><button type="button" class="inlineCancel">Cancel</button><button type="button" class="taskRemove inlineRemove">Remove This Task</button></div><div class="inlineConfirm hide"><strong>Remove this task from the active checklist?</strong><p class="muted">Previous submissions and evidence remain saved.</p><div class="inlineActions"><button type="button" class="taskRemove inlineRemoveYes">Yes, Remove Task</button><button type="button" class="inlineRemoveNo">Keep Task</button></div></div><small class="taskEditMessage">Edits apply ONLY to the date selected above. Other dates are preserved.</small></div><div class="taskContent">'+(isHead?'<div><label>Leader progress<input disabled value="'+enc(status(v.leader_status||'pending'))+'"></label><p class="muted">Leader note: '+enc(v.leader_note||'—')+'</p><label>Your review <select class="review"><option value="pending">Not reviewed</option><option value="complete">✓ Complete</option><option value="incomplete">△ Incomplete</option><option value="no-output">✕ No output</option><option value="na">N/A</option></select></label></div><div><label>Head remarks<textarea class="note" placeholder="Findings and required correction">'+enc(v.head_note||'')+'</textarea></label></div>':'<div><label>① Status ng task<select class="progress"><option value="pending">Not yet started</option><option value="working">Working on it / In progress</option><option value="submitted">✓ Done — Submit to Head</option></select></label><label>② Ano ang ginawa mo? (remarks)<textarea class="note" placeholder="Halimbawa: Na-check ang inventory, price tags at expiry dates.">'+enc(v.leader_note||'')+'</textarea></label></div><div><p class="muted">Status sa Head: <strong>'+enc(status(v.head_status||'pending'))+'</strong></p><p class="muted">'+enc(v.head_note||'')+'</p></div>')+'</div><section class="taskEvidence"><div class="savedLabel">📷 UPLOADED PHOTOS & VIDEOS — '+data.files.filter(f=>f.entry_id===v.id).length+' saved · Tap photo to preview</div><div class="files savedGallery">'+(evidence(v.id)||'<span class="muted">No saved evidence for this task/date yet.</span>')+'</div></section><div class="taskFooter"><input type="file" class="fileInput" aria-label="Choose actual photo or video proof" accept="image/*,.heic,.heif,.jpg,.jpeg,.png,.webp,video/mp4,video/webm,video/quicktime" multiple><div class="selectedFiles">No new files selected</div><button type="button" class="upload">＋ Add More Photos</button><button class="save main">'+(isHead?'Save Review':'✓ SUBMIT & SAVE TASK')+'</button><small class="muted">Photos are saved together with the report. Existing photos remain available.</small></div><div class="uploadStatus '+(v.leader_status==='submitted'?'verified':'waiting')+'" role="status" aria-live="polite">'+(v.leader_status==='submitted'?'✓ SUBMITTED · Saved in Supabase'+(data.files.filter(f=>f.entry_id===v.id).length?' · '+data.files.filter(f=>f.entry_id===v.id).length+' uploaded file(s)':' · No photo uploaded yet'):'Ready to submit — select photos, then tap SUBMIT & SAVE')+'</div><div class="muted result"></div></article>'}
+function taskCard(t,v,isHead){return '<article class="task" data-task="'+enc(t.id)+'"><div class="taskHeading"><div class="category">'+enc(t.category)+'<span class="period">'+enc((t.frequency||'daily').toUpperCase())+'</span></div>'+(isHead?'<button type="button" class="editPencil editCategory" title="Edit category name" aria-label="Edit category '+enc(t.category)+'">✎ Category</button>':'')+'</div><div class="taskHeading"><h3>'+enc(t.title)+'</h3>'+(isHead?'<button type="button" class="editPencil editTitle" title="Edit this checklist task" aria-label="Edit task '+enc(t.title)+'">✎ Edit Task</button><button type="button" class="editPencil editDelete" aria-label="Remove task '+enc(t.title)+'">− Remove</button>':'')+'</div><div class="inlineEditor hide" aria-label="Task editor"><label>Task name<input class="taskNameInput" value="'+enc(t.title)+'"></label><label>Category<input class="taskCategoryInput" value="'+enc(t.category)+'"></label><label>Repeat<select class="taskFrequencyInput"><option value="daily">Daily</option><option value="monthly">Monthly</option></select></label><div class="inlineActions"><button type="button" class="main inlineSave">Save Changes</button><button type="button" class="inlineCancel">Cancel</button><button type="button" class="taskRemove inlineRemove">Remove This Task</button></div><div class="inlineConfirm hide"><strong>Remove this task from the active checklist?</strong><p class="muted">Previous submissions and evidence remain saved.</p><div class="inlineActions"><button type="button" class="taskRemove inlineRemoveYes">Yes, Remove Task</button><button type="button" class="inlineRemoveNo">Keep Task</button></div></div><small class="taskEditMessage">Edits apply ONLY to the date selected above. Other dates are preserved.</small></div><div class="taskContent">'+(isHead?'<div><label>Leader progress<input disabled value="'+enc(status(v.leader_status||'pending'))+'"></label><p class="muted">Leader note: '+enc(v.leader_note||'—')+'</p><label>Your review <select class="review"><option value="pending">Not reviewed</option><option value="complete">✓ Complete</option><option value="incomplete">△ Incomplete</option><option value="no-output">✕ No output</option><option value="na">N/A</option></select></label></div><div><label>Head remarks<textarea class="note" placeholder="Findings and required correction">'+enc(v.head_note||'')+'</textarea></label></div>':'<div><label>① Status ng task<select class="progress"><option value="pending">Not yet started</option><option value="working">Working on it / In progress</option><option value="submitted">✓ Done — Submit to Head</option></select></label><label>② Ano ang ginawa mo? (remarks)<textarea class="note" placeholder="Halimbawa: Na-check ang inventory, price tags at expiry dates.">'+enc(v.leader_note||'')+'</textarea></label></div><div><p class="muted">Status sa Head: <strong>'+enc(status(v.head_status||'pending'))+'</strong></p><p class="muted">'+enc(v.head_note||'')+'</p></div>')+'</div><section class="taskEvidence"><div class="savedLabel">📷 UPLOADED PHOTOS & VIDEOS — '+data.files.filter(f=>f.entry_id===v.id).length+' saved · Tap photo to preview</div><div class="files savedGallery">'+(evidence(v.id)||'<span class="muted">No saved evidence for this task/date yet.</span>')+'</div></section><div class="taskFooter"><input type="file" class="fileInput" aria-label="Choose actual photo or video proof" accept="image/*,.heic,.heif,.jpg,.jpeg,.png,.webp,video/mp4,video/webm,video/quicktime" multiple><div class="selectedFiles">No new files selected</div><button type="button" class="upload">＋ Add More Photos</button><button class="save main">'+(isHead?'Save Review':'✓ SUBMIT & SAVE TASK')+'</button><small class="muted">Photos are saved together with the report. Existing photos remain available.</small></div><div class="uploadStatus '+(verifiedSubmission(v)?'verified':v.leader_status==='submitted'?'failed':'waiting')+'" role="status" aria-live="polite">'+(verifiedSubmission(v)?'✓ SUBMITTED · Verified remarks and '+data.files.filter(f=>f.entry_id===v.id).length+' saved attachment(s)':v.leader_status==='submitted'?'⚠ INCOMPLETE — missing required remarks or saved proof. Re-submit.':'Required: written remarks AND at least one photo/video before submitting.')+'</div><div class="muted result"></div></article>'}
 function openTaskEditor(card,task,focusField='title'){
  if(isViewer)return;
  document.querySelectorAll('#tasks .inlineEditor').forEach(el=>{if(el!==card.querySelector('.inlineEditor'))el.classList.add('hide')});
@@ -912,7 +927,7 @@ function wireTasks(isHead){document.querySelectorAll((isHead?'#tasks':'#myTasks'
  ed.querySelector('.inlineRemoveNo').onclick=()=>ed.querySelector('.inlineConfirm').classList.add('hide');
  ed.querySelector('.inlineRemoveYes').onclick=()=>removeTaskInline(card,task);
 }
- const select=card.querySelector(isHead?'.review':'.progress');select.value=isHead?v.head_status||'pending':v.leader_status||'pending';
+ const select=card.querySelector(isHead?'.review':'.progress');select.value=isHead?v.head_status||'pending':effectiveLeaderStatus(v);
  const currentLeader=isHead?selected:data.leaders[0]?.id;
  // Restore unsaved text after an accidental page reload and keep refreshing from erasing it.
  restoreTaskDraft(card,currentLeader,workDay,tid,isHead);
@@ -982,17 +997,32 @@ function wireTasks(isHead){document.querySelectorAll((isHead?'#tasks':'#myTasks'
 
  card.querySelector('.save').onclick=()=>perform(card,async()=>{
  const hadFiles=pendingFiles.length>0;
- // The green action explicitly submits a completed task, rather than saving a pending draft.
- const newStatus=isHead?select.value:'submitted',newNote=card.querySelector('.note').value;
- saveTaskDraft(card,currentLeader,workDay,tid,isHead);
- phase('uploading','Saving '+(isHead?'Head review':'task submission')+' to Supabase…',8);
- const saved=await api('entry_save',{day:workDay,leader_id:isHead?selected:undefined,task_id:tid,status:newStatus,note:newNote});
- if(saved.entry?.[isHead?'head_status':'leader_status']!==newStatus)throw Error('Server did not confirm task status. Please retry.');
- phase('uploading','✓ Task saved to Supabase'+(hadFiles?' · Uploading photos…':' · Checking Head visibility…'),hadFiles?17:80);
+  const newStatus=isHead?select.value:'submitted',newNote=card.querySelector('.note').value.trim();
+  const existing=entry(currentLeader,tid,workDay),alreadySaved=!!(existing.id&&data.files.some(f=>f.entry_id===existing.id));
+  if(!isHead){
+   const missing=[];
+   if(!newNote)missing.push('Write what you completed in the Remarks field.');
+   if(!alreadySaved&&!hadFiles)missing.push('Attach at least one actual photo or video as proof.');
+   if(missing.length){requiredTaskPopup(missing,card);phase('failed','⚠ Missing required remarks or photo/video.');return}
+  }else if(newStatus==='complete'&&!verifiedSubmission(existing)){
+   requiredTaskPopup(['Leader remarks and verified photo/video are required before marking this task Complete. Select Incomplete or No output if missing.'],card);return;
+  }
+  saveTaskDraft(card,currentLeader,workDay,tid,isHead);
+  if(!isHead&&hadFiles)await uploadSelected();
+  phase('uploading','Checking saved evidence in Supabase…',50);
+  const proof=await api('load',{day:workDay}),proofEntry=proof.entries.find(e=>e.leader_id===currentLeader&&e.task_id===tid&&e.work_date===workDay);
+  if(!isHead&&!proof.files.some(f=>f.entry_id===proofEntry?.id)){
+   requiredTaskPopup(['No server-verified photo/video is attached. Retry the upload before submitting.'],card);
+   throw Error('Submission blocked: missing verified attachment.');
+  }
+  const saved=await api('entry_save',{day:workDay,leader_id:isHead?selected:undefined,task_id:tid,status:newStatus,note:newNote});
+  if(saved.entry?.[isHead?'head_status':'leader_status']!==newStatus)throw Error('Server did not confirm task status. Please retry.');
+ phase('uploading','✓ Record saved · Checking evidence…',85);
  if(hadFiles)await uploadSelected();
  const latest=await api('load',{day:workDay});
  const confirmation=latest.entries.find(x=>x.leader_id===currentLeader&&x.task_id===tid&&x.work_date===workDay);
  if(confirmation?.[isHead?'head_status':'leader_status']!==newStatus)throw Error('Saved status is not yet visible from the shared server. Refresh and check before retrying.');
+  if(!isHead&&!verifiedSubmission(confirmation,latest.files))throw Error('Submission not verified: remarks or attachment is missing.');
  // Use the actual server state for the completion count.
  data=latest;
  if(!isHead)updateLeaderExportState(taskSubmission(currentLeader,workDay));
@@ -1191,7 +1221,7 @@ async function renderHistory(){
   let submittedDays=0,missingDays=0,partialDays=0,upcoming=0;
   $('historyDays').innerHTML=Array.from({length:days},(_,i)=>{
    const d=period+'-'+String(i+1).padStart(2,'0'),recs=byDay.get(d)||[];
-   const submitted=recs.filter(e=>e.leader_status==='submitted').length;
+   const submitted=recs.filter(e=>verifiedSubmission(e)).length;
    let label,klass;
    if(d>todayStr){label='Upcoming';klass='future';upcoming++}
    else if(!recs.length){label='No saved report';klass='missing';missingDays++}
@@ -1199,7 +1229,7 @@ async function renderHistory(){
    else{label=submitted+'/'+recs.length+' submitted';klass='partial';partialDays++}
    return '<button type="button" class="'+klass+(d===$('day').value?' current':'')+'" data-history="'+d+'" title="'+enc(d+' · '+label)+'">'+(i+1)+'<small>'+enc(label)+'</small></button>';
   }).join('');
-  $('archiveSummary').innerHTML='<strong>'+enc(monthNames[Number(historyMonth)-1]+' '+historyYear)+'</strong> · '+submittedDays+' days fully submitted in saved records · '+partialDays+' partial · '+missingDays+' days without saved records'+(upcoming?' · '+upcoming+' upcoming':'')+'<p class="muted">Historical task submissions are counted even when task definitions were later edited. No saved report does not establish absence; verify days off and duty schedules separately.</p>';
+  $('archiveSummary').innerHTML='<strong>'+enc(monthNames[Number(historyMonth)-1]+' '+historyYear)+'</strong> · '+submittedDays+' days fully submitted in saved records · '+partialDays+' partial · '+missingDays+' days without saved records'+(upcoming?' · '+upcoming+' upcoming':'')+'<p class="muted">Historical submissions without verified remarks and saved evidence are marked incomplete. No saved report does not establish absence; verify days off and duty schedules separately.</p>';
   document.querySelectorAll('[data-history]').forEach(b=>b.onclick=()=>{if(hasUnsavedChanges()&&!confirm('Discard unuploaded files and switch dates?'))return;$('day').value=b.dataset.history;load()});
  }catch(e){$('historyDays').textContent=e.message}
 }
@@ -1215,7 +1245,7 @@ $('deleteReportDay').onclick=async()=>{
  try{const result=await api('report_delete_day',{leader_id:selected,day});await load(true);await renderHistory();say('Deleted '+result.deleted+' saved task records for '+leader.name+' on '+day+'.')}catch(e){say('Deletion failed: '+e.message)}
 };
 function renderLeader(){let l=data.leaders[0];if(!l){$('myName').textContent='Access unavailable';return;}$('myName').textContent=l.name;$('myMeta').textContent=l.position+' • '+l.area+' • '+$('myDay').value;const tasks=leaderTasks(l.id),totals=taskSubmission(l.id,$('myDay').value),done=totals.submitted;
- updateLeaderExportState(totals);$('leaderProgress').innerHTML='<b>'+done+' of '+tasks.length+' formally submitted</b> · <strong>'+totals.received+'/'+tasks.length+' with saved proof</strong> · '+(done===tasks.length?'✓ Completed for selected date':'Photos may already be saved even when the task needs final submission.');$('myTasks').innerHTML=tasks.map((t,i)=>{const v=entry(l.id,t.id,taskDay(t,$('myDay').value));return taskCard(t,v,false).replace('<article class="task"','<article class="task"').replace('<div class="taskHeading"><h3>','<div class="taskHeading"><h3>'+(i+1)+'. ').replace('</h3></div><div class="taskContent">','</h3></div><div class="taskState '+enc(v.leader_status||'pending')+'">'+enc(v.leader_status==='submitted'?'✓ Submitted':v.leader_status==='working'?'In progress':'Not yet submitted')+'</div><div class="taskContent">')}).join('')||'<p>No active tasks.</p>';wireTasks(false);approvalState();checkPendingFinished();showDailyA4Reminder()}
+ updateLeaderExportState(totals);$('leaderProgress').innerHTML='<b>'+done+' of '+tasks.length+' formally submitted</b> · <strong>'+totals.received+'/'+tasks.length+' with saved proof</strong> · '+(done===tasks.length?'✓ Completed for selected date':'Photos may already be saved even when the task needs final submission.');$('myTasks').innerHTML=tasks.map((t,i)=>{const v=entry(l.id,t.id,taskDay(t,$('myDay').value));return taskCard(t,v,false).replace('<article class="task"','<article class="task"').replace('<div class="taskHeading"><h3>','<div class="taskHeading"><h3>'+(i+1)+'. ').replace('</h3></div><div class="taskContent">','</h3></div><div class="taskState '+enc(v.leader_status||'pending')+'">'+enc(verifiedSubmission(v)?'✓ Submitted':v.leader_status==='submitted'?'⚠ Missing proof/remarks':v.leader_status==='working'?'In progress':'Not yet submitted')+'</div><div class="taskContent">')}).join('')||'<p>No active tasks.</p>';wireTasks(false);approvalState();checkPendingFinished();showDailyA4Reminder()}
 $('headToday').onclick=()=>{
  if(hasUnsavedChanges()&&!confirm('You have unsaved changes. Switch to today and all regions?'))return;
  $('day').value=today();$('region').value='';$('showArchivedLeaders').checked=false;selected='';load();
@@ -1268,8 +1298,8 @@ $('submitNewTask').onclick=async()=>{
 function reportEvidence(id){return data.files.filter(f=>f.entry_id===id).map(f=>f.mime?.startsWith('image/')?'<figure class="reportPhoto"><img src="'+enc(f.url||'')+'" alt="'+enc(f.original_name)+'"><small>'+enc(f.original_name)+'</small></figure>':'<p class="small">▶ Video: '+enc(f.original_name)+' ('+Math.ceil(f.bytes/1024)+' KB) — view in online record</p>').join('')}
 function calculateLeader(l,day){let v=leaderTasks(l.id).map(t=>({task:t,entry:entry(l.id,t.id,taskDay(t,day))}));let reviewed=v.filter(x=>x.entry.head_status&&!['pending','na'].includes(x.entry.head_status));let score=reviewed.length?Math.round(reviewed.reduce((n,x)=>n+(x.entry.head_status==='complete'?1:x.entry.head_status==='incomplete'?.5:0),0)/reviewed.length*100)+'%':'—';return {l,v,reviewed,score}}
 function buildReport(all){let day=$('day').value,rows=(all?data.leaders.filter(l=>l.active!==false):data.leaders.filter(l=>l.id===selected)).map(l=>calculateLeader(l,day));
-if(all)return '<div class="page"><h2>VARDA GROUP · DAILY LEADERS SUMMARY</h2><p class="small">National Retail Head | '+enc(day)+'</p><table><thead><tr><th>Leader / Area</th><th>Score</th><th>Reviewed</th><th>Submitted</th><th>Evidence</th><th>No output</th></tr></thead><tbody>'+rows.map(o=>'<tr><td>'+enc(o.l.name)+'<br>'+enc(o.l.area)+'</td><td>'+o.score+'</td><td>'+o.reviewed.length+'/'+o.v.length+'</td><td>'+o.v.filter(x=>x.entry.leader_status==='submitted').length+'</td><td>'+o.v.reduce((n,x)=>n+data.files.filter(f=>f.entry_id===x.entry.id).length,0)+'</td><td>'+o.v.filter(x=>x.entry.head_status==='no-output').length+'</td></tr>').join('')+'</tbody></table><h3>Evidence photo previews · max 2×2 inches</h3>'+rows.map(o=>{let photos=o.v.flatMap(x=>data.files.filter(f=>f.entry_id===x.entry.id&&f.mime?.startsWith('image/')));return photos.length?'<section class="reportSection"><h4>'+enc(o.l.name)+'</h4><div class="reportFilm">'+photos.map(f=>'<figure class="reportPhoto"><img src="'+enc(f.url||'')+'" alt="'+enc(f.original_name)+'"><small>'+enc(f.original_name)+'</small></figure>').join('')+'</div></section>':''}).join('')+'<p class="small">Complete = 100% · Incomplete = 50% · No output = 0%. N/A and pending excluded. Video filenames are accessible in individual online records.</p></div>';
-return rows.map(o=>'<div class="page"><h2>VARDA GROUP · LEADER DAILY OUTPUT REPORT</h2><p class="small">National Retail Head | '+enc(day)+'</p><h3>'+enc(o.l.name)+' · '+enc(o.l.position)+' · '+enc(o.l.area)+'</h3><div class="stats"><b>Score: '+o.score+'</b><b>Reviewed: '+o.reviewed.length+'/'+o.v.length+'</b><b>Submitted: '+o.v.filter(x=>x.entry.leader_status==='submitted').length+'</b></div><table><thead><tr><th style="width:38%">Output / Checklist</th><th style="width:17%">Leader</th><th style="width:17%">Head review</th><th>Head findings / remarks</th></tr></thead><tbody>'+o.v.map(x=>'<tr><td>'+enc(x.task.category)+'<br><b>'+enc(x.task.title)+'</b></td><td>'+enc(status(x.entry.leader_status||'pending'))+'</td><td>'+enc(status(x.entry.head_status||'pending'))+'</td><td>'+enc((x.entry.head_note||'').slice(0,300))+'</td></tr>').join('')+'</tbody></table><h3>Evidence attachments (2×2-inch photos)</h3>'+o.v.map(x=>{let files=data.files.filter(f=>f.entry_id===x.entry.id);return files.length?'<section class="reportSection"><h4>'+enc(x.task.title)+'</h4><div class="reportFilm">'+reportEvidence(x.entry.id)+'</div></section>':''}).join('')+'<div class="signature"><div>Reviewed by: ____________________</div><div>Date: ____________________</div></div><p class="small">Photographs are displayed at 2×2 inches. Extra images or longer remarks may continue onto another A4 page. Video is referenced by filename rather than embedded in print.</p></div>').join('')}
+if(all)return '<div class="page"><h2>VARDA GROUP · DAILY LEADERS SUMMARY</h2><p class="small">National Retail Head | '+enc(day)+'</p><table><thead><tr><th>Leader / Area</th><th>Score</th><th>Reviewed</th><th>Submitted</th><th>Evidence</th><th>No output</th></tr></thead><tbody>'+rows.map(o=>'<tr><td>'+enc(o.l.name)+'<br>'+enc(o.l.area)+'</td><td>'+o.score+'</td><td>'+o.reviewed.length+'/'+o.v.length+'</td><td>'+o.v.filter(x=>verifiedSubmission(x.entry)).length+'</td><td>'+o.v.reduce((n,x)=>n+data.files.filter(f=>f.entry_id===x.entry.id).length,0)+'</td><td>'+o.v.filter(x=>x.entry.head_status==='no-output').length+'</td></tr>').join('')+'</tbody></table><h3>Evidence photo previews · max 2×2 inches</h3>'+rows.map(o=>{let photos=o.v.flatMap(x=>data.files.filter(f=>f.entry_id===x.entry.id&&f.mime?.startsWith('image/')));return photos.length?'<section class="reportSection"><h4>'+enc(o.l.name)+'</h4><div class="reportFilm">'+photos.map(f=>'<figure class="reportPhoto"><img src="'+enc(f.url||'')+'" alt="'+enc(f.original_name)+'"><small>'+enc(f.original_name)+'</small></figure>').join('')+'</div></section>':''}).join('')+'<p class="small">Complete = 100% · Incomplete = 50% · No output = 0%. N/A and pending excluded. Video filenames are accessible in individual online records.</p></div>';
+return rows.map(o=>'<div class="page"><h2>VARDA GROUP · LEADER DAILY OUTPUT REPORT</h2><p class="small">National Retail Head | '+enc(day)+'</p><h3>'+enc(o.l.name)+' · '+enc(o.l.position)+' · '+enc(o.l.area)+'</h3><div class="stats"><b>Score: '+o.score+'</b><b>Reviewed: '+o.reviewed.length+'/'+o.v.length+'</b><b>Submitted: '+o.v.filter(x=>verifiedSubmission(x.entry)).length+'</b></div><table><thead><tr><th style="width:38%">Output / Checklist</th><th style="width:17%">Leader</th><th style="width:17%">Head review</th><th>Head findings / remarks</th></tr></thead><tbody>'+o.v.map(x=>'<tr><td>'+enc(x.task.category)+'<br><b>'+enc(x.task.title)+'</b></td><td>'+enc(status(effectiveLeaderStatus(x.entry)))+'</td><td>'+enc(status(x.entry.head_status||'pending'))+'</td><td>'+enc((x.entry.head_note||'').slice(0,300))+'</td></tr>').join('')+'</tbody></table><h3>Evidence attachments (2×2-inch photos)</h3>'+o.v.map(x=>{let files=data.files.filter(f=>f.entry_id===x.entry.id);return files.length?'<section class="reportSection"><h4>'+enc(x.task.title)+'</h4><div class="reportFilm">'+reportEvidence(x.entry.id)+'</div></section>':''}).join('')+'<div class="signature"><div>Reviewed by: ____________________</div><div>Date: ____________________</div></div><p class="small">Photographs are displayed at 2×2 inches. Extra images or longer remarks may continue onto another A4 page. Video is referenced by filename rather than embedded in print.</p></div>').join('')}
 async function printReport(all){if(!all&&!selected){say('Choose a leader');return} $('report').innerHTML=buildReport(all);await waitReportImages();window.print()}
 async function waitReportImages(){let imgs=[...$('report').querySelectorAll('img')];await Promise.all(imgs.map(img=>img.complete?Promise.resolve():new Promise(resolve=>{img.onload=resolve;img.onerror=resolve;setTimeout(resolve,5000)})))}
 
@@ -1337,7 +1367,7 @@ async function buildLeaderJpegBlob(l,day){
   c.fillStyle=brand;c.font='bold 20px Arial';c.textAlign='right';c.fillText(day,W-margin,187);c.textAlign='left';
   const reviewed=records.filter(x=>x.record.head_status&&!['pending','na'].includes(x.record.head_status));
   const score=reviewed.length?Math.round(reviewed.reduce((n,x)=>n+(x.record.head_status==='complete'?1:x.record.head_status==='incomplete'?.5:0),0)/reviewed.length*100)+'%':'—';
-  const values=[['TASKS',records.length],['SUBMITTED',records.filter(x=>x.record.leader_status==='submitted').length],['REVIEWED',reviewed.length],['SCORE',score],['NO OUTPUT',records.filter(x=>x.record.head_status==='no-output').length]];
+  const values=[['TASKS',records.length],['SUBMITTED',records.filter(x=>verifiedSubmission(x.record)).length],['REVIEWED',reviewed.length],['SCORE',score],['NO OUTPUT',records.filter(x=>x.record.head_status==='no-output').length]];
   c.fillStyle='#f6f5f6';c.fillRect(margin,243,W-2*margin,72);
   values.forEach(([label,value],i)=>{const x=margin+24+i*(W-2*margin)/5;c.fillStyle=brand;c.font='bold 24px Arial';c.fillText(String(value),x,273);c.fillStyle=muted;c.font='bold 12px Arial';c.fillText(label,x,299)});
   // Measured content layout. Long comments and all photos remain included:
@@ -1382,15 +1412,15 @@ async function buildLeaderJpegBlob(l,day){
   records.forEach((x,i)=>{
    const m=layoutData.cards[i],col=i%columns,row=Math.floor(i/columns),px=col*(cardW+gap),py=rowY[row],ph=layoutData.rowHeights[row];
    c.fillStyle='#fff';c.fillRect(px,py,cardW,ph);c.strokeStyle='#dfe1e6';c.lineWidth=1.2;c.strokeRect(px,py,cardW,ph);
-   c.fillStyle=x.record.leader_status==='submitted'?'#23845b':x.record.leader_status==='working'?'#d39c39':'#c95d5d';
+   c.fillStyle=verifiedSubmission(x.record)?'#23845b':x.record.leader_status==='working'?'#d39c39':'#c95d5d';
    c.fillRect(px,py,5,ph);
    const xx=px+17,tw=cardW-34;
    c.fillStyle=brand;c.font='bold 12px Arial';c.fillText((i+1)+'. '+String(x.task.category||'TASK').toUpperCase(),xx,py+21);
    let yy=py+42;
    c.fillStyle=ink;c.font='bold 16px Arial';
    m.title.forEach(line=>{c.fillText(line,xx,yy);yy+=21});
-   c.fillStyle=x.record.leader_status==='submitted'?'#167247':muted;c.font='bold 11px Arial';
-   c.fillText('LEADER: '+status(x.record.leader_status||'pending')+'  |  HEAD: '+status(x.record.head_status||'pending'),xx,yy+4);yy+=27;
+   c.fillStyle=verifiedSubmission(x.record)?'#167247':muted;c.font='bold 11px Arial';
+   c.fillText('LEADER: '+status(effectiveLeaderStatus(x.record))+'  |  HEAD: '+status(x.record.head_status||'pending'),xx,yy+4);yy+=27;
    c.fillStyle=muted;c.font='bold 11px Arial';c.fillText('LEADER REMARKS',xx,yy);yy+=19;
    c.fillStyle=ink;c.font='14px Arial';m.leader.forEach(line=>{c.fillText(line,xx,yy);yy+=bodyLine});
    yy+=8;c.fillStyle=muted;c.font='bold 11px Arial';c.fillText('HEAD COMMENTS',xx,yy);yy+=19;
@@ -1580,7 +1610,7 @@ $('rpNone').onclick=()=>{rpSelected=new Set();renderReportPicker()};
 function rpDates(a,b){let out=[],d=new Date(a+'T12:00:00'),last=new Date(b+'T12:00:00');for(let i=0;d<=last&&i<366;i++,d.setDate(d.getDate()+1))out.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'));return out}
 function rpStatusFor(entries){
  if(!entries.length)return 'No Report';
- const submitted=entries.filter(e=>e.leader_status==='submitted').length;
+ const submitted=entries.filter(e=>verifiedSubmission(e)).length;
  if(!submitted)return 'Draft / Incomplete';
  return submitted===entries.length?'Submitted':'Partial';
 }
@@ -1649,7 +1679,7 @@ $('rpRun').onclick=async()=>{
  $('rpPrint').disabled=true;$('rpCSV').disabled=true;
  try{
  const response=await api('report',{from,to}),records=(response.entries||[]);
- rpRows=leaders.flatMap(l=>days.map(date=>{const entries=records.filter(e=>e.leader_id===l.id&&e.work_date===date);return {leader:l,date,entries,status:rpStatusFor(entries),submitted:entries.filter(e=>e.leader_status==='submitted').length,reviewed:entries.filter(e=>e.head_status&&!['pending','na'].includes(e.head_status)).length,score:rpPercent(entries)}}));
+ rpRows=leaders.flatMap(l=>days.map(date=>{const entries=records.filter(e=>e.leader_id===l.id&&e.work_date===date);return {leader:l,date,entries,status:rpStatusFor(entries),submitted:entries.filter(e=>verifiedSubmission(e)).length,reviewed:entries.filter(e=>e.head_status&&!['pending','na'].includes(e.head_status)).length,score:rpPercent(entries)}}));
  const noReport=rpRows.filter(r=>r.status==='No Report').length;
  const overview='<h2>VARDA GROUP · CEO LEADER OUTPUT REPORT</h2><p>'+enc(from)+' to '+enc(to)+' · '+leaders.length+' leaders · '+days.length+' days</p><p><b>'+rpRows.filter(r=>r.status==='Submitted').length+'</b> fully submitted leader-days &nbsp; <b>'+noReport+'</b> days without saved submissions</p>';
  const detail=$('rpFormat').value==='detail',master=$('rpFormat').value==='master';
