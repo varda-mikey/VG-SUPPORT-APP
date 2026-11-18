@@ -19,7 +19,7 @@ section{margin-top:20px}h3{font-size:calc(14px * var(--scale));color:var(--maroo
 td textarea{display:block;width:100%;min-width:0;min-height:30px;box-sizing:border-box;border:0;resize:none;overflow:hidden;font:inherit;line-height:1.5;background:transparent;color:inherit;padding:4px 1px;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word}td textarea:focus{background:#fff4d5;outline:2px solid #deb24c}td{overflow-wrap:anywhere;word-break:normal}
 td.num,th.num{text-align:right}td.num input{text-align:right}.remove{border:0;background:#ffe1e1;color:#9f2638;font-weight:900;cursor:pointer;border-radius:5px;padding:5px}
 .add{background:#f8eecf;color:#542b0c;border:1px solid #d6a53a;padding:8px 12px;border-radius:7px;font-weight:bold;margin-top:8px;cursor:pointer}
-.summary{display:grid;grid-template-columns:1fr 270px;gap:15px;margin-top:14px}.summary .notes{border:1px solid #d0d5df;padding:12px;min-height:125px}.sumrow{display:flex;justify-content:space-between;gap:12px;padding:8px;border-bottom:1px solid #ddd}.sumrow.total{background:#f8eecf;font-size:calc(15px * var(--scale));font-weight:900;color:var(--maroon)}
+.summary{display:grid;grid-template-columns:1fr 270px;gap:15px;margin-top:14px}.summary .notes{border:1px solid #d0d5df;padding:12px;min-height:125px}.sumrow{display:flex;justify-content:space-between;gap:12px;padding:8px;border-bottom:1px solid #ddd}.sumrow.total{background:#f8eecf;font-size:calc(15px * var(--scale));font-weight:900;color:var(--maroon)}.sumrow.total.over{background:#fde8e8;color:#9b1c1c}.accountingNote{font-size:calc(11px * var(--scale));line-height:1.45;padding:9px 8px;color:#4f5b6d;background:#f3f5f8;border:1px solid #dce2ea;margin-top:6px}.accountingNote.over{color:#8c2020;background:#fff1f0;border-color:#f0c4c0}
 .signs{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:28px}.signature{border-top:1px solid #333;padding-top:7px;text-align:center}.signature .edit{display:block;font-weight:700}.signature small{display:block;margin-top:5px}
 .footer{border-top:1px solid #ddd;margin-top:30px;padding-top:7px;display:flex;justify-content:space-between;color:#586272;font-size:calc(10px * var(--scale))}
 @media(max-width:850px){.sheet{margin:0}main{padding:10px}.toolbar{position:relative}.summary{grid-template-columns:1fr 240px}}
@@ -42,7 +42,7 @@ td.num,th.num{text-align:right}td.num input{text-align:right}.remove{border:0;ba
 </div>
 <section><h3 class="edit" contenteditable="true" data-key="expensesTitle">Expense & Receipt Details</h3><div class="tablewrap"><table><thead><tr><th style="width:17%">Receipt Date</th><th style="width:24%">Supplier / Store</th><th>Description / Purpose</th><th style="width:15%" class="num">Amount (₱)</th><th class="actioncol" style="width:30px"></th></tr></thead><tbody id="rows"></tbody></table></div><button class="add" onclick="addRow()">+ Add Expense Line</button></section>
 <div class="summary"><div class="notes"><strong class="edit" contenteditable="true" data-key="remarksLabel">REMARKS / SUPPORTING DOCUMENTS</strong><div class="edit" contenteditable="true" data-key="remarks" style="min-height:83px;margin-top:7px">Attach receipts and supporting documents for all amounts listed above.</div></div>
-<div><div class="sumrow"><span class="edit" contenteditable="true" data-key="fundLabel">Cash / Fund Received</span><span>₱ <input type="number" id="fund" style="width:105px;text-align:right;font:inherit;border:0;border-bottom:1px dashed #aaa" min="0" step=".01"></span></div><div class="sumrow"><span class="edit" contenteditable="true" data-key="spentLabel">Total Expenses</span><b id="spent">₱ 0.00</b></div><div class="sumrow total"><span class="edit" contenteditable="true" data-key="balanceLabel">Remaining / (Shortage)</span><span id="balance">₱ 0.00</span></div></div></div>
+<div><div class="sumrow"><span class="edit" contenteditable="true" data-key="fundLabel">Budget Allocation / Funds Released</span><span>₱ <input type="number" id="fund" style="width:105px;text-align:right;font:inherit;border:0;border-bottom:1px dashed #aaa" min="0" step=".01"></span></div><div class="sumrow"><span class="edit" contenteditable="true" data-key="spentLabel">Total Expenses</span><b id="spent">₱ 0.00</b></div><div class="sumrow total"><span id="balanceLabel">Unutilized Funds / Cash to Return</span><span id="balance">₱ 0.00</span></div><div id="accountingNote" class="accountingNote" aria-live="polite">Funds remaining from the allocation are available for return or reconciliation.</div></div></div>
 <section><h3 class="edit" contenteditable="true" data-key="signTitle">Acknowledgment & Approval</h3><div class="signs"><div class="signature"><div class="edit" contenteditable="true" data-key="prepared">Employee Name</div><small class="edit" contenteditable="true" data-key="preparedLabel">Prepared / Liquidated By</small></div><div class="signature"><div class="edit" contenteditable="true" data-key="checked">Accounting Officer</div><small class="edit" contenteditable="true" data-key="checkedLabel">Checked By</small></div><div class="signature"><div class="edit" contenteditable="true" data-key="approved">Approving Officer</div><small class="edit" contenteditable="true" data-key="approvedLabel">Approved By</small></div></div></section>
 <div class="footer"><span class="edit" contenteditable="true" data-key="footnote">VG Support App • Internal Accounting Document</span><span class="edit" contenteditable="true" data-key="page">Page 1</span></div>
 </article></main>
@@ -70,7 +70,22 @@ function sortRowsByDate(){
   save();
 }
 function removeRow(rowId){lineItems=lineItems.filter(x=>x.id!==rowId);renderRows();calculate();save()}
-function calculate(){let spent=lineItems.reduce((s,x)=>s+(Number(x.amount)||0),0),balance=(Number($('fund').value)||0)-spent;$('spent').textContent=money(spent);$('balance').textContent=(balance<0?'− ':'')+money(Math.abs(balance))}
+function calculate(){
+ const spent=lineItems.reduce((s,x)=>s+(Number(x.amount)||0),0);
+ const allocated=Number($('fund').value)||0;
+ const remaining=Math.round((allocated-spent)*100)/100;
+ $('spent').textContent=money(spent);
+ $('balance').textContent=money(Math.abs(remaining));
+ const excess=remaining<0;
+ $('balanceLabel').textContent=excess?'Excess Expenses / Reimbursement Requested':remaining>0?'Unutilized Funds / Cash to Return':'Fully Liquidated / No Balance';
+ $('accountingNote').textContent=excess
+ ?'Actual expenses exceeded the allocated funds by '+money(-remaining)+'. Reimbursement is requested, subject to receipt verification and management/accounting approval.'
+ :remaining>0
+ ?money(remaining)+' remains from the allocated funds. Return or reconcile the balance with Accounting.'
+ :'Actual expenses equal the funds allocated. No remaining balance or excess expense.';
+ document.querySelector('.sumrow.total').classList.toggle('over',excess);
+ $('accountingNote').classList.toggle('over',excess);
+}
 function snapshot(){let fields={};document.querySelectorAll('[data-key]').forEach(el=>fields[el.dataset.key]=el.innerHTML);return {version:1,font:$('fontSlider').value,date:$('date').value,fund:$('fund').value,logo:$('logo').getAttribute('src')||'',fields,rows:lineItems}}
 function save(){calculate();try{localStorage.setItem(KEY,JSON.stringify(snapshot()))}catch(e){console.warn('Local autosave unavailable',e)}}
 function load(d){if(!d||!Array.isArray(d.rows))return;lineItems=d.rows.map(x=>({id:id(),date:x.date||'',supplier:x.supplier||'',details:x.details||'',amount:x.amount||''}));for(let [k,v] of Object.entries(d.fields||{})){let el=Array.from(document.querySelectorAll('[data-key]')).find(x=>x.dataset.key===k);if(el)el.textContent=new DOMParser().parseFromString(String(v),'text/html').body.textContent}if(d.date)$('date').value=d.date;else $('date').value='';$('fund').value=d.fund||0;$('fontSlider').value=d.font||115;setFont();setLogo(d.logo||'');renderRows();calculate()}
