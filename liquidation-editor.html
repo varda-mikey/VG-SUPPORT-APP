@@ -26,7 +26,7 @@ td.num,th.num{text-align:right}td.num input{text-align:right}.remove{border:0;ba
 @page{size:A4 portrait;margin:0}@media print{body{background:white}.toolbar,.helper,.add,.remove,.actioncol{display:none!important}main{padding:0;overflow:visible}.sheet{width:210mm;min-height:297mm;box-shadow:none;margin:0;print-color-adjust:exact;-webkit-print-color-adjust:exact}input{appearance:none}.edit{border-bottom:0!important}.field input[type=date]{border-bottom:0!important}tr{break-inside:avoid}td textarea{overflow:visible!important;resize:none!important;white-space:pre-wrap!important}}
 </style></head><body>
 <div class="toolbar"><h1>VG · Liquidation Editor</h1><label>Text size <input id="fontSlider" type="range" min="90" max="145" value="115" step="5"> <span id="fontLabel">115%</span></label>
-<button onclick="addRow()">+ Add Expense</button><button class="primary" onclick="window.print()">Print / Save PDF</button><button onclick="exportData()">Save Editable JSON</button><button onclick="document.getElementById('importFile').click()">Load Saved</button><input id="importFile" type="file" accept=".json" hidden>
+<button onclick="addRow()">+ Add Expense</button><button class="primary" onclick="sortRowsByDate()" title="Sort receipt dates from earliest to latest">📅 Auto Arrange Dates ↑</button><button class="primary" onclick="window.print()">Print / Save PDF</button><button onclick="exportData()">Save Editable JSON</button><button onclick="document.getElementById('importFile').click()">Load Saved</button><input id="importFile" type="file" accept=".json" hidden>
 <button onclick="document.getElementById('logoInput').click()">Change Logo</button><input id="logoInput" type="file" accept="image/*" hidden><button onclick="resetForm()">New Form</button></div>
 <div class="helper">Click or tap any text directly on the A4 preview to edit it. Dates and expense fields are editable in place. Totals update automatically. Changes save automatically in this browser.</div>
 <main><article class="sheet" id="sheet">
@@ -55,6 +55,20 @@ function renderRows(){ $('rows').innerHTML=lineItems.map(x=>'<tr data-id="'+safe
 function autoGrow(el){if(!el)return;el.style.height='auto';el.style.height=Math.max(30,el.scrollHeight+2)+'px'}
 function autoGrowAll(){document.querySelectorAll('#rows textarea').forEach(autoGrow)}
 function addRow(){lineItems.push({id:id(),date:$('date').value,supplier:'',details:'',amount:''});renderRows();save()}
+function sortRowsByDate(){
+  // Sort complete expense records, not individual columns, to preserve receipt details.
+  // Undated entries stay at the bottom in their original relative order.
+  lineItems=lineItems.map((item,index)=>({item,index})).sort((a,b)=>{
+    const da=/^\d{4}-\d{2}-\d{2}$/.test(a.item.date||'')?a.item.date:'';
+    const db=/^\d{4}-\d{2}-\d{2}$/.test(b.item.date||'')?b.item.date:'';
+    if(!da&&!db)return a.index-b.index;
+    if(!da)return 1;
+    if(!db)return -1;
+    return da.localeCompare(db)||a.index-b.index;
+  }).map(x=>x.item);
+  renderRows();
+  save();
+}
 function removeRow(rowId){lineItems=lineItems.filter(x=>x.id!==rowId);renderRows();calculate();save()}
 function calculate(){let spent=lineItems.reduce((s,x)=>s+(Number(x.amount)||0),0),balance=(Number($('fund').value)||0)-spent;$('spent').textContent=money(spent);$('balance').textContent=(balance<0?'− ':'')+money(Math.abs(balance))}
 function snapshot(){let fields={};document.querySelectorAll('[data-key]').forEach(el=>fields[el.dataset.key]=el.innerHTML);return {version:1,font:$('fontSlider').value,date:$('date').value,fund:$('fund').value,logo:$('logo').getAttribute('src')||'',fields,rows:lineItems}}
