@@ -21,6 +21,7 @@ main{max-width:1200px;margin:auto;padding:20px}.finder{display:grid;grid-templat
 @media(max-width:840px){.finder{grid-template-columns:1fr}.topInner{align-items:flex-start}.policyToolbar{grid-template-columns:1fr}.pointGuide{grid-template-columns:1fr}.detailGrid{grid-template-columns:1fr}.detail.wide{grid-column:auto}main{padding:13px}.panel{padding:16px}.top{padding:14px}.mainActions{padding:10px 13px 0;grid-template-columns:1fr}.formGrid{grid-template-columns:1fr}.formGrid .full{grid-column:auto}.docStage{overflow:auto}.docPaper{margin:0}}
 .handwrittenIntro{font-size:10px;margin-bottom:4mm}.handwrittenSubject{border:1px solid #555;padding:3mm;margin:3mm 0;line-height:1.5;overflow-wrap:anywhere}.handwrittenPrompt{font-size:10px;margin-bottom:2mm}.blankMeta td{min-width:30mm;height:10mm}.blankMeta th{width:26mm}.writingLine{height:7mm;border-bottom:1px solid #999}.handwrittenSignatures{display:grid;grid-template-columns:1fr 1fr;gap:12mm;margin-top:11mm;text-align:center;font-size:10px}.handwrittenSignatures span{display:block;border-top:1px solid #333;margin:9mm 2mm 2mm}.docPaper:has(.handwrittenIntro){padding:10mm 14mm}.docPaper:has(.handwrittenIntro) .docTitle{font-size:15px;margin-bottom:3mm}.docPaper:has(.handwrittenIntro) .docSection{margin:2.5mm 0}.docPaper:has(.handwrittenIntro) .docHead{margin-bottom:3mm;padding-bottom:3mm}
 @media print{body{background:#fff}.top,.mainActions,main>.finder,.policySection,.formEditor,.printBar,.footerNote{display:none!important}.workflowSection{display:none!important}.workflowSection.printing{display:block!important}.workflowSection.printing .formWorkspace{display:block}.workflowSection.printing .docStage{padding:0;background:#fff}.workflowSection.printing .docPaper{display:block!important;width:210mm;min-height:297mm;margin:0;box-shadow:none;padding:12mm 14mm}@page{size:A4;margin:0}}
+.policyMatches{display:grid;gap:6px}.policyMatch{display:block;width:100%;text-align:left;border:1px solid #d9dfe6;border-radius:9px;background:#fff;padding:9px;color:#17212b;font-size:12px;font-weight:700}.policyMatch:hover,.policyMatch:focus-visible{border-color:var(--maroon);background:#fff5f5}.policyMatch small{display:block;color:#66727e;font-size:11px;font-weight:normal}.policyMatch.selected{border:2px solid var(--maroon)}.policyMatchesHint{font-size:12px;color:#66727e;margin:0}.exportButtons{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}.exportButtons button{white-space:nowrap}.docStage{max-width:100%}.printBar{flex-wrap:wrap}.formWorkspace>div{min-width:0}@media(max-width:1100px){.formWorkspace{grid-template-columns:1fr}.formEditor{position:static}}@media print{.exportButtons{display:none!important}}
 </style>
 </head>
 <body>
@@ -61,14 +62,16 @@ main{max-width:1200px;margin:auto;padding:20px}.finder{display:grid;grid-templat
         <label class="full">IR Print Format<select id="irPrintMode"><option value="digital">Completed / Digital Incident Report</option><option value="handwritten">Blank Handwritten Staff Explanation Form</option></select></label>
 <label class="full">Subject Type<select id="irSubjectType"><option value="policy">Reported Policy Violation (for explanation)</option><option value="investigation">For Investigation / Fact-Finding (no finding yet)</option></select></label>
 <label class="full">Investigation Subject / Allegation<input id="irSubject" placeholder="e.g. Cash discrepancy / Failure to follow schedule"></label>
-<label class="full">VARDA ACT Policy<select id="irPolicy"></select></label>
+<label class="full">Search Policy by Staff Action<input id="irPolicySearch" type="search" autocomplete="off" placeholder="Type: sleeping during duty, late, missing cash, no hairnet..."></label>
+        <div class="full" id="irPolicyMatches" aria-live="polite"></div>
+        <label class="full">VARDA ACT Policy<select id="irPolicy"></select></label>
         <label class="full">Incident Description / Statement of Facts<textarea id="irDescription" placeholder="Write only the facts: who, what, when, where, and how."></textarea></label>
         <label class="full">Witness/es<textarea id="irWitness" placeholder="Names and short statement, if any"></textarea></label>
         <label class="full">Evidence Attached<textarea id="irEvidence" placeholder="Photo, CCTV, DTR, POS record, log, chat, or other proof"></textarea></label>
         <label class="full">Immediate Action Taken<textarea id="irAction"></textarea></label>
         <label>Reported By<input id="irReporter"></label><label>Position / Title<input id="irReporterTitle"></label>
       </div></div>
-      <div><div class="printBar"><span>Live A4 preview · choose handwritten format to leave response fields blank</span><button class="printBtn" id="printIrBtn">Print / Save PDF</button></div><div class="docStage"><article class="docPaper" id="irPreview"></article></div></div>
+      <div><div class="printBar"><span>Live A4 preview · choose handwritten format to leave response fields blank</span><div class="exportButtons"><button class="printBtn" id="saveIrJpgBtn" type="button">Save as JPG</button><button class="printBtn" id="printIrBtn" type="button">Print / Save PDF</button></div></div><div class="docStage"><article class="docPaper" id="irPreview"></article></div></div>
     </div>
   </section>
 
@@ -144,6 +147,19 @@ function formatDate(raw){if(!raw)return '________________';const d=new Date(raw+
 function formatTime(raw){if(!raw)return '____________';const [h,m]=raw.split(':').map(Number);return new Date(2000,0,1,h,m).toLocaleTimeString('en-PH',{hour:'numeric',minute:'2-digit'})}
 function policyByCode(code){return policies.find(p=>p.code===code)}
 function policyOptions(){return '<option value="">Choose the involved VARDA ACT policy</option>'+policies.map(p=>`<option value="${p.code}">${p.code} — ${escapeHtml(p.title)} (${p.severity}, ${p.points} pts)</option>`).join('')}
+function searchIrPolicies(){
+ const query=value('irPolicySearch'),out=$('irPolicyMatches');
+ if(!query){out.innerHTML='<p class="policyMatchesHint">Search by policy code, title, or describe what the employee did. Select a suggestion below.</p>';return}
+ const ranked=policies.map(p=>({p,score:scorePolicy(p,query),exact:haystack(p).includes(normalize(query))}))
+   .filter(x=>x.score>0||x.exact)
+   .sort((a,b)=>Number(b.exact)-Number(a.exact)||b.score-a.score||a.p.code.localeCompare(b.p.code)).slice(0,7);
+ out.innerHTML=ranked.length?'<div class="policyMatches">'+ranked.map(x=>'<button type="button" class="policyMatch" data-policy-code="'+escapeHtml(x.p.code)+'"><b>'+escapeHtml(x.p.code+' — '+x.p.title)+'</b><small>'+escapeHtml(x.p.severity+' · '+x.p.points+' points · '+x.p.rule).slice(0,175)+'</small></button>').join('')+'</div>':'<p class="policyMatchesHint">No reliable match. Try another description or select directly from the full policy list.</p>';
+ out.querySelectorAll('button[data-policy-code]').forEach(b=>b.addEventListener('click',()=>{
+    const code=b.dataset.policyCode; selectedPolicyCode=code;$('irPolicy').value=code;$('ntePolicy').value=code;
+    const p=policyByCode(code);$('irPolicySearch').value=p.code+' — '+p.title;out.innerHTML='';
+    renderIR();renderNTE();
+ }));
+}
 function syncPolicySelectors(code){
   if(!code)return;selectedPolicyCode=code;
   ['irPolicy','ntePolicy'].forEach(id=>{if($(id))$(id).value=code});renderIR();renderNTE();
@@ -187,6 +203,28 @@ function openWorkflow(kind){
   document.querySelectorAll('.mainAction').forEach(b=>b.classList.remove('active'));$(kind==='policy'?'showAllTop':kind==='ir'?'fileIrBtn':'submitNteBtn').classList.add('active');
   if(kind==='ir'){copyIncidentToForm('ir');renderIR()}if(kind==='nte'){copyIncidentToForm('nte');renderNTE()}scrollTo({top:0,behavior:'smooth'});
 }
+async function saveIrAsJpg(){
+ const btn=$('saveIrJpgBtn');const original=btn.textContent;btn.disabled=true;btn.textContent='Creating JPG...';
+ try{
+   if(typeof window.html2canvas!=='function'){
+     await new Promise((resolve,reject)=>{
+       const script=document.createElement('script');
+       script.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+       script.onload=resolve;script.onerror=()=>reject(new Error('JPG renderer could not load. Check your connection.'));
+       document.head.appendChild(script);
+     });
+   }
+   const paper=$('irPreview');
+   const images=[...paper.querySelectorAll('img')];
+   await Promise.all(images.map(img=>img.complete?Promise.resolve():new Promise(resolve=>{img.addEventListener('load',resolve,{once:true});img.addEventListener('error',resolve,{once:true})})));
+   if(document.fonts&&document.fonts.ready)await document.fonts.ready;
+   const canvas=await window.html2canvas(paper,{backgroundColor:'#ffffff',scale:3,useCORS:true,scrollX:0,scrollY:0,logging:false,windowWidth:Math.max(document.documentElement.clientWidth,950)});
+   const link=document.createElement('a');
+   link.href=canvas.toDataURL('image/jpeg',0.96);
+   link.download=(value('irPrintMode')==='handwritten'?'VARDA-Blank-IR-':'VARDA-Incident-Report-')+(value('irRef')||localDate()).replace(/[^a-zA-Z0-9_-]/g,'-')+'.jpg';
+   document.body.appendChild(link);link.click();link.remove();
+ }catch(err){alert('Unable to save JPG: '+err.message+'\nYou can still use Print / Save PDF.')}finally{btn.disabled=false;btn.textContent=original}
+}
 function printDocument(kind){const section=$(kind==='ir'?'irSection':'nteSection');section.classList.add('printing');const cleanup=()=>section.classList.remove('printing');window.addEventListener('afterprint',cleanup,{once:true});window.print();setTimeout(cleanup,1200)}
 function init(){
   const departments=[...new Set(policies.map(p=>p.department))].sort();$('departmentFilter').innerHTML+=[...departments].map(x=>`<option>${escapeHtml(x)}</option>`).join('');
@@ -196,8 +234,11 @@ function init(){
   $('clearBtn').addEventListener('click',()=>{$('incident').value='';$('incident').focus();$('resultPanel').innerHTML='<div class="resultsEmpty"><div><span class="big">⚖️</span><b>Your suggested policy will appear here.</b><br><span style="font-size:13px">Enter the incident first, then select “Find Matching Policy.”</span></div></div>'});
   $('showAllTop').addEventListener('click',()=>openWorkflow('policy'));$('fileIrBtn').addEventListener('click',()=>openWorkflow('ir'));$('submitNteBtn').addEventListener('click',()=>openWorkflow('nte'));
   ['listSearch','severityFilter','departmentFilter'].forEach(id=>$(id).addEventListener('input',renderList));
-  $('irFields').addEventListener('input',e=>{if(e.target.id==='irPolicy'){selectedPolicyCode=e.target.value;$('ntePolicy').value=e.target.value}renderIR()});
+  $('irPolicySearch').addEventListener('input',searchIrPolicies);
+  searchIrPolicies();
+  $('irFields').addEventListener('input',e=>{if(e.target.id==='irPolicy'){selectedPolicyCode=e.target.value;$('ntePolicy').value=e.target.value;const p=policyByCode(e.target.value);$('irPolicySearch').value=p?p.code+' — '+p.title:'';searchIrPolicies()}renderIR()});
   $('nteFields').addEventListener('input',e=>{if(e.target.id==='ntePolicy'){selectedPolicyCode=e.target.value;$('irPolicy').value=e.target.value}renderNTE()});
+  $('saveIrJpgBtn').addEventListener('click',saveIrAsJpg);
   $('printIrBtn').addEventListener('click',()=>printDocument('ir'));$('printNteBtn').addEventListener('click',()=>printDocument('nte'));
   renderList();renderIR();renderNTE();
 }
