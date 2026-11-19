@@ -1213,19 +1213,19 @@ async function renderHistory(){
  const period=historyYear+'-'+historyMonth,from=period+'-01',days=new Date(Number(historyYear),Number(historyMonth),0).getDate(),to=period+'-'+String(days).padStart(2,'0');
  $('historyDays').innerHTML='<p class="muted">Loading saved reports…</p>';
  try{
-  const response=await api('report',{from,to}),all=(response.entries||[]).filter(e=>e.leader_id===selected);
+  const response=await api('report',{from,to}),all=(response.entries||[]).filter(e=>e.leader_id===selected),historicalProof=(response.evidence_entry_ids||[]).map(entry_id=>({entry_id}));
   // Use saved historical entries instead of today's task definitions: those can change.
   const todayStr=today(),byDay=new Map();
   for(const e of all){const list=byDay.get(e.work_date)||[];list.push(e);byDay.set(e.work_date,list)}
   let submittedDays=0,missingDays=0,partialDays=0,upcoming=0;
   $('historyDays').innerHTML=Array.from({length:days},(_,i)=>{
    const d=period+'-'+String(i+1).padStart(2,'0'),recs=byDay.get(d)||[];
-   const submitted=recs.filter(e=>verifiedSubmission(e)).length;
+   const submitted=recs.filter(e=>verifiedSubmission(e,historicalProof)).length,expected=Number(response.expected_task_counts?.[selected+'|'+d]??recs.length);
    let label,klass;
    if(d>todayStr){label='Upcoming';klass='future';upcoming++}
    else if(!recs.length){label='No saved report';klass='missing';missingDays++}
-   else if(submitted===recs.length){label='Submitted ('+submitted+')';klass='ok';submittedDays++}
-   else{label=submitted+'/'+recs.length+' submitted';klass='partial';partialDays++}
+   else if(expected>0&&submitted===expected){label='Submitted ('+submitted+')';klass='ok';submittedDays++}
+   else{label=submitted+'/'+expected+' submitted';klass='partial';partialDays++}
    return '<button type="button" class="'+klass+(d===$('day').value?' current':'')+'" data-history="'+d+'" title="'+enc(d+' · '+label)+'">'+(i+1)+'<small>'+enc(label)+'</small></button>';
   }).join('');
   $('archiveSummary').innerHTML='<strong>'+enc(monthNames[Number(historyMonth)-1]+' '+historyYear)+'</strong> · '+submittedDays+' days fully submitted in saved records · '+partialDays+' partial · '+missingDays+' days without saved records'+(upcoming?' · '+upcoming+' upcoming':'')+'<p class="muted">Historical submissions without verified remarks and saved evidence are marked incomplete. No saved report does not establish absence; verify days off and duty schedules separately.</p>';
