@@ -1608,9 +1608,9 @@ $('rpFrom').value=today().slice(0,7)+'-01';$('rpTo').value=today();
 $('rpAll').onclick=()=>{rpSelected=new Set(data.leaders.filter(l=>l.active!==false).map(l=>l.id));renderReportPicker()};
 $('rpNone').onclick=()=>{rpSelected=new Set();renderReportPicker()};
 function rpDates(a,b){let out=[],d=new Date(a+'T12:00:00'),last=new Date(b+'T12:00:00');for(let i=0;d<=last&&i<366;i++,d.setDate(d.getDate()+1))out.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'));return out}
-function rpStatusFor(entries){
+function rpStatusFor(entries,proofFiles){
  if(!entries.length)return 'No Report';
- const submitted=entries.filter(e=>verifiedSubmission(e)).length;
+ const submitted=entries.filter(e=>verifiedSubmission(e,proofFiles)).length;
  if(!submitted)return 'Draft / Incomplete';
  return submitted===entries.length?'Submitted':'Partial';
 }
@@ -1678,8 +1678,8 @@ $('rpRun').onclick=async()=>{
  btn.disabled=true;$('rpStatus').textContent='Loading saved records…';rpReady=false;
  $('rpPrint').disabled=true;$('rpCSV').disabled=true;
  try{
- const response=await api('report',{from,to}),records=(response.entries||[]);
- rpRows=leaders.flatMap(l=>days.map(date=>{const entries=records.filter(e=>e.leader_id===l.id&&e.work_date===date);return {leader:l,date,entries,status:rpStatusFor(entries),submitted:entries.filter(e=>verifiedSubmission(e)).length,reviewed:entries.filter(e=>e.head_status&&!['pending','na'].includes(e.head_status)).length,score:rpPercent(entries)}}));
+ const response=await api('report',{from,to}),records=(response.entries||[]),proofFiles=(response.evidence_entry_ids||[]).map(entry_id=>({entry_id}));
+ rpRows=leaders.flatMap(l=>days.map(date=>{const entries=records.filter(e=>e.leader_id===l.id&&e.work_date===date);return {leader:l,date,entries,status:rpStatusFor(entries,proofFiles),submitted:entries.filter(e=>verifiedSubmission(e,proofFiles)).length,reviewed:entries.filter(e=>e.head_status&&!['pending','na'].includes(e.head_status)).length,score:rpPercent(entries)}}));
  const noReport=rpRows.filter(r=>r.status==='No Report').length;
  const overview='<h2>VARDA GROUP · CEO LEADER OUTPUT REPORT</h2><p>'+enc(from)+' to '+enc(to)+' · '+leaders.length+' leaders · '+days.length+' days</p><p><b>'+rpRows.filter(r=>r.status==='Submitted').length+'</b> fully submitted leader-days &nbsp; <b>'+noReport+'</b> days without saved submissions</p>';
  const detail=$('rpFormat').value==='detail',master=$('rpFormat').value==='master';
@@ -1694,7 +1694,7 @@ $('rpRun').onclick=async()=>{
 $('rpPrint').onclick=async()=>{if(!rpReady)return;$('report').innerHTML=rpPrinted;const b=$('rpPrint');b.disabled=true;try{await waitReportImages();window.print()}finally{b.disabled=false}};
 $('rpCSV').onclick=()=>{if(!rpReady)return;downloadCSV('varda-leader-report-'+$('rpFrom').value+'-to-'+$('rpTo').value+'.csv',[['Leader','Branch','Date','Status','Tasks Submitted','Tasks Recorded','Head Reviewed','Score'],...rpRows.map(r=>[r.leader.name,r.leader.area||'',r.date,r.status,r.submitted,r.entries.length,r.reviewed,r.score])])};
 
-$('monthReport').onclick=async()=>{try{let month=$('day').value.slice(0,7),from=month+'-01',to=month+'-31',result=await api('report',{from,to}),records=result.entries||[],rows=data.leaders.map(l=>{let r=records.filter(x=>x.leader_id===l.id),reviewed=r.filter(x=>!['pending','na'].includes(x.head_status)),score=reviewed.length?Math.round(reviewed.reduce((n,x)=>n+(x.head_status==='complete'?1:x.head_status==='incomplete'?.5:0),0)/reviewed.length*100)+'%':'—';return '<tr><td>'+enc(l.name)+'</td><td>'+enc(l.area)+'</td><td>'+new Set(r.map(x=>x.work_date)).size+'</td><td>'+r.filter(x=>x.leader_status==='submitted').length+'</td><td>'+reviewed.length+'</td><td>'+score+'</td></tr>'}).join('');$('report').innerHTML='<div class="page"><h2>VARDA GROUP • MONTHLY LEADER SUMMARY</h2><p>'+enc(month)+'</p><table><thead><tr><th>Leader</th><th>Region</th><th>Recorded Dates</th><th>Submitted</th><th>Reviewed</th><th>Score</th></tr></thead><tbody>'+rows+'</tbody></table><p class="small">Score based on reviewed items only; monthly tasks recorded once per month.</p></div>';window.print()}catch(e){say(e.message)}};
+$('monthReport').onclick=async()=>{try{let month=$('day').value.slice(0,7),from=month+'-01',to=month+'-31',result=await api('report',{from,to}),records=result.entries||[],proofFiles=(result.evidence_entry_ids||[]).map(entry_id=>({entry_id})),rows=data.leaders.map(l=>{let r=records.filter(x=>x.leader_id===l.id),reviewed=r.filter(x=>!['pending','na'].includes(x.head_status)),score=reviewed.length?Math.round(reviewed.reduce((n,x)=>n+(x.head_status==='complete'?1:x.head_status==='incomplete'?.5:0),0)/reviewed.length*100)+'%':'—';return '<tr><td>'+enc(l.name)+'</td><td>'+enc(l.area)+'</td><td>'+new Set(r.map(x=>x.work_date)).size+'</td><td>'+r.filter(x=>verifiedSubmission(x,proofFiles)).length+'</td><td>'+reviewed.length+'</td><td>'+score+'</td></tr>'}).join('');$('report').innerHTML='<div class="page"><h2>VARDA GROUP • MONTHLY LEADER SUMMARY</h2><p>'+enc(month)+'</p><table><thead><tr><th>Leader</th><th>Region</th><th>Recorded Dates</th><th>Submitted</th><th>Reviewed</th><th>Score</th></tr></thead><tbody>'+rows+'</tbody></table><p class="small">Score based on reviewed items only; monthly tasks recorded once per month.</p></div>';window.print()}catch(e){say(e.message)}};
 if(mode==='leader'){$('headLogin').classList.add('hide');$('leaderView').classList.remove('hide');$('sessionTitle').textContent='Leader Personal Dashboard';if(!leaderToken){$('myName').textContent='Missing personal link key';$('myMessage').textContent='Ask your Head to send your complete link.'}else load();}
 else if(isViewer&&ceoToken){$('headLogin').classList.add('hide');$('headView').classList.remove('hide');$('sessionTitle').textContent='CEO • View-Only Reports';load()}
 else if(headToken)openHead();
