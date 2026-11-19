@@ -22,6 +22,16 @@ main{max-width:1200px;margin:auto;padding:20px}.finder{display:grid;grid-templat
 .handwrittenIntro{font-size:10px;margin-bottom:4mm}.handwrittenSubject{border:1px solid #555;padding:3mm;margin:3mm 0;line-height:1.5;overflow-wrap:anywhere}.handwrittenPrompt{font-size:10px;margin-bottom:2mm}.blankMeta td{min-width:30mm;height:10mm}.blankMeta th{width:26mm}.writingLine{height:7mm;border-bottom:1px solid #999}.handwrittenSignatures{display:grid;grid-template-columns:1fr 1fr;gap:12mm;margin-top:11mm;text-align:center;font-size:10px}.handwrittenSignatures span{display:block;border-top:1px solid #333;margin:9mm 2mm 2mm}.docPaper:has(.handwrittenIntro){padding:10mm 14mm}.docPaper:has(.handwrittenIntro) .docTitle{font-size:15px;margin-bottom:3mm}.docPaper:has(.handwrittenIntro) .docSection{margin:2.5mm 0}.docPaper:has(.handwrittenIntro) .docHead{margin-bottom:3mm;padding-bottom:3mm}
 @media print{body{background:#fff}.top,.mainActions,main>.finder,.policySection,.formEditor,.printBar,.footerNote{display:none!important}.workflowSection{display:none!important}.workflowSection.printing{display:block!important}.workflowSection.printing .formWorkspace{display:block}.workflowSection.printing .docStage{padding:0;background:#fff}.workflowSection.printing .docPaper{display:block!important;width:210mm;min-height:297mm;margin:0;box-shadow:none;padding:12mm 14mm}@page{size:A4;margin:0}}
 .policyMatches{display:grid;gap:6px}.policyMatch{display:block;width:100%;text-align:left;border:1px solid #d9dfe6;border-radius:9px;background:#fff;padding:9px;color:#17212b;font-size:12px;font-weight:700}.policyMatch:hover,.policyMatch:focus-visible{border-color:var(--maroon);background:#fff5f5}.policyMatch small{display:block;color:#66727e;font-size:11px;font-weight:normal}.policyMatch.selected{border:2px solid var(--maroon)}.policyMatchesHint{font-size:12px;color:#66727e;margin:0}.exportButtons{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}.exportButtons button{white-space:nowrap}.docStage{max-width:100%}.printBar{flex-wrap:wrap}.formWorkspace>div{min-width:0}@media(max-width:1100px){.formWorkspace{grid-template-columns:1fr}.formEditor{position:static}}@media print{.exportButtons{display:none!important}}
+
+#irPreview.docPaper{width:210mm;height:297mm;min-height:0;max-height:297mm;padding:11mm 13mm;overflow:hidden;box-sizing:border-box}
+#irPreview .irPageInner{transform-origin:top left;width:100%}
+#irPreview .docHead{margin-bottom:3mm;padding-bottom:3mm}
+#irPreview .docTitle{margin-bottom:3mm}
+#irPreview .docSection{margin:2.5mm 0}
+#irPreview .writingLine{height:6.5mm}
+#irPreview .handwrittenSignatures{margin-top:9mm}
+#irPreview .handwrittenSignatures span{margin-top:7mm}
+@media print{#irSection.printing #irPreview.docPaper{width:210mm!important;height:297mm!important;min-height:0!important;max-height:297mm!important;padding:11mm 13mm!important;overflow:hidden!important;box-sizing:border-box!important;break-inside:avoid!important;page-break-inside:avoid!important}#irSection.printing .docStage{overflow:visible!important}}
 </style>
 </head>
 <body>
@@ -167,6 +177,19 @@ function syncPolicySelectors(code){
 function policyPrintBox(code){const p=policyByCode(code);return p?`<div class="policyBox"><b>${escapeHtml(p.code)} — ${escapeHtml(p.title)}</b><br>${escapeHtml(p.rule)}<br><b>Classification:</b> ${p.severity} · Suggested ${p.points}-point demerit<br><b>Required evidence:</b> ${escapeHtml(p.evidence)}<br><b>Due process:</b> ${escapeHtml(p.dueProcess)}</div>`:'<div class="policyBox"><b>No policy selected.</b> Choose the policy involved before printing.</div>'}
 function docHeader(title,ref){return `<div class="docHead"><div class="docLogo"><img src="varda-logo.jpg" alt="Varda Group logo"></div><div class="docCompany"><b>VARDA GROUP</b><span>PEOPLE MANAGEMENT & OPERATIONS</span></div><div class="docRef"><b>Reference No.</b><br>${escapeHtml(ref||'____________')}</div></div><div class="docTitle">${title}</div>`}
 function handwritingLines(count){return '<div class="handwritingLines">'+Array.from({length:count},()=>'<div class="writingLine"></div>').join('')+'</div>'}
+function fitIrPage(){
+ const paper=$('irPreview');if(!paper)return;
+ let inner=paper.querySelector('.irPageInner');
+ if(!inner){inner=document.createElement('div');inner.className='irPageInner';while(paper.firstChild)inner.appendChild(paper.firstChild);paper.appendChild(inner)}
+ inner.style.transform='none';inner.style.width='100%';
+ const style=getComputedStyle(paper),h=paper.clientHeight-parseFloat(style.paddingTop)-parseFloat(style.paddingBottom)-3,w=paper.clientWidth-parseFloat(style.paddingLeft)-parseFloat(style.paddingRight);
+ if(h<=0||w<=0)return;
+ const factor=Math.max(.15,Math.min(1,h/Math.max(1,inner.scrollHeight),w/Math.max(1,inner.scrollWidth))*.985);
+ inner.style.width=(100/factor)+'%';inner.style.transform='scale('+factor+')';
+ const displayH=inner.scrollHeight*factor;
+ if(displayH>h)inner.style.transform='scale('+(factor*h/displayH*.985)+')';
+}
+function finishIRPreview(){fitIrPage();requestAnimationFrame(fitIrPage)}
 function renderHandwrittenIR(){
  const p=policyByCode(value('irPolicy'));
  const investigating=value('irSubjectType')==='investigation';
@@ -180,12 +203,12 @@ function renderHandwrittenIR(){
  <div class="docSection"><h3>Witnesses / Supporting Evidence (if any)</h3>${handwritingLines(3)}</div>
  <div class="docSection"><h3>Additional Information / Clarification</h3>${handwritingLines(3)}</div>
  <div class="handwrittenSignatures"><div>Employee Signature over Printed Name<span></span>Date / Time: __________________</div><div>Received By / Supervisor<span></span>Date / Time: __________________</div></div>
- <div class="docFine">For fact-finding and employee response only. The listed policy is not a final finding or automatic V-points penalty. Review evidence and the employee's response before any decision, with proper due process.</div>`;
+ <div class="docFine">For fact-finding and employee response only. The listed policy is not a final finding or automatic V-points penalty. Review evidence and the employee's response before any decision, with proper due process.</div>`;finishIRPreview();
 }
 function renderIR(){
  if(value('irPrintMode')==='handwritten'){renderHandwrittenIR();return;}
   if(!$('irPreview'))return;
-  $('irPreview').innerHTML=docHeader('INCIDENT REPORT',value('irRef'))+`<table class="docTable"><tr><th>Date Filed</th><td>${formatDate(value('irFiled'))}</td><th>Branch / Location</th><td>${escapeHtml(value('irBranch')||'________________')}</td></tr><tr><th>Employee Involved</th><td>${escapeHtml(value('irEmployee')||'________________')}</td><th>Position</th><td>${escapeHtml(value('irPosition')||'________________')}</td></tr><tr><th>Incident Date & Time</th><td>${formatDate(value('irDate'))} · ${formatTime(value('irTime'))}</td><th>Exact Area / Station</th><td>${escapeHtml(value('irLocation')||'________________')}</td></tr></table><div class="docSection"><h3>Incident Description / Statement of Facts</h3><div class="docText">${escapeHtml(value('irDescription')||'Write the complete factual account here.')}</div></div><div class="docSection"><h3>Policy Involved</h3>${policyPrintBox(value('irPolicy'))}</div><table class="docTable"><tr><th>Witness/es</th><td>${escapeHtml(value('irWitness')||'None stated')}</td></tr><tr><th>Evidence Attached</th><td>${escapeHtml(value('irEvidence')||'None listed')}</td></tr><tr><th>Immediate Action Taken</th><td>${escapeHtml(value('irAction')||'None stated')}</td></tr></table><div class="signGrid"><div class="sign"><b>${escapeHtml(value('irReporter')||'Reported By')}</b><small>${escapeHtml(value('irReporterTitle')||'Position / Signature / Date')}</small></div><div class="sign"><b>Received / Reviewed By</b><small>Leader / People Management / Date</small></div></div><div class="docFine">This report records an allegation or observed incident. It is not by itself a final finding. Evidence validation, employee statement, appropriate approval, and company due process are required.</div>`;
+  $('irPreview').innerHTML=docHeader('INCIDENT REPORT',value('irRef'))+`<table class="docTable"><tr><th>Date Filed</th><td>${formatDate(value('irFiled'))}</td><th>Branch / Location</th><td>${escapeHtml(value('irBranch')||'________________')}</td></tr><tr><th>Employee Involved</th><td>${escapeHtml(value('irEmployee')||'________________')}</td><th>Position</th><td>${escapeHtml(value('irPosition')||'________________')}</td></tr><tr><th>Incident Date & Time</th><td>${formatDate(value('irDate'))} · ${formatTime(value('irTime'))}</td><th>Exact Area / Station</th><td>${escapeHtml(value('irLocation')||'________________')}</td></tr></table><div class="docSection"><h3>Incident Description / Statement of Facts</h3><div class="docText">${escapeHtml(value('irDescription')||'Write the complete factual account here.')}</div></div><div class="docSection"><h3>Policy Involved</h3>${policyPrintBox(value('irPolicy'))}</div><table class="docTable"><tr><th>Witness/es</th><td>${escapeHtml(value('irWitness')||'None stated')}</td></tr><tr><th>Evidence Attached</th><td>${escapeHtml(value('irEvidence')||'None listed')}</td></tr><tr><th>Immediate Action Taken</th><td>${escapeHtml(value('irAction')||'None stated')}</td></tr></table><div class="signGrid"><div class="sign"><b>${escapeHtml(value('irReporter')||'Reported By')}</b><small>${escapeHtml(value('irReporterTitle')||'Position / Signature / Date')}</small></div><div class="sign"><b>Received / Reviewed By</b><small>Leader / People Management / Date</small></div></div><div class="docFine">This report records an allegation or observed incident. It is not by itself a final finding. Evidence validation, employee statement, appropriate approval, and company due process are required.</div>`;finishIRPreview();
 }
 function renderNTE(){
   if(!$('ntePreview'))return;const p=policyByCode(value('ntePolicy'));
@@ -214,6 +237,7 @@ async function saveIrAsJpg(){
        document.head.appendChild(script);
      });
    }
+   fitIrPage();
    const paper=$('irPreview');
    const images=[...paper.querySelectorAll('img')];
    await Promise.all(images.map(img=>img.complete?Promise.resolve():new Promise(resolve=>{img.addEventListener('load',resolve,{once:true});img.addEventListener('error',resolve,{once:true})})));
@@ -225,7 +249,7 @@ async function saveIrAsJpg(){
    document.body.appendChild(link);link.click();link.remove();
  }catch(err){alert('Unable to save JPG: '+err.message+'\nYou can still use Print / Save PDF.')}finally{btn.disabled=false;btn.textContent=original}
 }
-function printDocument(kind){const section=$(kind==='ir'?'irSection':'nteSection');section.classList.add('printing');const cleanup=()=>section.classList.remove('printing');window.addEventListener('afterprint',cleanup,{once:true});window.print();setTimeout(cleanup,1200)}
+function printDocument(kind){if(kind==='ir')fitIrPage();const section=$(kind==='ir'?'irSection':'nteSection');section.classList.add('printing');const cleanup=()=>section.classList.remove('printing');window.addEventListener('afterprint',cleanup,{once:true});window.print();setTimeout(cleanup,1200)}
 function init(){
   const departments=[...new Set(policies.map(p=>p.department))].sort();$('departmentFilter').innerHTML+=[...departments].map(x=>`<option>${escapeHtml(x)}</option>`).join('');
   $('irPolicy').innerHTML=policyOptions();$('ntePolicy').innerHTML=policyOptions();
@@ -240,6 +264,7 @@ function init(){
   $('nteFields').addEventListener('input',e=>{if(e.target.id==='ntePolicy'){selectedPolicyCode=e.target.value;$('irPolicy').value=e.target.value}renderNTE()});
   $('saveIrJpgBtn').addEventListener('click',saveIrAsJpg);
   $('printIrBtn').addEventListener('click',()=>printDocument('ir'));$('printNteBtn').addEventListener('click',()=>printDocument('nte'));
+  window.addEventListener('resize',()=>{if($('irSection').classList.contains('open'))fitIrPage()});
   renderList();renderIR();renderNTE();
 }
 init();
