@@ -41,6 +41,32 @@ main{max-width:1200px;margin:auto;padding:20px}.finder{display:grid;grid-templat
 #ntePreview .nteFinalSignatures{margin-top:8mm}
 #ntePreview .nteCustomText{white-space:pre-wrap;line-height:1.5}
 @media print{#nteSection.printing #ntePreview.docPaper{width:210mm!important;height:297mm!important;min-height:0!important;max-height:297mm!important;padding:11mm 13mm!important;overflow:hidden!important;box-sizing:border-box!important;break-inside:avoid!important;page-break-inside:avoid!important}#nteSection.printing .docStage{overflow:visible!important}}
+
+/* NTE: fixed one-page A4; 30% compact notice / 70% employee explanation */
+#ntePreview.docPaper{width:210mm!important;height:297mm!important;min-height:0!important;max-height:297mm!important;padding:10mm 12mm!important;overflow:hidden;box-sizing:border-box}
+#ntePreview .ntePageInner{height:100%;width:100%;display:flex;flex-direction:column;overflow:hidden}
+#ntePreview .nteTop{height:30%;flex:0 0 30%;overflow:hidden;position:relative}
+#ntePreview .nteTopContent{width:100%;transform-origin:top left;font-size:10px;line-height:1.32}
+#ntePreview .docHead{margin-bottom:2mm;padding-bottom:2mm;grid-template-columns:15mm 1fr 28mm}
+#ntePreview .docLogo{width:14mm;height:14mm}
+#ntePreview .docCompany b{font-size:13px}
+#ntePreview .docTitle{font-size:14px;margin:0 0 2mm}
+#ntePreview .nteCompactMeta{border-bottom:1px solid #aaa;padding:2mm 0}
+#ntePreview .nteCompactSubject{padding:2mm 0;font-size:11px;border-bottom:1px solid #aaa}
+#ntePreview .nteCompactBody{padding:1.5mm 0}
+#ntePreview .nteCompactBody p{margin:1mm 0}
+#ntePreview .nteCompactBody>div{margin:1mm 0;white-space:pre-wrap;overflow-wrap:anywhere}
+#ntePreview .nteCustomText{white-space:pre-wrap;overflow-wrap:anywhere}
+#ntePreview .nteCompactPolicy{font-size:9px}
+#ntePreview .nteCompactSign{display:flex;justify-content:space-between;gap:3mm;border-top:1px solid #aaa;padding-top:2mm;font-size:9px}
+#ntePreview .nteResponseArea{height:70%;flex:0 0 70%;display:flex;flex-direction:column;overflow:hidden;border-top:1px solid #333;padding-top:2mm}
+#ntePreview .nteResponseTitle{font-size:11px;flex:none;font-weight:900;padding-bottom:2mm}
+#ntePreview .nteResponseTitle small{font-size:9px;color:#555;font-weight:normal}
+#ntePreview .nteResponsePaper{min-height:0;flex:1;overflow:hidden;border:1px solid #888}
+#ntePreview .nteHandwrittenBox{height:100%;background:repeating-linear-gradient(to bottom,#fff 0,#fff 8.8mm,#c9c9c9 8.9mm,#c9c9c9 9mm)}
+#ntePreview .nteTypedResponse{height:100%;padding:3mm;white-space:pre-wrap;overflow-wrap:anywhere;font-size:10px;line-height:1.4}
+#ntePreview .nteResponseFoot{flex:none;display:flex;justify-content:space-between;gap:3mm;padding-top:3mm;padding-bottom:1mm;font-size:9px}
+@media print{#nteSection.printing #ntePreview.docPaper{width:210mm!important;height:297mm!important;min-height:0!important;max-height:297mm!important;padding:10mm 12mm!important;overflow:hidden!important;break-inside:avoid!important;page-break-inside:avoid!important}}
 </style>
 </head>
 <body>
@@ -101,7 +127,8 @@ main{max-width:1200px;margin:auto;padding:20px}.finder{display:grid;grid-templat
         <label>Employee Name<input id="nteEmployee"></label><label>Position<input id="ntePosition"></label>
         <label class="full">Branch / Location<input id="nteBranch"></label>
         <label>Incident Date<input id="nteDate" type="date"></label><label>Incident Time<input id="nteTime" type="time"></label>
-        <label class="full">VARDA ACT Policy<select id="ntePolicy"></select></label>
+        <label class="full">Include Policy Reference?<select id="nteIncludePolicy"><option value="no">No policy reference (default)</option><option value="yes">Yes – show selected VARDA ACT policy</option></select></label>
+        <label class="full" id="ntePolicyChoice" style="display:none">VARDA ACT Policy<select id="ntePolicy"></select></label>
         <label class="full">NTE Subject / Reason for Explanation (shown at top of letter)<input id="nteSubject" placeholder="e.g. Notice to Explain – Alleged Cash Shortage / For Investigation"></label>
         <label class="full">Specific Facts / Allegation<textarea id="nteFacts" placeholder="State the specific facts clearly and objectively."></textarea></label>
         <label class="full">Manual NTE Letter (optional – replaces the standard letter paragraphs)<textarea id="nteManualLetter" rows="6" placeholder="Type the exact NTE letter wording here. Subject, incident facts, policy, deadline, signatures and employee response area are still shown."></textarea></label>
@@ -110,7 +137,7 @@ main{max-width:1200px;margin:auto;padding:20px}.finder{display:grid;grid-templat
         <label>Explanation Due Date<input id="nteDueDate" type="date"></label><label>Explanation Due Time<input id="nteDueTime" type="time"></label>
         <label>Issued By<input id="nteIssuer"></label><label>Position / Title<input id="nteIssuerTitle"></label>
       </div></div>
-      <div><div class="printBar"><span>Live one-page A4 preview · custom subject and editable NTE text</span><button class="printBtn" id="printNteBtn">Print / Save PDF</button></div><div class="docStage"><article class="docPaper" id="ntePreview"></article></div></div>
+      <div><div class="printBar"><span>One A4 page · 70% writing area · HD image export</span><div class="exportButtons"><button class="printBtn" id="saveNteJpgBtn" type="button">Save HD JPG</button><button class="printBtn" id="printNteBtn" type="button">Print / Save PDF</button></div></div><div class="docStage"><article class="docPaper" id="ntePreview"></article></div></div>
     </div>
   </section>
 </main>
@@ -224,33 +251,44 @@ function renderIR(){
   $('irPreview').innerHTML=docHeader('INCIDENT REPORT',value('irRef'))+`<table class="docTable"><tr><th>Date Filed</th><td>${formatDate(value('irFiled'))}</td><th>Branch / Location</th><td>${escapeHtml(value('irBranch')||'________________')}</td></tr><tr><th>Employee Involved</th><td>${escapeHtml(value('irEmployee')||'________________')}</td><th>Position</th><td>${escapeHtml(value('irPosition')||'________________')}</td></tr><tr><th>Incident Date & Time</th><td>${formatDate(value('irDate'))} · ${formatTime(value('irTime'))}</td><th>Exact Area / Station</th><td>${escapeHtml(value('irLocation')||'________________')}</td></tr></table><div class="docSection"><h3>Incident Description / Statement of Facts</h3><div class="docText">${escapeHtml(value('irDescription')||'Write the complete factual account here.')}</div></div><div class="docSection"><h3>Policy Involved</h3>${policyPrintBox(value('irPolicy'))}</div><table class="docTable"><tr><th>Witness/es</th><td>${escapeHtml(value('irWitness')||'None stated')}</td></tr><tr><th>Evidence Attached</th><td>${escapeHtml(value('irEvidence')||'None listed')}</td></tr><tr><th>Immediate Action Taken</th><td>${escapeHtml(value('irAction')||'None stated')}</td></tr></table><div class="signGrid"><div class="sign"><b>${escapeHtml(value('irReporter')||'Reported By')}</b><small>${escapeHtml(value('irReporterTitle')||'Position / Signature / Date')}</small></div><div class="sign"><b>Received / Reviewed By</b><small>Leader / People Management / Date</small></div></div><div class="docFine">This report records an allegation or observed incident. It is not by itself a final finding. Evidence validation, employee statement, appropriate approval, and company due process are required.</div>`;finishIRPreview();
 }
 function fitNtePage(){
- const paper=$('ntePreview'),inner=paper&&paper.querySelector('.ntePageInner');if(!inner)return;
- inner.style.transform='none';inner.style.width='100%';
- const style=getComputedStyle(paper),h=paper.clientHeight-parseFloat(style.paddingTop)-parseFloat(style.paddingBottom)-4,w=paper.clientWidth-parseFloat(style.paddingLeft)-parseFloat(style.paddingRight);
+ const paper=$('ntePreview'),page=paper&&paper.querySelector('.ntePageInner'),top=page&&page.querySelector('.nteTop'),content=top&&top.querySelector('.nteTopContent');
+ if(!paper||!page||!top||!content)return;
+ page.style.height='100%';content.style.transform='none';content.style.width='100%';
+ const h=top.clientHeight-2,w=top.clientWidth-2;
  if(h<=0||w<=0)return;
- const factor=Math.max(.15,Math.min(1,h/Math.max(1,inner.scrollHeight),w/Math.max(1,inner.scrollWidth))*.98);
- inner.style.width=(100/factor)+'%';inner.style.transform='scale('+factor+')';
+ const factor=Math.max(.12,Math.min(1,h/Math.max(1,content.scrollHeight),w/Math.max(1,content.scrollWidth))*.99);
+ content.style.width=(100/factor)+'%';content.style.transform='scale('+factor+')';
 }
 function renderNTE(){
  if(!$('ntePreview'))return;
- const p=policyByCode(value('ntePolicy'));
+ const includePolicy=value('nteIncludePolicy')==='yes';
+ $('ntePolicyChoice').style.display=includePolicy?'block':'none';
+ const p=includePolicy?policyByCode(value('ntePolicy')):null;
  const subject=value('nteSubject')||(p?'Request for Written Explanation – '+p.title:'Request for Written Explanation – Reported Incident');
  const manual=value('nteManualLetter').trim();
- const due='<b>'+formatDate(value('nteDueDate'))+' at '+formatTime(value('nteDueTime'))+'</b>';
- const standardLetter='<p>Dear <b>'+escapeHtml(value('nteEmployee')||'Employee')+'</b>,</p><p>You are requested to submit a written explanation regarding the following reported incident:</p>';
- const body=manual?'<div class="docText nteCustomText">'+escapeHtml(manual)+'</div>':standardLetter;
- const conclusion=manual?'':'<p>Please submit your signed written explanation on or before '+due+'. You may provide supporting evidence or identify witnesses for evaluation.</p><p>No final conclusion has been reached. Your explanation and the available evidence will be reviewed before management makes any decision.</p>';
- const responseMode=value('nteResponseMode');
- $('nteResponseTextLabel').style.display=responseMode==='typed'?'block':'none';
- const response=responseMode==='typed'?'<div class="explainBox nteTypedResponse">'+escapeHtml(value('nteResponseText')||'')+'</div>':'<div class="explainBox nteHandwrittenBox"></div>';
- $('ntePreview').innerHTML='<div class="ntePageInner">'+docHeader('NOTICE TO EXPLAIN',value('nteRef'))+
- '<table class="docTable"><tr><th>To</th><td>'+escapeHtml(value('nteEmployee')||'Employee Name')+' · '+escapeHtml(value('ntePosition')||'Position')+'</td></tr><tr><th>Branch</th><td>'+escapeHtml(value('nteBranch')||'________________')+'</td></tr><tr><th>Date Issued</th><td>'+formatDate(value('nteIssued'))+'</td></tr><tr><th>Subject / Reason</th><td><b>'+escapeHtml(subject)+'</b></td></tr></table>'+
- '<div class="nteLetter">'+body+'<div class="docSection"><h3>Reported Incident / Reason for NTE</h3><div class="docText">'+escapeHtml(value('nteFacts')||'Details of the reported incident: __________________________')+'</div></div>'+policyPrintBox(value('ntePolicy'))+
- conclusion+(manual?'<p><b>Deadline to submit explanation:</b> '+due+'</p>':'')+
- '<p class="docFine">This notice is a request for explanation, not a finding of guilt. Due process and impartial review will apply.</p></div>'+
- '<div class="signGrid nteSignatureGrid"><div class="sign"><b>'+escapeHtml(value('nteIssuer')||'Issued By')+'</b><small>'+escapeHtml(value('nteIssuerTitle')||'Position / Signature / Date')+'</small></div><div class="sign"><b>'+escapeHtml(value('nteEmployee')||'Received By')+'</b><small>Employee Signature / Date / Time</small></div></div>'+
- '<div class="docSection nteExplanationSection"><h3>Employee’s Written Explanation</h3><p class="handwrittenPrompt">Employee may write the explanation below and attach additional signed pages if necessary.</p>'+response+'</div>'+
- '<div class="signGrid nteFinalSignatures"><div class="sign"><b>Employee Signature</b><small>Date</small></div><div class="sign"><b>Receiving Officer</b><small>Date / Time Received</small></div></div></div>';
+ const due=(value('nteDueDate')?formatDate(value('nteDueDate')):'________________')+(value('nteDueTime')?' at '+formatTime(value('nteDueTime')):'');
+ $('nteResponseTextLabel').style.display=value('nteResponseMode')==='typed'?'block':'none';
+ const response=value('nteResponseMode')==='typed'
+ ?'<div class="nteTypedResponse">'+escapeHtml(value('nteResponseText')||'')+'</div>'
+ :'<div class="nteHandwrittenBox"></div>';
+ const body=manual?'<div class="nteCustomText">'+escapeHtml(manual)+'</div>'
+ :'<p>Dear <b>'+escapeHtml(value('nteEmployee')||'Employee')+'</b>, you are requested to provide a written explanation regarding the reported matter below. Your response will be considered before any decision is made.</p>';
+ const policyBlock=includePolicy?(p?'<div class="nteCompactPolicy"><b>Policy:</b> '+escapeHtml(p.code+' — '+p.title)+' · '+escapeHtml(p.rule)+'</div>':'<div class="nteCompactPolicy"><b>Policy:</b> Please select the relevant policy.</div>'):'';
+ $('ntePreview').innerHTML='<div class="ntePageInner">'+
+ '<div class="nteTop"><div class="nteTopContent">'+docHeader('NOTICE TO EXPLAIN',value('nteRef'))+
+ '<div class="nteCompactMeta"><b>To:</b> '+escapeHtml(value('nteEmployee')||'Employee Name')+' · '+escapeHtml(value('ntePosition')||'Position')+
+ '　<b>Branch:</b> '+escapeHtml(value('nteBranch')||'____________')+
+ '　<b>Issued:</b> '+formatDate(value('nteIssued'))+'</div>'+
+ '<div class="nteCompactSubject"><b>SUBJECT / REASON FOR NTE:</b> '+escapeHtml(subject)+'</div>'+
+ '<div class="nteCompactBody">'+body+
+ '<div><b>Reported Incident:</b> '+escapeHtml(value('nteFacts')||'____________________________________')+'</div>'+policyBlock+
+ '<div><b>Explanation due:</b> '+escapeHtml(due)+'. This notice is not a finding of guilt.</div></div>'+
+ '<div class="nteCompactSign"><span><b>'+escapeHtml(value('nteIssuer')||'Issued By')+'</b> · '+escapeHtml(value('nteIssuerTitle')||'Issuer')+'</span><span><b>Received by:</b> __________________ · Date: __________</span></div>'+
+ '</div></div>'+
+ '<div class="nteResponseArea"><div class="nteResponseTitle">EMPLOYEE’S WRITTEN EXPLANATION <small>(70% of this A4 page)</small></div>'+
+ '<div class="nteResponsePaper">'+response+'</div>'+
+ '<div class="nteResponseFoot"><span>Employee Signature: ____________________　Date: __________</span><span>Receiving Officer: ____________________</span></div></div>'+
+ '</div>';
  fitNtePage();requestAnimationFrame(fitNtePage);
 }
 function copyIncidentToForm(kind){
@@ -288,6 +326,20 @@ async function saveIrAsJpg(){
    document.body.appendChild(link);link.click();link.remove();
  }catch(err){alert('Unable to save JPG: '+err.message+'\nYou can still use Print / Save PDF.')}finally{btn.disabled=false;btn.textContent=original}
 }
+async function saveNteAsJpg(){
+ const btn=$('saveNteJpgBtn'),original=btn.textContent;btn.disabled=true;btn.textContent='Creating HD JPG...';
+ try{
+  if(typeof window.html2canvas!=='function'){
+   await new Promise((resolve,reject)=>{const script=document.createElement('script');script.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';script.onload=resolve;script.onerror=()=>reject(new Error('Image renderer could not load. Check internet connection.'));document.head.appendChild(script)});
+  }
+  fitNtePage();
+  const paper=$('ntePreview');
+  await Promise.all([...paper.querySelectorAll('img')].map(img=>img.complete?Promise.resolve():new Promise(resolve=>{img.addEventListener('load',resolve,{once:true});img.addEventListener('error',resolve,{once:true})})));
+  if(document.fonts&&document.fonts.ready)await document.fonts.ready;
+  const canvas=await window.html2canvas(paper,{backgroundColor:'#fff',scale:4,useCORS:true,scrollX:0,scrollY:0,logging:false});
+  const a=document.createElement('a');a.href=canvas.toDataURL('image/jpeg',0.97);a.download='VARDA-NTE-'+(value('nteRef')||localDate()).replace(/[^a-zA-Z0-9_-]/g,'-')+'-HD.jpg';document.body.appendChild(a);a.click();a.remove();
+ }catch(err){alert('Unable to save HD JPG: '+err.message)}finally{btn.disabled=false;btn.textContent=original}
+}
 function printDocument(kind){if(kind==='ir')fitIrPage();if(kind==='nte')fitNtePage();const section=$(kind==='ir'?'irSection':'nteSection');section.classList.add('printing');const cleanup=()=>section.classList.remove('printing');window.addEventListener('afterprint',cleanup,{once:true});window.print();setTimeout(cleanup,1200)}
 function init(){
   const departments=[...new Set(policies.map(p=>p.department))].sort();$('departmentFilter').innerHTML+=[...departments].map(x=>`<option>${escapeHtml(x)}</option>`).join('');
@@ -302,6 +354,7 @@ function init(){
   $('irFields').addEventListener('input',e=>{if(e.target.id==='irPolicy'){selectedPolicyCode=e.target.value;$('ntePolicy').value=e.target.value;const p=policyByCode(e.target.value);$('irPolicySearch').value=p?p.code+' — '+p.title:'';searchIrPolicies()}renderIR()});
   $('nteFields').addEventListener('input',e=>{if(e.target.id==='ntePolicy'){selectedPolicyCode=e.target.value;$('irPolicy').value=e.target.value}renderNTE()});
   $('saveIrJpgBtn').addEventListener('click',saveIrAsJpg);
+  $('saveNteJpgBtn').addEventListener('click',saveNteAsJpg);
   $('printIrBtn').addEventListener('click',()=>printDocument('ir'));$('printNteBtn').addEventListener('click',()=>printDocument('nte'));
   window.addEventListener('resize',()=>{if($('irSection').classList.contains('open'))fitIrPage();if($('nteSection').classList.contains('open'))fitNtePage()});
   renderList();renderIR();renderNTE();
