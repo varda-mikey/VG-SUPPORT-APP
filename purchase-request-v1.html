@@ -57,6 +57,19 @@
  .inventory td textarea,.inventory td input{display:none!important}
  .inventory td .printValue{display:block!important;overflow-wrap:anywhere;white-space:pre-wrap}
 }
+
+/* V16: pin the calculated amount in view even when editing wide PR rows. */
+.inventory .tablewrap{position:relative}
+.inventory th:last-child,.inventory td:last-child{position:sticky;right:0;z-index:2;min-width:145px!important;width:145px!important;background:#fff4df!important;box-shadow:-3px 0 9px #32121b1f}
+.inventory th:last-child{z-index:4;background:#f7e4b6!important;color:#4b2513}
+.inventory td:last-child input[data-field="amount"]{display:block;width:100%;min-height:39px;font-size:15px;font-weight:800;color:#612117;background:transparent;text-align:right;padding:8px 5px;border:0;font-variant-numeric:tabular-nums;pointer-events:none}
+.inventory .total{position:sticky;bottom:0;z-index:5;background:#fff7e7;border:2px solid #7b182b;font-size:17px;box-shadow:0 4px 12px #32121b26}
+.inventory .total output{color:#681126;font-size:21px}
+@media print{
+ .inventory th:last-child,.inventory td:last-child{position:static!important;box-shadow:none!important;width:auto!important;min-width:0!important}
+ .inventory td:last-child input[data-field="amount"]{display:none!important}
+ .inventory .total{position:static!important;box-shadow:none!important}
+}
 </style>
 </head>
 <body>
@@ -116,7 +129,26 @@ function addRow(data={}){const row=document.createElement('tr');if(data.unitPric
 function resize(){document.querySelectorAll('td textarea').forEach(el=>{el.style.height='auto';el.style.height=Math.max(39,el.scrollHeight+4)+'px'})}
 function decimalRatio(value){const [base,exp='0']=String(value).toLowerCase().split('e');const [whole,fraction='']=base.split('.');let numerator=BigInt((whole||'0')+fraction);const scale=fraction.length-Number(exp);return scale>=0?[numerator,10n**BigInt(scale)]:[numerator*10n**BigInt(-scale),1n];}
 function lineCents(price,qty){const [p,pd]=decimalRatio(price),[q,qd]=decimalRatio(qty);const denominator=pd*qd;return (p*q*100n*2n+denominator)/(denominator*2n);}
-function totals(){let cents=0n;for(const row of $('rows').children){if(poMode==='automatic')calculateOrder(row);const price=row.querySelector('[data-field="unitPrice"]'),qty=row.querySelector('[data-field="qty"]'),amount=row.querySelector('[data-field="amount"]');if(price.value!==''&&qty.value!==''&&price.validity.valid&&qty.validity.valid){const value=lineCents(price.value,qty.value);amount.value=(value/100n).toString()+'.'+(value%100n).toString().padStart(2,'0');delete row.dataset.legacy;cents+=value;}else if(row.dataset.legacy==='true'&&price.value===''&&amount.value!==''){cents+=lineCents(amount.value,'1');}else amount.value='';}$('total').value=currency.format(Number(cents)/100);}
+function totals(){
+ let cents=0n;
+ for(const row of $('rows').children){
+  if(poMode==='automatic')calculateOrder(row);
+  const price=row.querySelector('[data-field="unitPrice"]');
+  const qty=row.querySelector('[data-field="qty"]');
+  const amount=row.querySelector('[data-field="amount"]');
+  // FINAL ORDER QTY times UNIT PRICE. PAR and on-hand never affect the line total.
+  if(price.value!==''&&qty.value!==''&&price.validity.valid&&qty.validity.valid){
+   const value=lineCents(price.value,qty.value);
+   amount.value=(value/100n).toString()+'.'+(value%100n).toString().padStart(2,'0');
+   amount.title=qty.value+' × ₱'+price.value+' = '+currency.format(Number(value)/100);
+   amount.setAttribute('aria-label','Total Amount: '+currency.format(Number(value)/100));
+   delete row.dataset.legacy;cents+=value;
+  }else if(row.dataset.legacy==='true'&&price.value===''&&amount.value!==''){
+   cents+=lineCents(amount.value,'1');
+  }else{amount.value='';amount.title='Enter final order quantity and unit price';}
+ }
+ $('total').value=currency.format(Number(cents)/100);
+}
 function calculateOrder(row){const e=k=>row.querySelector('[data-field="'+k+'"]');const valid=k=>e(k).value!==''&&e(k).validity.valid;const used=valid('dailyPar')&&valid('days');if(!used){for(const k of ['gross','bufferQty','suggested'])e(k).value='';if(row.dataset.qtyOverride!=='true')e('qty').value='';return}const round=n=>Math.round((n+Number.EPSILON)*1000)/1000;const gross=round(Number(e('dailyPar').value)*Number(e('days').value));const shortage=round(Math.max(0,gross-Number(e('onHand').value||0)));const buffer=round(shortage*Number(e('bufferPercent').value||0)/100);const suggested=round(shortage+buffer);e('gross').value=String(gross);e('bufferQty').value=String(buffer);e('suggested').value=String(suggested);if(row.dataset.qtyOverride!=='true')e('qty').value=String(suggested);}
 function serialize(){const fields={};document.querySelectorAll('[name]').forEach(el=>fields[el.name]=el.value);return{version:1,fields,rows:[...$('rows').children].map(row=>({...Object.fromEntries([...row.querySelectorAll('[data-field]')].map(el=>[el.dataset.field,el.value])),...(poMode==='automatic'?{qtyOverride:row.dataset.qtyOverride==='true'}:{})}))}}
 
