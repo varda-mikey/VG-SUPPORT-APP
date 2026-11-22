@@ -161,6 +161,15 @@ const MARY_WILSON=[
  piecesPerPack:1,packPrice:Number((a[3]/a[1]).toFixed(2)),pieceUOM:a[2],
  sourceBranch:a[4],sourceDate:'2026-11-21',sourceAmount:a[3],sourceQty:a[1]
 }));
+// DALI receipt (Nov 21, 2026): voided burger buns intentionally excluded.
+// Handwritten snack costs: supplier unconfirmed, preserve interpretation as provisional.
+const EXTRA_STARTERS=[
+ {item:'Emborg Chef’s Selection FCM 1L',uom:'pc (1 L)',price:79,supplier:'DALI Everyday Grocery',notes:'2026-11-21 receipt, qty 2 × ₱79 = ₱158; verified purchase',piecesPerPack:1,packPrice:79,pieceUOM:'pc',barcode:''},
+ {item:'BBQ',uom:'pack',price:35,supplier:'Unverified snack supplier',notes:'Handwritten 11-21: 1 pack = ₱35; confirm actual product',piecesPerPack:1,packPrice:35,pieceUOM:'pc',barcode:''},
+ {item:'Cheese',uom:'pack',price:35,supplier:'Unverified snack supplier',notes:'Handwritten 11-21: 1 pack = ₱35; confirm pack size',piecesPerPack:1,packPrice:35,pieceUOM:'pc',barcode:''},
+ {item:'Sauce',uom:'pack',price:35,supplier:'Unverified snack supplier',notes:'Handwritten 11-21: 1 pack = ₱35; confirm type',piecesPerPack:1,packPrice:35,pieceUOM:'pc',barcode:''},
+ {item:'Fries',uom:'pouch',price:550,supplier:'Unverified snack supplier',notes:'Handwritten 11-21: ₱550 appears on note; amount and unit need confirmation',piecesPerPack:1,packPrice:550,pieceUOM:'pc',barcode:''}
+];
 const $=id=>document.getElementById(id), STORAGE='vg-pr-supplier-cost-catalog-v1';
 let catalog;
 try{
@@ -176,6 +185,13 @@ try{
    }
   }
   try{localStorage.setItem(marker,'1');}catch(e){}
+ }
+ const extraMarker='vg-pr-dali-snacks-20261121-v1';
+ if(!localStorage.getItem(extraMarker)){
+  for(const item of EXTRA_STARTERS){
+   if(!catalog.some(x=>x.item===item.item&&x.supplier===item.supplier))catalog.push({...item});
+  }
+  try{localStorage.setItem(extraMarker,'1')}catch(e){}
  }
  // Upgrade previously saved Puregold starter records without replacing customized costs.
  for(const item of catalog){
