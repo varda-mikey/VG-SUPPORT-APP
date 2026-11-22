@@ -12,9 +12,11 @@ async function renderPRCanvas(){
  const requestSign=safeSignature(f.preparedSignatureImage)?await pageImage(f.preparedSignatureImage):null;
  const approvalSign=record?.status==='approved'&&safeSignature(record.signature_data)?await pageImage(record.signature_data):null;
  const cols=automatic?autoColumns:manualColumns;
- const weights=automatic?[5,20,6,8,7,10,9,8,8,11,10,16,10,12]:[5,26,8,10,12,12,21,13,15];
+ const weights=automatic?[4,24,8,7,7,9,8,7,8,10,8,13,10,12]:[4,30,11,9,11,10,15,12,14];
  const widths=weights.map(w=>w/weights.reduce((a,b)=>a+b,0)*(W-56));
- const rows=data.rows.length?data.rows:[{}];
+ // Print only populated item rows; unused editor rows must not consume A4 space.
+ const printedRows=data.rows.filter(r=>String(r.description||'').trim()||String(r.qty||'').trim()||String(r.unitPrice||'').trim());
+ const rows=printedRows.length?printedRows:[{}];
  function layout(scale,paint=false){let y=22;const font=(size,bold=false)=>{ctx.font=(bold?'700 ':'400 ')+(size*scale)+'px Arial';};
  const lines=(value,width,size,bold=false)=>{font(size,bold);const all=[];for(const paragraph of String(value??'').replace(/₱/g,'PHP').split('\n')){let line='';for(const word of paragraph.split(/\s+/)){if(ctx.measureText(line+(line?' ':'')+word).width<=width){line+=(line?' ':'')+word;continue}if(line){all.push(line);line=''}let piece='';for(const ch of word){if(piece&&ctx.measureText(piece+ch).width>width){all.push(piece);piece=''}piece+=ch}line=piece;}all.push(line)}return all};
  const text=(value,x,top,width,size=13,bold=false,color='#21171a',align='left')=>{const arr=lines(value,width,size,bold);if(paint){font(size,bold);ctx.fillStyle=color;ctx.textAlign=align;ctx.textBaseline='top';arr.forEach((s,i)=>ctx.fillText(s,align==='center'?x+width/2:align==='right'?x+width:x,top+i*size*1.25*scale));ctx.textAlign='left'}return arr.length*size*1.25*scale};
@@ -30,7 +32,7 @@ async function renderPRCanvas(){
  if(automatic)y+=text('Daily PAR × Days Covered − Stock on Hand (minimum 0), plus buffer on the shortage. Final Order Qty is editable.',28,y,W-56,10,false,'#65535a')+8*scale;
  else y+=text('PAR Period: '+({day:'Per Day',week:'Per Week'}[f.parPeriod]||'Not specified'),28,y,W-56,11)+7*scale;
  bar('INVENTORY-BASED PURCHASE REQUEST');
- const headers=['#',...cols.map(k=>columnLabels[k])];const cellFont=automatic?10:12;
+ const headers=['#',...cols.map(k=>columnLabels[k])];const cellFont=automatic?10.5:12;
  const headerH=Math.max(...headers.map((s,i)=>lines(s,widths[i]-10,cellFont,true).length))*cellFont*1.25*scale+14*scale;
  let x=28;headers.forEach((h,i)=>{rect(x,y,widths[i],headerH,'#eeeaec','#9b8f93');text(h,x+5,y+6*scale,widths[i]-10,cellFont,true);x+=widths[i]});y+=headerH;
  rows.forEach((row,n)=>{const vals=[String(n+1),...cols.map(k=>['unitPrice','amount'].includes(k)&&row[k]!==''&&row[k]!=null?Number(row[k]).toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2}):row[k]??'')];const rh=Math.max((automatic?25:33)*scale,Math.max(...vals.map((v,i)=>lines(v,widths[i]-10,cellFont).length))*cellFont*1.25*scale+12*scale);let xx=28;vals.forEach((v,i)=>{rect(xx,y,widths[i],rh,n%2?'#fcfafb':'#fff','#b8adb1');text(v,xx+5,y+5*scale,widths[i]-10,cellFont,false,'#21171a',i>=vals.length-2?'right':'left');xx+=widths[i]});y+=rh});
@@ -47,9 +49,9 @@ async function renderPRCanvas(){
  return y;
  }
  let low=.005,high=1.6;for(let pass=0;pass<14;pass++){const mid=(low+high)/2;if(layout(mid)<=H-22)low=mid;else high=mid;}const scale=low;
- layout(scale,true);canvas.dataset.fitScale=String(scale);return canvas;
+ layout(scale,true);canvas.dataset.fitScale=String(scale);canvas.dataset.printedLines=String(printedRows.length);return canvas;
 }
-async function refreshPagePreview(scroll=false){const sequence=++pagePreviewSequence;$('wholePage').hidden=false;$('pageStatus').textContent='Preparing one-page A4 preview…';try{const canvas=await renderPRCanvas();if(sequence!==pagePreviewSequence)return;const jpeg=canvas.toDataURL('image/jpeg',.94);$('pageImage').src=jpeg;$('pageFullSize').href=jpeg;$('pageStatus').textContent='One A4 page • Same layout for PDF and JPEG'+(Number(canvas.dataset.fitScale)<.6?' • Many items: open full size to inspect.':'');if(scroll)$('wholePage').scrollIntoView({behavior:'smooth',block:'start'})}catch(err){$('pageStatus').textContent='Preview unavailable: '+err.message}}
+async function refreshPagePreview(scroll=false){const sequence=++pagePreviewSequence;$('wholePage').hidden=false;$('pageStatus').textContent='Preparing one-page A4 preview…';try{const canvas=await renderPRCanvas();if(sequence!==pagePreviewSequence)return;const jpeg=canvas.toDataURL('image/jpeg',.94);$('pageImage').src=jpeg;$('pageFullSize').href=jpeg;$('pageStatus').textContent='One A4 page • '+canvas.dataset.printedLines+' filled item(s) • PDF and JPEG match'+(Number(canvas.dataset.fitScale)<.6?' • Content is dense; review legibility at actual A4 print size.':'');if(scroll)$('wholePage').scrollIntoView({behavior:'smooth',block:'start'})}catch(err){$('pageStatus').textContent='Preview unavailable: '+err.message}}
 async function downloadJPEG(){try{const canvas=await renderPRCanvas();const a=document.createElement('a');a.href=canvas.toDataURL('image/jpeg',.95);a.download=($('pr').value||'Purchase-Request-Draft')+'.jpg';a.click();$('status').textContent='One-page JPEG downloaded.'}catch(err){$('status').textContent='JPEG download failed: '+err.message}}
 async function onePagePDF(){const canvas=await renderPRCanvas();const doc=new window.jspdf.jsPDF({format:'a4',unit:'mm',orientation:canvas.width>canvas.height?'landscape':'portrait'});doc.addImage(canvas.toDataURL('image/jpeg',.95),'JPEG',0,0,doc.internal.pageSize.getWidth(),doc.internal.pageSize.getHeight());return doc;}
 const originalFillRecord=fillRecord;fillRecord=function(r){$('preparedSignatureImage').value='';originalFillRecord(r);showRequestorSignature();$('request').hidden=true;refreshPagePreview(true)};
