@@ -153,7 +153,7 @@ function normalize(x){
  const packPrice=Number(x.packPrice);
  return {...x,piecesPerPack,packPrice:Number.isFinite(packPrice)&&packPrice>=0?packPrice:Number(x.price)||0,pieceUOM:String(x.pieceUOM||'pc').trim()||'pc'};
 }
-function rate(x){const n=normalize(x);if(n.piecesPerPack>1)return {price:Number((n.packPrice/n.piecesPerPack).toFixed(4)),uom:n.pieceUOM,label:'PER PC (from '+n.piecesPerPack+' pcs/pack)'};
+function rate(x){const n=normalize(x);if(n.piecesPerPack>1)return {price:Number((n.packPrice/n.piecesPerPack).toFixed(2)),uom:n.pieceUOM,label:'PER PC (from '+n.piecesPerPack+' pcs/pack)'};
  return {price:Number(n.price),uom:n.uom,label:/^pc\\b/i.test(n.uom)?'PER PC':'PER PACK / UNIT'};
 }
 function addButton(text,fn,cls=''){const b=document.createElement('button');b.type='button';b.textContent=text;b.className=cls;b.addEventListener('click',fn);return b}
