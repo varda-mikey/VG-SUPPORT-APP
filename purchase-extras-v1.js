@@ -109,5 +109,6 @@ $('recordExport').onclick=async()=>{
  }catch(err){$('invStatus').textContent='Record export failed: '+err.message+' (No claim of complete export.)'}
  finally{btn.disabled=false}
 };
+window.addEventListener('vg-catalog-item-added',updateQuick);
 setTimeout(updateQuick,0);
 })();
