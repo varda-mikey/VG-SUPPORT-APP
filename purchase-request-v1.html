@@ -25,6 +25,7 @@
 .catalogResult small{display:block;color:#706269;margin-top:3px}
 .catalogResult b{color:var(--wine)}
 .catalogResult button{padding:8px}
+#rows textarea[data-field=description]{border-bottom:1px dashed #b88b99}#rows textarea[data-field=description]:focus{background:#fff8ea}
 .catalogSummary{font-size:12px;color:#6b5962}
 @media(max-width:650px){.priceCatalog{margin:12px;padding:13px}.catalogResult{grid-template-columns:1fr 80px}.catalogResult div:first-child{grid-column:1/-1}}
 @media print{.priceCatalog{display:none!important}}
@@ -170,6 +171,9 @@ const EXTRA_STARTERS=[
  {item:'Sauce',uom:'pack',price:35,supplier:'Unverified snack supplier',notes:'Handwritten 11-21: 1 pack = ₱35; confirm type',piecesPerPack:1,packPrice:35,pieceUOM:'pc',barcode:''},
  {item:'Fries',uom:'pouch',price:550,supplier:'Unverified snack supplier',notes:'Handwritten 11-21: ₱550 appears on note; amount and unit need confirmation',piecesPerPack:1,packPrice:550,pieceUOM:'pc',barcode:''}
 ];
+const AUTOCOMPLETE_STARTERS=[
+ {item:'Bigas',uom:'kg',price:'',supplier:'',notes:'Enter supplier price manually; no verified rice price uploaded yet',piecesPerPack:1,pieceUOM:'kg',packPrice:0,barcode:''}
+];
 const $=id=>document.getElementById(id), STORAGE='vg-pr-supplier-cost-catalog-v1';
 let catalog;
 try{
@@ -193,6 +197,7 @@ try{
   }
   try{localStorage.setItem(extraMarker,'1')}catch(e){}
  }
+ if(!catalog.some(x=>x.item.toLowerCase()==='bigas'))catalog.push({...AUTOCOMPLETE_STARTERS[0]});
  // Upgrade previously saved Puregold starter records without replacing customized costs.
  for(const item of catalog){
   if(item.piecesPerPack!==undefined)continue;
@@ -234,15 +239,20 @@ line.append(desc,price,addButton('Add to PR',()=>pick(x)),addButton('Edit',()=>e
 if(!matches.length){const p=document.createElement('p');p.style.padding='12px';p.textContent='No matches. Use + New Price Item or import your CSV.';wrap.append(p)}
 $('catalogCount').textContent=catalog.length+' catalog items • showing '+matches.length+' • Grand total remains calculated from requested PO quantities only.';
 }
-function pick(x){
-let row=[...$('rows').children].find(r=>{const d=r.querySelector('[data-field="description"]');return d&&!d.value.trim();});
+function pick(x,targetRow){
+let row=targetRow||[...$('rows').children].find(r=>{const d=r.querySelector('[data-field="description"]');return d&&!d.value.trim();});
 if(!row){addRow();row=$('rows').lastElementChild}
 const r=rate(x);
-for(const [k,v] of [['description',x.item],['unit',r.uom],['unitPrice',r.price]]){const el=row.querySelector('[data-field="'+k+'"]');if(el)el.value=v}
-if(row.querySelector('[data-field="remarks"]')&&x.supplier)row.querySelector('[data-field="remarks"]').value='Supplier: '+x.supplier+(x.notes?' | '+x.notes:'');
-totals();resize();window.dispatchEvent(new Event('vg-catalog-item-added'));$('status').textContent=x.item+' added from price catalog. Enter request quantity, then save or submit the PR.';
-row.scrollIntoView({behavior:'smooth',block:'center'});
-const qty=row.querySelector('[data-field="qty"]');if(qty)qty.focus();
+for(const [k,v] of [['description',x.item],['unit',r.uom],['unitPrice',x.price===''?'':r.price]]){
+ const el=row.querySelector('[data-field="'+k+'"]');if(el)el.value=v
+}
+const remarks=row.querySelector('[data-field="remarks"]');
+if(remarks&&x.supplier)remarks.value='Supplier: '+x.supplier+(x.notes?' | '+x.notes:'');
+delete row.dataset.legacy;totals();resize();
+window.dispatchEvent(new Event('vg-catalog-item-added'));
+$('status').textContent=x.item+' selected. Enter quantity'+(x.price===''?' and price':'')+' then save or submit.';
+row.scrollIntoView({behavior:'smooth',block:'nearest'});
+const focus=row.querySelector('[data-field="'+(x.price===''?'unitPrice':'qty')+'"]');if(focus)focus.focus();
 }
 function edit(i){
 const old=normalize(i==null?{item:'',uom:'pc',price:0,supplier:'Puregold',barcode:'',notes:'',piecesPerPack:1,pieceUOM:'pc'}:catalog[i]);
@@ -278,6 +288,65 @@ catalog.forEach(x=>{const n=normalize(x);lines.push([n.item,n.uom,n.price,n.supp
 const blob=new Blob(['\ufeff'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'});
 const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='VG-Supplier-Price-Catalog.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
+
+/* Inline autocomplete for BOTH manual and automatic PR item-description cells. */
+const suggest=document.createElement('div');
+suggest.id='prItemSuggest';
+suggest.setAttribute('role','listbox');
+suggest.setAttribute('aria-label','Matching saved supplier items');
+suggest.style.cssText='position:fixed;display:none;z-index:20000;max-height:265px;overflow:auto;background:#fff;border:2px solid #7b182b;border-radius:9px;box-shadow:0 12px 35px #0003;min-width:260px;max-width:95vw';
+document.body.append(suggest);
+let currentField=null,choices=[],selectedIndex=0;
+function hideSuggest(){suggest.style.display='none';suggest.replaceChildren();if(currentField)currentField.setAttribute('aria-expanded','false');currentField=null;choices=[]}
+function positionSuggest(field){
+ if(!field||!field.isConnected)return hideSuggest();
+ const rect=field.getBoundingClientRect();const above=window.innerHeight-rect.bottom<180&&rect.top>180;
+ suggest.style.left=Math.max(8,Math.min(rect.left,window.innerWidth-280))+'px';
+ suggest.style.width=Math.min(Math.max(rect.width,320),window.innerWidth-16)+'px';
+ suggest.style.maxHeight=Math.max(120,Math.min(265,above?rect.top-12:window.innerHeight-rect.bottom-12))+'px';
+ suggest.style.top=above?'auto':Math.max(8,rect.bottom+3)+'px';
+ suggest.style.bottom=above?(window.innerHeight-rect.top+3)+'px':'auto';
+}
+function showSuggest(field){
+ if(field.disabled)return hideSuggest();
+ const query=field.value.trim().toLocaleLowerCase();if(!query)return hideSuggest();
+ choices=catalog.filter(x=>x.item.toLocaleLowerCase().includes(query)||String(x.barcode||'').toLocaleLowerCase().includes(query)||(query==='rice'&&x.item.toLocaleLowerCase()==='bigas')).sort((a,b)=>{
+  const ap=a.item.toLowerCase().startsWith(query)?0:1,bp=b.item.toLowerCase().startsWith(query)?0:1;
+  return ap-bp||a.item.localeCompare(b.item);
+ }).slice(0,10);
+ if(!choices.length)return hideSuggest();
+ currentField=field;selectedIndex=0;suggest.replaceChildren();
+ for(const [i,x] of choices.entries()){
+  const b=document.createElement('button');b.type='button';b.setAttribute('role','option');
+  b.style.cssText='display:flex;width:100%;text-align:left;justify-content:space-between;gap:12px;background:#fff;color:#252525;border:0;border-bottom:1px solid #e7dce0;border-radius:0;padding:11px;font-weight:normal;box-shadow:none';
+  const label=document.createElement('span');label.textContent=x.item+' • '+x.uom+(x.supplier?' • '+x.supplier:'');
+  const price=document.createElement('strong');price.style.color='#7b182b';price.textContent=x.price===''?'Set price':money(rate(x).price);
+  b.append(label,price);
+  b.addEventListener('pointerdown',e=>e.preventDefault());
+  b.addEventListener('click',()=>{const row=currentField?.closest('tr');hideSuggest();if(row)pick(x,row)});
+  suggest.append(b);
+ }
+ highlightSuggest();positionSuggest(field);suggest.style.display='block';field.setAttribute('aria-expanded','true');
+}
+function highlightSuggest(){[...suggest.children].forEach((b,i)=>{b.style.background=i===selectedIndex?'#fbe9ed':'#fff';b.setAttribute('aria-selected',i===selectedIndex?'true':'false')})}
+document.addEventListener('input',e=>{
+ if(e.target.matches('#rows [data-field="description"]'))showSuggest(e.target);
+});
+document.addEventListener('focusin',e=>{
+ if(e.target.matches('#rows [data-field="description"]'))showSuggest(e.target);
+ else if(!suggest.contains(e.target))hideSuggest();
+});
+document.addEventListener('keydown',e=>{
+ if(!currentField||e.target!==currentField||suggest.style.display==='none')return;
+ if(e.key==='ArrowDown'){e.preventDefault();selectedIndex=(selectedIndex+1)%choices.length;highlightSuggest()}
+ else if(e.key==='ArrowUp'){e.preventDefault();selectedIndex=(selectedIndex+choices.length-1)%choices.length;highlightSuggest()}
+ else if(e.key==='Enter'){e.preventDefault();const row=currentField.closest('tr'),item=choices[selectedIndex];hideSuggest();if(row&&item)pick(item,row)}
+ else if(e.key==='Escape')hideSuggest();
+});
+document.addEventListener('pointerdown',e=>{if(currentField&&!suggest.contains(e.target)&&e.target!==currentField)hideSuggest()});
+window.addEventListener('resize',()=>{if(currentField)positionSuggest(currentField)});
+document.addEventListener('scroll',()=>{if(currentField)positionSuggest(currentField)},true);
+
 $('catalogSearch').addEventListener('input',render);
 $('catalogAdd').addEventListener('click',()=>edit(null));
 $('catalogExport').addEventListener('click',exportCSV);
