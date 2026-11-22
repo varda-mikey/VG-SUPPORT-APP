@@ -240,7 +240,7 @@ if(!row){addRow();row=$('rows').lastElementChild}
 const r=rate(x);
 for(const [k,v] of [['description',x.item],['unit',r.uom],['unitPrice',r.price]]){const el=row.querySelector('[data-field="'+k+'"]');if(el)el.value=v}
 if(row.querySelector('[data-field="remarks"]')&&x.supplier)row.querySelector('[data-field="remarks"]').value='Supplier: '+x.supplier+(x.notes?' | '+x.notes:'');
-totals();resize();$('status').textContent=x.item+' added from price catalog. Enter request quantity, then save or submit the PR.';
+totals();resize();window.dispatchEvent(new Event('vg-catalog-item-added'));$('status').textContent=x.item+' added from price catalog. Enter request quantity, then save or submit the PR.';
 row.scrollIntoView({behavior:'smooth',block:'center'});
 const qty=row.querySelector('[data-field="qty"]');if(qty)qty.focus();
 }
@@ -293,7 +293,7 @@ if(indexes.some(x=>x<0))throw Error('CSV must contain Item, UOM and Price column
 const supplier=find('supplier','store'),barcode=find('barcode','sku'),notes=find('notes','remarks'),packCount=find('piecesperpack','packqty','packquantity'),packCost=find('packprice','priceperpack'),pieceUnit=find('pieceuom','pieceunit');
 const additions=csv.slice(1).map(row=>({item:(row[indexes[0]]||'').trim(),uom:(row[indexes[1]]||'').trim(),price:Number(String(row[indexes[2]]||'').replace(/[₱,\s]/g,'')),supplier:supplier<0?'':(row[supplier]||'').trim(),barcode:barcode<0?'':(row[barcode]||'').trim(),notes:notes<0?'':(row[notes]||'').trim(),
 piecesPerPack:packCount<0?1:Number(row[packCount]||1),
-packPrice:packCost<0?Number(String(row[indexes[2]]||'').replace(/[₱,\\s]/g,'')):Number(String(row[packCost]||'').replace(/[₱,\\s]/g,'')),
+packPrice:packCost<0?Number(String(row[indexes[2]]||'').replace(/[₱,\s]/g,'')):Number(String(row[packCost]||'').replace(/[₱,\s]/g,'')),
 pieceUOM:pieceUnit<0?'pc':(row[pieceUnit]||'pc').trim()})).filter(x=>x.item&&x.uom&&Number.isFinite(x.price)&&x.price>=0&&Number.isInteger(x.piecesPerPack)&&x.piecesPerPack>=1&&Number.isFinite(x.packPrice)&&x.packPrice>=0);
 if(!additions.length)throw Error('No valid rows found. Check the CSV headers, unit and prices.');
 if(!confirm('Import '+additions.length+' items? Existing matches by supplier + item + UOM will be updated; other items will remain.'))return;
