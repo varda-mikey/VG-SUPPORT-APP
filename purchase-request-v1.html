@@ -70,6 +70,38 @@
  .inventory td:last-child input[data-field="amount"]{display:none!important}
  .inventory .total{position:static!important;box-shadow:none!important}
 }
+
+/* V17: show every line total in the SAME viewport as price and final order quantity. */
+body:not(.automaticPO) .inventory .tablewrap{overflow-x:visible}
+body:not(.automaticPO) .inventory table{table-layout:fixed!important;width:100%!important;min-width:0!important}
+body:not(.automaticPO) .inventory th{min-width:0!important;width:auto!important;white-space:normal;overflow-wrap:break-word}
+body:not(.automaticPO) .inventory th:nth-child(1){width:3.5%!important}
+body:not(.automaticPO) .inventory th:nth-child(2){width:24%!important}
+body:not(.automaticPO) .inventory th:nth-child(3){width:11%!important}
+body:not(.automaticPO) .inventory th:nth-child(4){width:8%!important}
+body:not(.automaticPO) .inventory th:nth-child(5){width:8.5%!important}
+body:not(.automaticPO) .inventory th:nth-child(6){width:10%!important}
+body:not(.automaticPO) .inventory th:nth-child(7){width:12%!important}
+body:not(.automaticPO) .inventory th:nth-child(8){width:10%!important}
+body:not(.automaticPO) .inventory th:nth-child(9){width:13%!important}
+body:not(.automaticPO) .inventory td{max-width:0;overflow-wrap:anywhere}
+body:not(.automaticPO) .inventory td textarea{width:100%;padding:6px 3px;min-height:39px;font-size:12px}
+body:not(.automaticPO) .inventory td input{width:100%;padding:6px 3px;min-width:0;font-size:12px}
+body:not(.automaticPO) .inventory th:last-child,body:not(.automaticPO) .inventory td:last-child{position:static!important;box-shadow:none!important;width:auto!important;min-width:0!important}
+body:not(.automaticPO) .inventory td:last-child{background:#fff3d7!important}
+body:not(.automaticPO) .inventory td:last-child input[data-field="amount"]{font-size:13px!important;font-weight:800!important;color:#671529!important;min-height:39px}
+body:not(.automaticPO) .inventory th:last-child{background:#ffebc2!important}
+.inventory .total{display:flex;align-items:center;justify-content:flex-end;gap:14px;flex-wrap:wrap;position:static!important}
+.inventory .total output{min-width:145px;text-align:right}
+@media(max-width:620px){
+ body:not(.automaticPO) .inventory .tablewrap{overflow-x:auto}
+ body:not(.automaticPO) .inventory table{min-width:790px!important}
+ body:not(.automaticPO) .inventory th:last-child,body:not(.automaticPO) .inventory td:last-child{position:sticky!important;right:0;z-index:3}
+}
+@media print{
+ body:not(.automaticPO) .inventory table{min-width:0!important}
+ body:not(.automaticPO) .inventory th:last-child,body:not(.automaticPO) .inventory td:last-child{position:static!important}
+}
 </style>
 </head>
 <body>
@@ -108,7 +140,7 @@
 <div class="field"><label for="supplier">Preferred Supplier:</label><input id="supplier" name="supplier"></div>
 </div></div>
 <div class="par"><label for="parPeriod">PAR Period (optional):</label><select id="parPeriod" name="parPeriod"><option value="">Not specified</option><option value="day">Per Day</option><option value="week">Per Week</option></select></div>
-<section class="section inventory"><h2><span>▣</span>INVENTORY-BASED PURCHASE REQUEST</h2><div class="tablewrap"><table><thead><tr><th scope="col">#</th><th scope="col">Item Description</th><th scope="col">UOM</th><th scope="col">PAR Stock</th><th scope="col">Stock on Hand</th><th scope="col">Request Qty</th><th scope="col">Unit Price (₱)</th><th scope="col">Amount (₱)</th><th scope="col">Remarks</th></tr></thead><tbody id="rows"></tbody></table></div><div class="total">TOTAL AMOUNT <output id="total">₱0.00</output></div><div class="rowbuttons"><button type="button" id="add">+ Add Line</button><button type="button" class="secondary" id="remove">Remove Last Line</button></div></section>
+<section class="section inventory"><h2><span>▣</span>INVENTORY-BASED PURCHASE REQUEST</h2><div class="tablewrap"><table><thead><tr><th scope="col">#</th><th scope="col">Item Description</th><th scope="col">UOM</th><th scope="col">PAR Stock</th><th scope="col">Stock on Hand</th><th scope="col">Request Qty</th><th scope="col">Unit Price (₱)</th><th scope="col">Amount (₱)</th><th scope="col">Remarks</th></tr></thead><tbody id="rows"></tbody></table></div><div class="total">GRAND TOTAL — ALL LINE TOTALS <output id="total">₱0.00</output></div><div class="rowbuttons"><button type="button" id="add">+ Add Line</button><button type="button" class="secondary" id="remove">Remove Last Line</button></div></section>
 <section class="section"><h2><span>▤</span>PURCHASE BASIS</h2><ol><li>Request quantity should be based on PAR stock.</li><li>Purchases should not exceed actual requirement unless properly justified and separately approved.</li><li>Bulk buying without basis is not allowed because it affects inventory counting and cash flow.</li></ol></section>
 <section class="section"><h2><span>▤</span>JUSTIFICATION / REMARKS</h2><textarea id="justification" name="justification" aria-label="Justification / Remarks"></textarea></section>
 <section class="section"><h2><span>⚙</span>WORKFLOW / CONTROL STEPS</h2><ol><li>Make a request for purchases based on PAR stock and stock on hand.</li><li>Purchase based on the approved request only.</li><li>Make a Receiving Report (RR) based on actual count and weight received.</li><li>Send the manual Receiving Report and Invoice immediately to Precious for QuickBooks RR, inventory setup, and payable recording.</li><li>Immediate submission supports trust, transparency, and accurate inventory and payable recording.</li></ol></section>
@@ -121,7 +153,7 @@ const $=id=>document.getElementById(id),key='vg-purchase-request-v1';
 let poMode='manual';
 const manualColumns=['description','unit','par','onHand','qty','remarks','unitPrice','amount'];
 const autoColumns=['description','unit','dailyPar','days','gross','onHand','bufferPercent','bufferQty','suggested','qty','remarks','unitPrice','amount'];
-const columnLabels={description:'Item Description',unit:'UOM',par:'PAR Stock',dailyPar:'Daily PAR',days:'Days Covered',gross:'Period Requirement',onHand:'Stock on Hand',bufferPercent:'Buffer % (optional)',bufferQty:'Buffer Qty',suggested:'Suggested Order Qty',qty:'Final Order Qty',remarks:'Remarks',unitPrice:'Unit Price (₱)',amount:'Total Amount (₱)'};
+const columnLabels={description:'Item Description',unit:'UOM',par:'PAR Stock',dailyPar:'Daily PAR',days:'Days Covered',gross:'Period Requirement',onHand:'Stock on Hand',bufferPercent:'Buffer % (optional)',bufferQty:'Buffer Qty',suggested:'Suggested Order Qty',qty:'Final Order Qty',remarks:'Remarks',unitPrice:'Unit Price (₱)',amount:'Line Total (₱)'};
 let columns=manualColumns;
 function setPOMode(mode){poMode=mode==='automatic'?'automatic':'manual';columns=poMode==='automatic'?autoColumns:manualColumns;$('poMode').value=poMode;if(poMode==='automatic')$('parPeriod').value='day';document.body.classList.toggle('automaticPO',poMode==='automatic');const head=document.querySelector('.inventory thead tr');head.replaceChildren();for(const label of ['#',...columns.map(c=>columnLabels[c])]){const th=document.createElement('th');th.scope='col';th.textContent=label;head.append(th)}$('modeHint').textContent=poMode==='automatic'?'PO AUTOMATIC • Daily PAR × Days Covered = Period Requirement. Subtract stock on hand (minimum zero), then add buffer % of the shortage. Final Order Qty remains editable. Clear Final Order Qty to use the suggestion again.':'MANUAL PO • Enter your order quantity and unit price. Total Amount calculates automatically.';}
 const currency=new Intl.NumberFormat('en-PH',{style:'currency',currency:'PHP'});
