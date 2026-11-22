@@ -14,7 +14,7 @@ const quick=document.createElement('section');quick.className='priceCatalog';qui
 document.getElementById('priceCatalog').after(quick);
 function spreadsheetRows(){
  return [...$('rows').children].map(row=>{const get=k=>row.querySelector('[data-field="'+k+'"]')?.value||'';
- return [get('description'),get('unit'),get('par')||get('dailyPar'),get('onHand'),get('qty'),get('unitPrice'),get('remarks'),get('remarks').match(/Supplier:\\s*([^|]+)/)?.[1]||'',$('campus').value]})
+ return [get('description'),get('unit'),get('par')||get('dailyPar'),get('onHand'),get('qty'),get('unitPrice'),get('remarks'),get('remarks').match(/Supplier:\s*([^|]+)/)?.[1]||'',$('campus').value]})
  .filter(r=>r[0].trim());
 }
 function createWorkbook(records,name){
@@ -61,7 +61,7 @@ $('invUpload').addEventListener('change',async e=>{
  try{
   if(prSelected&&!prEditing)throw Error('Open New Form or authorized Edit Request before importing. Approved/saved records cannot be overwritten.');
   let matrix;
-  if(/\\.csv$/i.test(file.name))matrix=parseCSV((await file.text()).replace(/^\\ufeff/,''));
+  if(/\.csv$/i.test(file.name))matrix=parseCSV((await file.text()).replace(/^\ufeff/,''));
   else if(typeof XLSX!=='undefined'){const wb=XLSX.read(await file.arrayBuffer(),{type:'array'});matrix=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''});}
   else throw Error('XLSX reader not available. Save your spreadsheet as CSV UTF-8 in Excel and upload again.');
   const names=(matrix.shift()||[]).map(x=>String(x).trim().toLowerCase().replace(/[^a-z0-9]/g,''));
