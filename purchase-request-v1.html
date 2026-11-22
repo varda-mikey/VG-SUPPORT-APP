@@ -36,10 +36,10 @@
 
 <section id="priceCatalog" class="priceCatalog" aria-label="Searchable supplier price catalog">
 <h2>🛒 Puregold &amp; Supplier Price Catalog</h2>
-<p>Search a product and select <strong>Add to PR</strong>. Product, pack/UOM and unit price fill automatically; enter quantity and the PO total updates. Prices are estimates until verified against the latest receipt. Catalog changes are saved in this browser; export a backup when sharing with other branches.</p>
+<p>Search a product and select <strong>Add to PR</strong>. Product, pack/UOM and unit price fill automatically; enter quantity and the PO total updates. Prefer PER PC when each item is sold individually or the number of pieces per pack is verified. Otherwise use PER PACK. Prices are estimates until verified against the latest receipt. Catalog changes are saved in this browser; export a backup when sharing with other branches.</p>
 <div class="catalogControls"><input id="catalogSearch" type="search" placeholder="Search item, brand, size or barcode…" aria-label="Search supplier items"><button id="catalogAdd" type="button">+ New Price Item</button><button id="catalogExport" type="button" class="secondary">Export CSV</button><label style="padding:10px;border:1px solid #c7bdc0;border-radius:8px;cursor:pointer">Import CSV / Excel CSV<input type="file" id="catalogImport" accept=".csv,text/csv" hidden></label><button id="catalogReset" type="button" class="secondary">Restore Receipt Starter List</button></div>
 <div id="catalogResults" class="catalogResults"></div><div class="catalogSummary" id="catalogCount"></div>
-<p><strong>CSV columns:</strong> Item, UOM, Price, Supplier, Barcode, Notes. Open an Excel sheet and save it as CSV UTF-8 to upload. The list is separate from your actual saved PR/PO records.</p>
+<p><strong>CSV columns:</strong> Item, UOM, Price, Supplier, Barcode, Notes, PiecesPerPack, PackPrice, PieceUOM. Price is the original selling-unit price; PiecesPerPack plus PackPrice lets the app calculate per-piece cost. Open an Excel sheet and save it as CSV UTF-8 to upload. The list is separate from your actual saved PR/PO records.</p>
 </section>
 <section class="register" aria-label="Shared purchase request register">
 <div class="registerHead"><div><h2>Central PR Records</h2><p>Choose a branch folder, then click a PR number to preview or download.</p></div><button class="secondary" type="button" id="refreshRecords">Refresh</button></div>
@@ -132,20 +132,39 @@ const BASE=[
 ['Chice Creamer','320 mL',35.25,'Puregold','','Receipt shows 48 × 35.25; verify label'],
 ['Dingdong','100 g',21.15,'Puregold','','Receipt shows 15 × 21.15'],
 ['Oishi Sponge','30 g',9.60,'Puregold','','Receipt shows 20 × 9.60']
-].map(a=>({item:a[0],uom:a[1],price:a[2],supplier:a[3],barcode:a[4],notes:a[5]}));
+].map(a=>({item:a[0],uom:a[1],price:a[2],supplier:a[3],barcode:a[4],notes:a[5]})); 
+// Receipt provides line-item prices, not internal piece counts of multipacks.
+// Single retail packs, cans and bottles count as one piece; ambiguous packs stay PACK.
+const packedNames=new Set(['Nips M-C SB','Chocomucho','Whattatops Vanios']);
+BASE.forEach(x=>{
+ x.piecesPerPack=1;
+ x.pieceUOM=/\\b(kg|g|mL|L|can)\\b/i.test(x.uom)?'pc ('+x.uom+')':(packedNames.has(x.item)?'pack':'pc');
+ x.packPrice=x.price;
+ if(!packedNames.has(x.item))x.uom=x.pieceUOM;
+});
 const $=id=>document.getElementById(id), STORAGE='vg-pr-supplier-cost-catalog-v1';
 let catalog;
 try{const stored=JSON.parse(localStorage.getItem(STORAGE)||'null');catalog=Array.isArray(stored)?stored:BASE.map(x=>({...x}));}catch(e){catalog=BASE.map(x=>({...x}));}
 function store(){try{localStorage.setItem(STORAGE,JSON.stringify(catalog));}catch(e){$('catalogCount').textContent='Storage full: export your catalog CSV to back up changes.'}}
 function money(n){return '₱'+Number(n).toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2})}
+function normalize(x){
+ const copies=Number(x.piecesPerPack);
+ const piecesPerPack=Number.isInteger(copies)&&copies>=1?copies:1;
+ const packPrice=Number(x.packPrice);
+ return {...x,piecesPerPack,packPrice:Number.isFinite(packPrice)&&packPrice>=0?packPrice:Number(x.price)||0,pieceUOM:String(x.pieceUOM||'pc').trim()||'pc'};
+}
+function rate(x){const n=normalize(x);if(n.piecesPerPack>1)return {price:Number((n.packPrice/n.piecesPerPack).toFixed(4)),uom:n.pieceUOM,label:'PER PC (from '+n.piecesPerPack+' pcs/pack)'};
+ return {price:Number(n.price),uom:n.uom,label:/^pc\\b/i.test(n.uom)?'PER PC':'PER PACK / UNIT'};
+}
 function addButton(text,fn,cls=''){const b=document.createElement('button');b.type='button';b.textContent=text;b.className=cls;b.addEventListener('click',fn);return b}
 function render(){
 const query=$('catalogSearch').value.trim().toLowerCase(),wrap=$('catalogResults');wrap.replaceChildren();
 const matches=catalog.map((x,i)=>({...x,index:i})).filter(x=>([x.item,x.uom,x.supplier,x.barcode,x.notes].join(' ').toLowerCase()).includes(query)).slice(0,100);
 for(const x of matches){const line=document.createElement('div');line.className='catalogResult';
 const desc=document.createElement('div'),name=document.createElement('strong');name.textContent=x.item;desc.append(name);
-const sub=document.createElement('small');sub.textContent=[x.uom,x.supplier,x.barcode].filter(Boolean).join(' • ')+(x.notes?' — '+x.notes:'');desc.append(sub);
-const price=document.createElement('b');price.textContent=money(x.price);
+const sub=document.createElement('small');const r=rate(x);
+sub.textContent=[r.label,r.uom,x.supplier,x.barcode].filter(Boolean).join(' • ')+(x.notes?' — '+x.notes:'');desc.append(sub);
+const price=document.createElement('b');price.textContent=money(r.price);
 line.append(desc,price,addButton('Add to PR',()=>pick(x)),addButton('Edit',()=>edit(x.index),'secondary'));wrap.append(line);}
 if(!matches.length){const p=document.createElement('p');p.style.padding='12px';p.textContent='No matches. Use + New Price Item or import your CSV.';wrap.append(p)}
 $('catalogCount').textContent=catalog.length+' catalog items • showing '+matches.length+' • Grand total remains calculated from requested PO quantities only.';
@@ -153,21 +172,33 @@ $('catalogCount').textContent=catalog.length+' catalog items • showing '+match
 function pick(x){
 let row=[...$('rows').children].find(r=>{const d=r.querySelector('[data-field="description"]');return d&&!d.value.trim();});
 if(!row){addRow();row=$('rows').lastElementChild}
-for(const [k,v] of [['description',x.item],['unit',x.uom],['unitPrice',x.price]]){const el=row.querySelector('[data-field="'+k+'"]');if(el)el.value=v}
+const r=rate(x);
+for(const [k,v] of [['description',x.item],['unit',r.uom],['unitPrice',r.price]]){const el=row.querySelector('[data-field="'+k+'"]');if(el)el.value=v}
 if(row.querySelector('[data-field="remarks"]')&&x.supplier)row.querySelector('[data-field="remarks"]').value='Supplier: '+x.supplier+(x.notes?' | '+x.notes:'');
 totals();resize();$('status').textContent=x.item+' added from price catalog. Enter request quantity, then save or submit the PR.';
 row.scrollIntoView({behavior:'smooth',block:'center'});
 const qty=row.querySelector('[data-field="qty"]');if(qty)qty.focus();
 }
 function edit(i){
-const old=i==null?{item:'',uom:'',price:0,supplier:'Puregold',barcode:'',notes:''}:catalog[i];
+const old=normalize(i==null?{item:'',uom:'pc',price:0,supplier:'Puregold',barcode:'',notes:'',piecesPerPack:1,pieceUOM:'pc'}:catalog[i]);
 const item=prompt('Product name',old.item);if(item===null)return;if(!item.trim())return alert('Product name required.');
 const uom=prompt('Unit / pack size',old.uom);if(uom===null)return;if(!uom.trim())return alert('Unit is required.');
 const raw=prompt('Unit price (₱)',String(old.price));if(raw===null)return;const price=Number(raw);if(raw.trim()===''||!Number.isFinite(price)||price<0)return alert('Enter a valid price.');
+const piecesRaw=prompt('Pieces inside each pack? Enter 1 for single-piece products or products sold per pack (unknown piece count).',String(old.piecesPerPack));
+if(piecesRaw===null)return;const piecesPerPack=Number(piecesRaw);
+if(!Number.isInteger(piecesPerPack)||piecesPerPack<1)return alert('Pieces per pack must be a whole number >= 1.');
+let packPrice=price,pieceUOM=old.pieceUOM;
+if(piecesPerPack>1){
+ const packRaw=prompt('FULL PACK PRICE (₱). This will be divided by '+piecesPerPack+' to calculate PER PC price.',String(old.piecesPerPack>1?old.packPrice:price));
+ if(packRaw===null)return;packPrice=Number(packRaw);
+ if(packRaw.trim()===''||!Number.isFinite(packPrice)||packPrice<0)return alert('Enter a valid pack price.');
+ const pcRaw=prompt('Per-piece UOM (example: pc, sachet, can, bottle)',old.pieceUOM==='pc'? 'pc':old.pieceUOM);
+ if(pcRaw===null)return;pieceUOM=pcRaw.trim()||'pc';
+}
 const supplier=prompt('Supplier / store',old.supplier);if(supplier===null)return;
 const barcode=prompt('Barcode / SKU (optional)',old.barcode);if(barcode===null)return;
 const notes=prompt('Notes / verification status',old.notes);if(notes===null)return;
-const value={item:item.trim(),uom:uom.trim(),price,supplier:supplier.trim(),barcode:barcode.trim(),notes:notes.trim()};
+const value={item:item.trim(),uom:uom.trim(),price,supplier:supplier.trim(),barcode:barcode.trim(),notes:notes.trim(),piecesPerPack,packPrice,pieceUOM};
 if(i==null)catalog.push(value);else catalog[i]=value;store();render();
 }
 function parseCSV(s){
@@ -177,8 +208,8 @@ out.push(field);if(out.some(v=>v.trim()))rows.push(out);return rows;
 }
 function csvEscape(v){return '"'+String(v??'').replace(/"/g,'""')+'"'}
 function exportCSV(){
-const cols=['Item','UOM','Price','Supplier','Barcode','Notes'],lines=[cols.join(',')];
-catalog.forEach(x=>lines.push([x.item,x.uom,x.price,x.supplier,x.barcode,x.notes].map(csvEscape).join(',')));
+const cols=['Item','UOM','Price','Supplier','Barcode','Notes','PiecesPerPack','PackPrice','PieceUOM'],lines=[cols.join(',')];
+catalog.forEach(x=>{const n=normalize(x);lines.push([n.item,n.uom,n.price,n.supplier,n.barcode,n.notes,n.piecesPerPack,n.packPrice,n.pieceUOM].map(csvEscape).join(','))});
 const blob=new Blob(['\ufeff'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'});
 const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='VG-Supplier-Price-Catalog.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
@@ -194,8 +225,11 @@ if(!csv.length)throw Error('CSV is empty');
 const h=csv[0].map(x=>x.trim().toLowerCase().replace(/[\s_\-]/g,'')),find=(...names)=>h.findIndex(x=>names.includes(x));
 const indexes=[find('item','product','productname','description','name'),find('uom','unit','pack','size'),find('price','unitprice','cost','unitcost')];
 if(indexes.some(x=>x<0))throw Error('CSV must contain Item, UOM and Price columns.');
-const supplier=find('supplier','store'),barcode=find('barcode','sku'),notes=find('notes','remarks');
-const additions=csv.slice(1).map(row=>({item:(row[indexes[0]]||'').trim(),uom:(row[indexes[1]]||'').trim(),price:Number(String(row[indexes[2]]||'').replace(/[₱,\s]/g,'')),supplier:supplier<0?'':(row[supplier]||'').trim(),barcode:barcode<0?'':(row[barcode]||'').trim(),notes:notes<0?'':(row[notes]||'').trim()})).filter(x=>x.item&&x.uom&&Number.isFinite(x.price)&&x.price>=0);
+const supplier=find('supplier','store'),barcode=find('barcode','sku'),notes=find('notes','remarks'),packCount=find('piecesperpack','packqty','packquantity'),packCost=find('packprice','priceperpack'),pieceUnit=find('pieceuom','pieceunit');
+const additions=csv.slice(1).map(row=>({item:(row[indexes[0]]||'').trim(),uom:(row[indexes[1]]||'').trim(),price:Number(String(row[indexes[2]]||'').replace(/[₱,\s]/g,'')),supplier:supplier<0?'':(row[supplier]||'').trim(),barcode:barcode<0?'':(row[barcode]||'').trim(),notes:notes<0?'':(row[notes]||'').trim(),
+piecesPerPack:packCount<0?1:Number(row[packCount]||1),
+packPrice:packCost<0?Number(String(row[indexes[2]]||'').replace(/[₱,\\s]/g,'')):Number(String(row[packCost]||'').replace(/[₱,\\s]/g,'')),
+pieceUOM:pieceUnit<0?'pc':(row[pieceUnit]||'pc').trim()})).filter(x=>x.item&&x.uom&&Number.isFinite(x.price)&&x.price>=0&&Number.isInteger(x.piecesPerPack)&&x.piecesPerPack>=1&&Number.isFinite(x.packPrice)&&x.packPrice>=0);
 if(!additions.length)throw Error('No valid rows found. Check the CSV headers, unit and prices.');
 if(!confirm('Import '+additions.length+' items? Existing matches by supplier + item + UOM will be updated; other items will remain.'))return;
 for(const x of additions){const i=catalog.findIndex(y=>[y.item,y.uom,y.supplier].join('|').toLowerCase()===[x.item,x.uom,x.supplier].join('|').toLowerCase());if(i<0)catalog.push(x);else catalog[i]=x;}
