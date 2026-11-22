@@ -37,7 +37,7 @@
 <section id="priceCatalog" class="priceCatalog" aria-label="Searchable supplier price catalog">
 <h2>🛒 Puregold &amp; Supplier Price Catalog</h2>
 <p>Search a product and select <strong>Add to PR</strong>. Product, pack/UOM and unit price fill automatically; enter quantity and the PO total updates. Prefer PER PC when each item is sold individually or the number of pieces per pack is verified. Otherwise use PER PACK. Prices are estimates until verified against the latest receipt. Catalog changes are saved in this browser; export a backup when sharing with other branches.</p>
-<div class="catalogControls"><input id="catalogSearch" type="search" placeholder="Search item, brand, size or barcode…" aria-label="Search supplier items"><button id="catalogAdd" type="button">+ New Price Item</button><button id="catalogExport" type="button" class="secondary">Export CSV</button><label style="padding:10px;border:1px solid #c7bdc0;border-radius:8px;cursor:pointer">Import CSV / Excel CSV<input type="file" id="catalogImport" accept=".csv,text/csv" hidden></label><button id="catalogReset" type="button" class="secondary">Restore Receipt Starter List</button></div>
+<div class="catalogControls"><input id="catalogSearch" type="search" placeholder="Search vegetables, item, brand, supplier or barcode…" aria-label="Search supplier items"><button id="catalogAdd" type="button">+ New Price Item</button><button id="catalogExport" type="button" class="secondary">Export CSV</button><label style="padding:10px;border:1px solid #c7bdc0;border-radius:8px;cursor:pointer">Import CSV / Excel CSV<input type="file" id="catalogImport" accept=".csv,text/csv" hidden></label><button id="catalogReset" type="button" class="secondary">Restore Receipt Starter List</button></div>
 <div id="catalogResults" class="catalogResults"></div><div class="catalogSummary" id="catalogCount"></div>
 <p><strong>CSV columns:</strong> Item, UOM, Price, Supplier, Barcode, Notes, PiecesPerPack, PackPrice, PieceUOM. Price is the original selling-unit price; PiecesPerPack plus PackPrice lets the app calculate per-piece cost. Open an Excel sheet and save it as CSV UTF-8 to upload. The list is separate from your actual saved PR/PO records.</p>
 </section>
@@ -142,11 +142,41 @@ BASE.forEach(x=>{
  x.packPrice=x.price;
  if(!packedNames.has(x.item))x.uom=x.pieceUOM;
 });
+// Mary Wilson market slips, 2026-11-21. Unit prices = line amounts / ordered quantities.
+const MARY_WILSON=[
+ ['Bawang talop',2,'kg',300,'Dorm 2'],['Sibuyas',4,'kg',440,'Dorm 2'],
+ ['Kamatis',2,'kg',200,'Dorm 2'],['Leeks',1,'kg',280,'Dorm 2'],
+ ['Luya',1,'kg',150,'Dorm 2'],['Carrots',4,'kg',400,'Dorm 2'],
+ ['Patatas',3,'kg',450,'Dorm 2'],['Tanglad',1,'kg',180,'Dorm 2'],
+ ['Lakatan',10,'pc',155,'Dorm 2'],['Kalamansi',1,'kg',100,'Dorm 2'],
+ ['Celery',0.5,'kg',236,'Dorm 2'],['Cooking Oil',4,'L',1600,'Dorm 2'],
+ ['Langka',4,'kg',520,'Dorm 1'],['Chopsuey vegetables',4,'kg',600,'Dorm 1'],
+ ['Kangkong',9,'tali',207,'Dorm 1'],['Kamote',6,'kg',480,'Dorm 1'],
+ ['Tahong',4,'kg',400,'Dorm 1'],['Carrots',5,'kg',500,'Dorm 1'],
+ ['Patatas',5,'kg',750,'Dorm 1'],['Bell pepper',2,'kg',870,'Dorm 1'],
+ ['Corned beef',3,'tub',2385,'Dorm 1']
+].map((a,i)=>({
+ item:a[0],uom:a[2],price:Number((a[3]/a[1]).toFixed(2)),
+ supplier:'Mary Wilson',barcode:'',notes:'2026-11-21 '+a[4]+' order slip • '+a[1]+' '+a[2]+' = ₱'+a[3].toFixed(2)+' • Please reconfirm current supplier price',
+ piecesPerPack:1,packPrice:Number((a[3]/a[1]).toFixed(2)),pieceUOM:a[2],
+ sourceBranch:a[4],sourceDate:'2026-11-21',sourceAmount:a[3],sourceQty:a[1]
+}));
 const $=id=>document.getElementById(id), STORAGE='vg-pr-supplier-cost-catalog-v1';
 let catalog;
 try{
  const stored=JSON.parse(localStorage.getItem(STORAGE)||'null');
  catalog=Array.isArray(stored)?stored:BASE.map(x=>({...x}));
+ // Add Mary Wilson without overwriting existing supplier catalog prices.
+ // Branch-specific lines remain separate reference entries, even for matching products.
+ const marker='vg-pr-mary-wilson-20261121-v1';
+ if(!localStorage.getItem(marker)){
+  for(const item of MARY_WILSON){
+   if(!catalog.some(x=>x.supplier===item.supplier&&x.item.toLowerCase()===item.item.toLowerCase()&&String(x.sourceBranch||'')===item.sourceBranch)){
+    catalog.push({...item});
+   }
+  }
+  try{localStorage.setItem(marker,'1');}catch(e){}
+ }
  // Upgrade previously saved Puregold starter records without replacing customized costs.
  for(const item of catalog){
   if(item.piecesPerPack!==undefined)continue;
