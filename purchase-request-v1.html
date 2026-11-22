@@ -66,7 +66,7 @@
 <section id="priceCatalog" class="priceCatalog" aria-label="Searchable supplier price catalog">
 <h2>🛒 Puregold &amp; Supplier Price Catalog</h2>
 <p>Search a product and select <strong>Add to PR</strong>. Product, pack/UOM and unit price fill automatically; enter quantity and the PO total updates. Prefer PER PC when each item is sold individually or the number of pieces per pack is verified. Otherwise use PER PACK. Prices are estimates until verified against the latest receipt. Catalog changes are saved in this browser; export a backup when sharing with other branches.</p>
-<div class="catalogControls"><input id="catalogSearch" type="search" placeholder="Search vegetables, item, brand, supplier or barcode…" aria-label="Search supplier items"><button id="catalogAdd" type="button">+ New Price Item</button><button id="catalogExport" type="button" class="secondary">Export CSV</button><label style="padding:10px;border:1px solid #c7bdc0;border-radius:8px;cursor:pointer">Import CSV / Excel CSV<input type="file" id="catalogImport" accept=".csv,text/csv" hidden></label><button id="catalogReset" type="button" class="secondary">Restore Receipt Starter List</button></div>
+<div class="catalogControls" style="margin-bottom:10px"><button id="sharedRefresh" type="button">Refresh Shared Prices</button><button id="sharedPublish" type="button" class="secondary">Publish Current PO Prices for All Users</button><span id="sharedStatus" style="font-size:12px">Connect shared records to sync prices.</span></div><div class="catalogControls"><input id="catalogSearch" type="search" placeholder="Search vegetables, item, brand, supplier or barcode…" aria-label="Search supplier items"><button id="catalogAdd" type="button">+ New Price Item</button><button id="catalogExport" type="button" class="secondary">Export CSV</button><label style="padding:10px;border:1px solid #c7bdc0;border-radius:8px;cursor:pointer">Import CSV / Excel CSV<input type="file" id="catalogImport" accept=".csv,text/csv" hidden></label><button id="catalogReset" type="button" class="secondary">Restore Receipt Starter List</button></div>
 <div id="catalogResults" class="catalogResults"></div><div class="catalogSummary" id="catalogCount"></div>
 <p><strong>CSV columns:</strong> Item, UOM, Price, Supplier, Barcode, Notes, PiecesPerPack, PackPrice, PieceUOM. Price is the original selling-unit price; PiecesPerPack plus PackPrice lets the app calculate per-piece cost. Open an Excel sheet and save it as CSV UTF-8 to upload. The list is separate from your actual saved PR/PO records.</p>
 </section>
@@ -303,6 +303,7 @@ const barcode=prompt('Barcode / SKU (optional)',old.barcode);if(barcode===null)r
 const notes=prompt('Notes / verification status',old.notes);if(notes===null)return;
 const value={item:item.trim(),uom:uom.trim(),price,supplier:supplier.trim(),barcode:barcode.trim(),notes:notes.trim(),piecesPerPack,packPrice,pieceUOM};
 if(i==null)catalog.push(value);else catalog[i]=value;store();render();
+if(sharedSession())publishShared([value]).catch(e=>sharedStatus.textContent='Saved locally; shared sync failed: '+e.message);
 }
 function parseCSV(s){
 const rows=[],out=[];let field='',quoted=false;
@@ -375,6 +376,77 @@ document.addEventListener('pointerdown',e=>{if(currentField&&!suggest.contains(e
 window.addEventListener('resize',()=>{if(currentField)positionSuggest(currentField)});
 document.addEventListener('scroll',()=>{if(currentField)positionSuggest(currentField)},true);
 
+
+const SHARED_ENDPOINT='https://lwjeroszacnqibggxair.supabase.co/functions/v1/pr-shared-catalog';
+const sharedStatus=document.getElementById('sharedStatus');
+function sharedSession(){try{return typeof currentSession==='function'?currentSession():null}catch(e){return null}}
+async function sharedCall(action,items){
+ const session=sharedSession();
+ if(!session?.token)throw Error('Connect to VG shared records first.');
+ const response=await fetch(SHARED_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,token:session.token,data:items?{items}:{}})});
+ const data=await response.json();if(!response.ok||data?.error)throw Error(data?.error||'Shared catalog unavailable');return data;
+}
+function sharedKey(x){return [x.supplier||'',x.item||'',x.uom||''].map(v=>String(v).trim().toLowerCase()).join('|')}
+let refreshing=false;
+async function refreshShared(silent=false){
+ if(refreshing||!sharedSession())return;refreshing=true;
+ try{
+  const remote=await sharedCall('list');
+  if(!Array.isArray(remote))throw Error('Unexpected shared catalog result');
+  for(const item of remote){
+   // Never allow the empty Bigas starter to hide a real shared unit price.
+   if(String(item.item).trim().toLowerCase()==='bigas'&&Number(item.price)>0){
+    catalog=catalog.filter(x=>!(String(x.item).trim().toLowerCase()==='bigas'&&(x.price===''||Number(x.price)===0)));
+   }
+   const index=catalog.findIndex(x=>sharedKey(x)===sharedKey(item));
+   if(index>=0)catalog[index]={...catalog[index],...item};else catalog.push(item);
+  }
+  try{localStorage.setItem(STORAGE,JSON.stringify(catalog))}catch(e){}
+  render();sharedStatus.textContent='Shared prices connected: '+remote.length+' cloud entries • '+new Date().toLocaleTimeString();
+ }catch(e){if(!silent)sharedStatus.textContent='Price sync failed: '+e.message}
+ finally{refreshing=false}
+}
+async function publishShared(items){
+ const valid=items.filter(x=>x.item&&x.uom&&x.price!==''&&Number.isFinite(Number(x.price)))
+ .map(x=>({...x,price:Number(Number(x.price).toFixed(2)),packPrice:Number(Number(x.packPrice??x.price).toFixed(2)),piecesPerPack:Number(x.piecesPerPack)||1}));
+ if(!valid.length)throw Error('Enter item, UOM, and price before publishing');
+ for(let i=0;i<valid.length;i+=75)await sharedCall('upsert',valid.slice(i,i+75));
+ sharedStatus.textContent=valid.length+' price(s) published to the VG shared master.';
+ await refreshShared(true);
+}
+function currentPOPrices(){
+ return [...document.querySelectorAll('#rows tr')].map(row=>{
+  const v=k=>row.querySelector('[data-field="'+k+'"]')?.value?.trim()||'';
+  const remarks=v('remarks');
+  const match=remarks.match(new RegExp('Supplier:\\s*([^|]+)','i'));
+  const item=v('description'),uom=v('unit'),price=v('unitPrice');
+  return {item,uom,price,supplier:(match?.[1]||document.getElementById('supplier')?.value||'').trim(),
+   notes:'VG Purchase Order shared price update',barcode:'',piecesPerPack:1,packPrice:price,pieceUOM:uom||'pc'};
+ }).filter(x=>x.item&&x.uom&&x.price!=='');
+}
+document.getElementById('sharedRefresh').onclick=()=>refreshShared();
+document.getElementById('sharedPublish').onclick=async()=>{
+ const items=currentPOPrices();
+ if(!items.length){sharedStatus.textContent='Enter item, UOM and price on a PO row first.';return}
+ if(!confirm('Publish '+items.length+' current PO price(s) for ALL connected VG users? Matching shared prices will be updated.'))return;
+ try{await publishShared(items)}catch(e){sharedStatus.textContent='Not published: '+e.message}
+};
+document.getElementById('rows').addEventListener('input',e=>{if(e.target.dataset.field==='unitPrice')e.target.dataset.dirtyPrice='true'});
+document.getElementById('rows').addEventListener('focusout',async e=>{
+ if(e.target.dataset.field!=='unitPrice'||e.target.dataset.dirtyPrice!=='true')return;
+ delete e.target.dataset.dirtyPrice;
+ if(!sharedSession())return;
+ const row=e.target.closest('tr'),name=row.querySelector('[data-field="description"]')?.value?.trim();
+ const entry=currentPOPrices().find(x=>x.item===name);
+ if(!entry)return;
+ try{await publishShared([entry]);sharedStatus.textContent=entry.item+' updated for all VG users.'}
+ catch(err){sharedStatus.textContent='Price saved in PO but NOT shared: '+err.message}
+});
+window.addEventListener('focus',()=>refreshShared(true));
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshShared(true)});
+setInterval(()=>{if(sharedSession()&&!document.hidden)refreshShared(true)},20000);
+setTimeout(()=>refreshShared(true),750);
+
 $('catalogSearch').addEventListener('input',render);
 $('catalogAdd').addEventListener('click',()=>edit(null));
 $('catalogExport').addEventListener('click',exportCSV);
@@ -396,6 +468,7 @@ if(!additions.length)throw Error('No valid rows found. Check the CSV headers, un
 if(!confirm('Import '+additions.length+' items? Existing matches by supplier + item + UOM will be updated; other items will remain.'))return;
 for(const x of additions){const i=catalog.findIndex(y=>[y.item,y.uom,y.supplier].join('|').toLowerCase()===[x.item,x.uom,x.supplier].join('|').toLowerCase());if(i<0)catalog.push(x);else catalog[i]=x;}
 store();render();alert('Imported '+additions.length+' supplier price rows.');
+if(sharedSession())publishShared(additions).catch(e=>sharedStatus.textContent='Imported locally; shared sync failed: '+e.message);
 }catch(err){alert('Catalog import failed: '+err.message)}finally{e.target.value=''}
 });
 render();
