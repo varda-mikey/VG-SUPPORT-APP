@@ -200,7 +200,7 @@ const EXTRA_STARTERS=[
  {item:'Fries',uom:'pouch',price:550,supplier:'Unverified snack supplier',notes:'Handwritten 11-21: ₱550 appears on note; amount and unit need confirmation',piecesPerPack:1,packPrice:550,pieceUOM:'pc',barcode:''}
 ];
 const AUTOCOMPLETE_STARTERS=[
- {item:'Bigas',uom:'kg',price:'',supplier:'',notes:'Enter supplier price manually; no verified rice price uploaded yet',piecesPerPack:1,pieceUOM:'kg',packPrice:0,barcode:''}
+ {item:'Bigas',uom:'PER SAC',price:1150,supplier:'',notes:'Price shown on VG PO screenshot 2026-11-22; shared price master',piecesPerPack:1,pieceUOM:'PER SAC',packPrice:1150,barcode:''}
 ];
 const $=id=>document.getElementById(id), STORAGE='vg-pr-supplier-cost-catalog-v1';
 let catalog;
@@ -225,7 +225,9 @@ try{
   }
   try{localStorage.setItem(extraMarker,'1')}catch(e){}
  }
- if(!catalog.some(x=>x.item.toLowerCase()==='bigas'))catalog.push({...AUTOCOMPLETE_STARTERS[0]});
+ const existingBigas=catalog.find(x=>String(x.item).toLowerCase()==='bigas'&&(x.price===''||x.price==null||Number(x.price)===0));
+ if(existingBigas)Object.assign(existingBigas,AUTOCOMPLETE_STARTERS[0]);
+ else if(!catalog.some(x=>String(x.item).toLowerCase()==='bigas'))catalog.push({...AUTOCOMPLETE_STARTERS[0]});
  // Upgrade previously saved Puregold starter records without replacing customized costs.
  for(const item of catalog){
   if(item.piecesPerPack!==undefined)continue;
