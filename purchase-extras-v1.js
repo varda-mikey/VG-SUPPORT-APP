@@ -42,7 +42,8 @@ function updateQuick(){
   }
   for(const field of ['qty','unitPrice']){
    const td=document.createElement('td'),input=document.createElement('input');input.type='number';input.step=field==='qty'?'any':'.01';input.min='0';input.style.width='95px';input.value=getRowValue(row,field);input.disabled=locked;
-   input.addEventListener('input',()=>{const original=row.querySelector('[data-field="'+field+'"]');if(!original)return;original.value=input.value;if(field==='qty'&&poMode==='automatic')row.dataset.qtyOverride='true';delete row.dataset.legacy;totals();const amount=row.querySelector('[data-field="amount"]');tr.lastElementChild.textContent=amount?.value?Number(amount.value).toFixed(2):'—';$('quickTotal').textContent='GRAND TOTAL: '+$('total').value;$('status').textContent='Unsaved edits — save draft or submit for approval.';});
+   input.addEventListener('input',()=>{const original=row.querySelector('[data-field="'+field+'"]');if(!original)return;original.value=input.value;if(field==='unitPrice')original.dataset.dirtyPrice='true';if(field==='qty'&&poMode==='automatic')row.dataset.qtyOverride='true';delete row.dataset.legacy;totals();const amount=row.querySelector('[data-field="amount"]');tr.lastElementChild.textContent=amount?.value?Number(amount.value).toFixed(2):'—';$('quickTotal').textContent='GRAND TOTAL: '+$('total').value;$('status').textContent='Unsaved edits — save draft or submit for approval.';});
+   if(field==='unitPrice')input.addEventListener('blur',()=>{const original=row.querySelector('[data-field="unitPrice"]');if(original)original.dispatchEvent(new Event('focusout',{bubbles:true}))});
    td.append(input);tr.append(td);
   }
   const td=document.createElement('td');td.textContent=getRowValue(row,'amount')?Number(getRowValue(row,'amount')).toFixed(2):'—';tr.append(td);rows.append(tr);
