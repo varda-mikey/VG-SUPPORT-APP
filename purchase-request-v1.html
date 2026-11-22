@@ -209,8 +209,17 @@ function normalize(x){
  const packPrice=Number(x.packPrice);
  return {...x,piecesPerPack,packPrice:Number.isFinite(packPrice)&&packPrice>=0?packPrice:Number(x.price)||0,pieceUOM:String(x.pieceUOM||'pc').trim()||'pc'};
 }
-function rate(x){const n=normalize(x);if(n.piecesPerPack>1)return {price:Number((n.packPrice/n.piecesPerPack).toFixed(2)),uom:n.pieceUOM,label:'PER PC (from '+n.piecesPerPack+' pcs/pack)'};
- return {price:Number(n.price),uom:n.uom,label:/^pc/i.test(n.uom)?'PER PC':(/^kg$/i.test(n.uom)?'PER KG':(/^tali$/i.test(n.uom)?'PER TALI':(/^l$/i.test(n.uom)?'PER LITER':(/^tub$/i.test(n.uom)?'PER TUB':'PER PACK / UNIT')))};
+function rate(x){
+ const n=normalize(x);
+ if(n.piecesPerPack>1)return {price:Number((n.packPrice/n.piecesPerPack).toFixed(2)),uom:n.pieceUOM,label:'PER PC (from '+n.piecesPerPack+' pcs/pack)'};
+ const u=String(n.uom).toLowerCase();
+ let label='PER PACK / UNIT';
+ if(u.startsWith('pc'))label='PER PC';
+ else if(u==='kg')label='PER KG';
+ else if(u==='tali')label='PER TALI';
+ else if(u==='l')label='PER LITER';
+ else if(u==='tub')label='PER TUB';
+ return {price:Number(n.price),uom:n.uom,label};
 }
 function addButton(text,fn,cls=''){const b=document.createElement('button');b.type='button';b.textContent=text;b.className=cls;b.addEventListener('click',fn);return b}
 function render(){
