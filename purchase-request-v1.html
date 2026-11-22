@@ -138,13 +138,23 @@ const BASE=[
 const packedNames=new Set(['Nips M-C SB','Chocomucho','Whattatops Vanios']);
 BASE.forEach(x=>{
  x.piecesPerPack=1;
- x.pieceUOM=/\\b(kg|g|mL|L|can)\\b/i.test(x.uom)?'pc ('+x.uom+')':(packedNames.has(x.item)?'pack':'pc');
+ x.pieceUOM=(/(kg|g|ml|can)/i.test(x.uom))?'pc ('+x.uom+')':(packedNames.has(x.item)?'pack':'pc');
  x.packPrice=x.price;
  if(!packedNames.has(x.item))x.uom=x.pieceUOM;
 });
 const $=id=>document.getElementById(id), STORAGE='vg-pr-supplier-cost-catalog-v1';
 let catalog;
-try{const stored=JSON.parse(localStorage.getItem(STORAGE)||'null');catalog=Array.isArray(stored)?stored:BASE.map(x=>({...x}));}catch(e){catalog=BASE.map(x=>({...x}));}
+try{
+ const stored=JSON.parse(localStorage.getItem(STORAGE)||'null');
+ catalog=Array.isArray(stored)?stored:BASE.map(x=>({...x}));
+ // Upgrade previously saved Puregold starter records without replacing customized costs.
+ for(const item of catalog){
+  if(item.piecesPerPack!==undefined)continue;
+  const starter=BASE.find(x=>x.item===item.item&&x.supplier===item.supplier);
+  if(starter){item.piecesPerPack=1;item.pieceUOM=starter.pieceUOM;item.packPrice=item.price;
+    if(!packedNames.has(item.item))item.uom=starter.uom;}
+ }
+}catch(e){catalog=BASE.map(x=>({...x}));}
 function store(){try{localStorage.setItem(STORAGE,JSON.stringify(catalog));}catch(e){$('catalogCount').textContent='Storage full: export your catalog CSV to back up changes.'}}
 function money(n){return '₱'+Number(n).toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2})}
 function normalize(x){
