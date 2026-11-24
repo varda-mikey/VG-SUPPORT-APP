@@ -163,13 +163,12 @@ button{
 
     <div class="card"><div class="icon">🏢</div><h2>Organizational Chart Maker</h2><p>Flexible Varda branch organization chart with direct preview editing, photos, department lines, column control, and Left/Right/Down placement tools.</p><button onclick="openSystem('orgchart','Organizational Chart Maker')">Open Org Chart</button></div>
 
-    <div class="card"><div class="icon">🍽️</div><h2>Catering Form Maker</h2><p>Create catering service requests, automatic costing and analysis, editable previews, school themes, signatures, and print/PDF-ready forms.</p><button onclick="openSystem('catering','Catering Form Maker')">Open Catering Form Maker</button></div>
 
     <div class="card"><div class="icon">📋</div><h2>VARDA GROUP RETAIL AUDIT</h2><p>Main Canteen and Kiosk audits with monthly sales, daily average, leftovers, compliance scoring, corrective actions, print and JPEG summary.</p><button onclick="openSystem('retail-audit','VARDA GROUP RETAIL AUDIT')">Open Retail Audit</button><button onclick="openSystem('retail-cpar','AUDIT & CPAR DASHBOARD')">Audit & CPAR Dashboard</button></div>
     <div class="card"><div class="icon">⚖️</div><h2>Varda Policy & V-Points</h2><p>Find the matching VARDA ACT policy and points, create Incident Reports and NTEs, or securely view employee policy acknowledgments by branch.</p><div class="cardActions"><button onclick="openSystem('policy','Varda Policy & V-Points')">Open Policy Finder</button><button class="viewAcknowledgments" onclick="window.open('https://varda-mikey.github.io/VARDA-POLICY/?admin=1','_blank','noopener,noreferrer')">View All Acknowledgments</button></div></div>
     <div class="card"><div class="icon">📊</div><h2>Employee Appraisal</h2><p>Shared live position weights across every device, automatic 100% balancing, job-description summary, criterion remarks, performance impact, merit guidance, and a three-page executive printout.</p><button onclick="openSystem('appraisal','Employee Appraisal')">Open Employee Appraisal</button></div>
 
-    <div class="card"><div class="icon">🍽️</div><h2>Varda Group Catering Form</h2><p>Create the Catering Form alone, with an automatic SOA, or with both SOA and Acknowledgement of Payment—all from one encoding.</p><button onclick="openSystem('catering','Varda Group Catering Form')">Open Varda Group Catering Form</button></div>
+    <div class="card"><div class="icon">🍽️</div><h2>Varda Group Catering Form</h2><p>Budget-based packages, menu shuffle and customization, catering quotation, SOA and Acknowledgement of Payment—all in one system.</p><button onclick="openSystem('catering','Varda Group Catering Form')">Open Varda Group Catering Form</button></div>
     <div class="card"><div class="icon">🎟️</div><h2>Voucher Maker</h2><p>Create school-themed gift, meal, drink, snack, food, and special vouchers with automatic numbering, flexible validity, one-time or accumulated use, cashier controls, and A4 print presets.</p><button onclick="openSystem('voucher','Voucher Maker')">Open Voucher Maker</button></div>
     <div class="card"><div class="icon">🏆</div><h2>C.E.R.A.P. Certificate Maker</h2><p>Create editable, print-ready certificates with branch, date, font, and approver controls.</p><button onclick="openSystem('cerap','C.E.R.A.P. Certificate Maker')">Open Certificate Maker</button></div>
 
@@ -235,7 +234,7 @@ function openSystem(key,title){
   else if(key==='purchase-request') frame.src='purchase-request-v1.html?v=17';
   else if(key==='utility') frame.src='utility-v2.html?v=3';
   else if(key==='schedule') frame.src='schedule-v2.html?v=20261026-whole-hours';
-  else if(key==='catering') frame.src='catering-v1.html?v=3';
+  else if(key==='catering') frame.src='catering-v1.html?v=4';
   else if(key==='retail-cpar') frame.src='retail-audit-dashboard.html?v=9';
   else if(key==='retail-audit') frame.src='retail-audit-v1.html?v=11';
   else if(key==='policy') frame.src='policy-v1.html?v=6';
@@ -295,7 +294,7 @@ const mapping={
 "Monthly Payables Reminder Creator":2,"Utility Billing & SOA":2,"Business Document Suite":2,
 "Grocery Price Tag Maker":3,"Price Tag Maker":3,"Pinggang Pinoy Tag Maker":3,"Christmas Price Tag Maker":3,"Athlete Price Tag":3,"FSQA Tag Maker":3,"Varda ID Maker":3,"Card Maker":3,"C.E.R.A.P. Certificate Maker":3,"Varda TV System":3,
 "Kapirata / Pirates Admin":4,"Voucher Maker":4,"Welcome Employee Poster Creator":4,
-"Leader Daily Output Checklist":5,"Generals & Missions":5,"Staff Schedule Maker":5,"Weekly Menu Cycle":5,"Catering Form Maker":5,"VARDA GROUP RETAIL AUDIT":5,"Varda Group Catering Form":5,
+"Leader Daily Output Checklist":5,"Generals & Missions":5,"Staff Schedule Maker":5,"Weekly Menu Cycle":5,"VARDA GROUP RETAIL AUDIT":5,"Varda Group Catering Form":5,
 "Memorandum Maker":6,"Organizational Chart Maker":6,"Varda Policy & V-Points":6,"Employee Appraisal":6
 };
 const cards=[...grid.children].filter(el=>el.classList.contains("card"));
