@@ -232,7 +232,8 @@ const PUREGOLD_RECEIPT_20261122=[{"item":"Lucky Me! Go Cup Noodles 70g","uom":"p
 const PUREGOLD_ALIASES=[["Lucky Me! Pancit Canton Hot Chili 80g Multipack","Lucky Me! Pancit Canton Hot Chili 75g x 6"],["Bear Brand Sterilized Milk Multipack","Bear Brand Sterilized Milk 200ml Multipack"],["Nescafé Creamy White Multipack","Nescafé Creamy White 22g Multipack"],["Papa Banana Ketchup 320g (verify pack)","Del Monte Pablits 432g (verify label)"],["Royal Tru Orange 325ml (alternate code)","Royal Tru Lemon 325ml"],["Coke Zero 325ml","Coca-Cola Zero 325ml"]];
 function pgName(x){return String(x||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'');}
 function pgMatch(x,y){return pgName(x.supplier)==='puregold'&&pgName(y.supplier)==='puregold'&&((x.barcode&&y.barcode&&String(x.barcode)===String(y.barcode))||pgName(x.item)===pgName(y.item)||PUREGOLD_ALIASES.some(([o,n])=>pgName(x.item)===pgName(o)&&pgName(y.item)===pgName(n)));}
-function reconcilePuregold(){for(const incoming of PUREGOLD_RECEIPT_20261122){const matches=catalog.filter(x=>pgMatch(x,incoming));const prior=matches.find(x=>pgName(x.item)===pgName(incoming.item)&&!String(x.notes||'').includes('Receipt reference'));catalog=catalog.filter(x=>!pgMatch(x,incoming));catalog.push({...incoming});}}
+function dedupePuregold(){const seen=[];catalog=catalog.filter(x=>{if(pgName(x.supplier)!=='puregold')return true;if(seen.some(y=>pgMatch(x,y)||pgMatch(y,x)))return false;seen.push(x);return true;});}
+function reconcilePuregold(){for(const incoming of PUREGOLD_RECEIPT_20261122){const matches=catalog.filter(x=>pgMatch(x,incoming));const prior=matches.find(x=>pgName(x.item)===pgName(incoming.item)&&!String(x.notes||'').includes('Receipt reference'));catalog=catalog.filter(x=>!pgMatch(x,incoming));catalog.push({...incoming});}dedupePuregold();}
 // Receipt provides line-item prices, not internal piece counts of multipacks.
 // Single retail packs, cans and bottles count as one piece; ambiguous packs stay PACK.
 const packedNames=new Set(['Nips M-C SB','Chocomucho','Whattatops Vanios']);
@@ -332,6 +333,7 @@ function rate(x){
 }
 function addButton(text,fn,cls=''){const b=document.createElement('button');b.type='button';b.textContent=text;b.className=cls;b.addEventListener('click',fn);return b}
 function render(){
+dedupePuregold();
 const query=$('catalogSearch').value.trim().toLowerCase(),wrap=$('catalogResults');wrap.replaceChildren();
 const matches=catalog.map((x,i)=>({...x,index:i})).filter(x=>([x.item,x.uom,x.supplier,x.barcode,x.notes].join(' ').toLowerCase()).includes(query));
 for(const x of matches){const line=document.createElement('div');line.className='catalogResult';
