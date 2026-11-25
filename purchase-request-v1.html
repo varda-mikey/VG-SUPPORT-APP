@@ -333,7 +333,7 @@ function rate(x){
 function addButton(text,fn,cls=''){const b=document.createElement('button');b.type='button';b.textContent=text;b.className=cls;b.addEventListener('click',fn);return b}
 function render(){
 const query=$('catalogSearch').value.trim().toLowerCase(),wrap=$('catalogResults');wrap.replaceChildren();
-const matches=catalog.map((x,i)=>({...x,index:i})).filter(x=>([x.item,x.uom,x.supplier,x.barcode,x.notes].join(' ').toLowerCase()).includes(query)).slice(0,100);
+const matches=catalog.map((x,i)=>({...x,index:i})).filter(x=>([x.item,x.uom,x.supplier,x.barcode,x.notes].join(' ').toLowerCase()).includes(query));
 for(const x of matches){const line=document.createElement('div');line.className='catalogResult';
 const desc=document.createElement('div'),name=document.createElement('strong');name.textContent=x.item;desc.append(name);
 const sub=document.createElement('small');const r=rate(x);
@@ -351,7 +351,8 @@ for(const [k,v] of [['description',x.item],['unit',r.uom],['unitPrice',x.price==
  const el=row.querySelector('[data-field="'+k+'"]');if(el)el.value=v
 }
 const remarks=row.querySelector('[data-field="remarks"]');
-if(remarks&&x.supplier)remarks.value='Supplier: '+x.supplier+(x.notes?' | '+x.notes:'');
+// Keep remarks user-entered only; supplier metadata is separate.
+row.dataset.catalogSupplier=x.supplier||'';
 delete row.dataset.legacy;totals();resize();
 window.dispatchEvent(new Event('vg-catalog-item-added'));
 $('status').textContent=x.item+' selected. Enter quantity'+(x.price===''?' and price':'')+' then save or submit.';
@@ -496,7 +497,7 @@ function currentPOPrices(){
   const remarks=v('remarks');
   const match=remarks.match(new RegExp('Supplier:\\s*([^|]+)','i'));
   const item=v('description'),uom=v('unit'),price=v('unitPrice');
-  return {item,uom,price,supplier:(match?.[1]||document.getElementById('supplier')?.value||'').trim(),
+  return {item,uom,price,supplier:(row.dataset.catalogSupplier||match?.[1]||document.getElementById('supplier')?.value||'').trim(),
    notes:'VG Purchase Order shared price update',barcode:'',piecesPerPack:1,packPrice:price,pieceUOM:uom||'pc'};
  }).filter(x=>x.item&&x.uom&&x.price!=='');
 }
