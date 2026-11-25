@@ -393,7 +393,7 @@ body.viewerMode .removeEvidence{display:none!important}
  <div style="margin-top:10px"><button type="button" id="downloadStorageSummary">⬇ Download All Report Records (CSV)</button><small class="storageMeta" style="display:block;margin-top:5px">CSV includes task submissions, remarks, acknowledgement reasons, and file inventory. Photos/videos are NOT included. Keep separate verified copies before deleting evidence.</small></div>
  <div id="headPendingReasons" style="margin-top:14px"></div>
  <p class="storageMeta">1 GB is the Supabase Free-plan storage reference, not a confirmed quota for your account. Uploaded files only; database size and billing-period averages are separate.</p>
- </section><div id="headActivity" class="headActivity"></div><div class="layout"><aside class="panel"><div class="heading"><h2>Leaders</h2><button id="addLeader" class="main">+ Add</button></div><p class="muted">Select a leader to review outputs. Copy their private personal link for phone submissions.</p><label class="muted" style="display:flex;align-items:center;gap:8px;margin:10px 0"><input type="checkbox" id="showArchivedLeaders"> Show archived leaders</label><div class="people" id="people"></div><button id="archiveLeader" class="danger" style="margin-top:10px">Archive selected leader</button><button id="editLeader" style="margin-top:10px">Edit selected leader</button><button id="rotate" style="margin-top:10px">Reset personal link</button></aside><section class="panel"><div class="heading"><div><h2 id="leaderName">Select leader</h2><div id="leaderMeta" class="muted"></div></div><div class="actions"><button type="button" id="openAddTask" class="main">＋ Add Task</button><button id="copyLink" class="main">Copy personal link</button></div></div><div id="stats" class="kpis"></div><div id="headSelectedSummary" class="headSelectedSummary"></div><p class="viewerReadOnly muted">View-only access · Editing and grading are disabled. Private reports are for authorized management viewing.</p><div id="addTaskBoard" class="addTaskBoard hide"><h3 style="margin:0">Add task for selected leader</h3><label>Task name<input id="newTaskTitle" placeholder="Describe the daily duty"></label><label>Category<input id="newTaskCategory" placeholder="Example: Operations"></label><label>Task type<select id="newTaskType"><option value="regular">Regular — repeat every day</option><option value="special">Special Mission — until submitted</option><option value="single">One-day task — selected date only</option></select></label><div class="dateOnlyNotice" id="addScheduleNote">Regular duty begins on <strong id="addDateLabel">selected date</strong> and returns every day with a fresh report.</div><div class="inlineActions"><button type="button" class="main" id="submitNewTask">Save New Task</button><button type="button" id="cancelNewTask">Cancel</button></div><small id="newTaskMessage" class="muted"></small></div><div id="tasks" class="tasks"><p class="muted">Select a leader.</p></div><div id="historyPanel" class="history"><div class="heading"><h3>Saved reports by date</h3><button id="historyRefresh">Load History</button></div><div class="archiveControls"><label>Year<select id="archiveYear"></select></label><label>Month<select id="archiveMonth"></select></label><button id="archiveToday">Today</button><button id="deleteReportDay" class="danger">Delete Selected Day</button></div><p class="muted">Saved automatically by Year → Month → Date. Select any date to view its report and attached proof.</p><div id="archiveSummary" class="archiveSummary"></div><div id="historyDays" class="calendarDays"></div><p class="muted">Green = submitted, yellow = partial, red = no daily report, faded = future. Deletion is permanent and reserved for the National Retail Head.</p></div><p id="message" role="status"></p></section></div>
+ </section><div id="headActivity" class="headActivity"></div><div class="layout"><aside class="panel"><div class="heading"><h2>Leaders</h2><button id="addLeader" class="main">+ Add</button></div><p class="muted">Select a leader to review outputs. Copy their private personal link for phone submissions.</p><label class="muted" style="display:flex;align-items:center;gap:8px;margin:10px 0"><input type="checkbox" id="showArchivedLeaders"> Show archived leaders</label><div class="people" id="people"></div><button id="archiveLeader" class="danger" style="margin-top:10px">Archive selected leader</button><button id="editLeader" style="margin-top:10px">Edit selected leader</button><button id="rotate" style="margin-top:10px">Reset personal link</button></aside><section class="panel"><div class="heading"><div><h2 id="leaderName">Select leader</h2><div id="leaderMeta" class="muted"></div></div><div class="actions"><button type="button" id="openAddTask" class="main">＋ Add Task</button><button id="copyLink" class="main">Copy personal link</button></div></div><div id="stats" class="kpis"></div><div id="headSelectedSummary" class="headSelectedSummary"></div><div id="absenceHeadPanel"></div><p class="viewerReadOnly muted">View-only access · Editing and grading are disabled. Private reports are for authorized management viewing.</p><div id="addTaskBoard" class="addTaskBoard hide"><h3 style="margin:0">Add task for selected leader</h3><label>Task name<input id="newTaskTitle" placeholder="Describe the daily duty"></label><label>Category<input id="newTaskCategory" placeholder="Example: Operations"></label><label>Task type<select id="newTaskType"><option value="regular">Regular — repeat every day</option><option value="special">Special Mission — until submitted</option><option value="single">One-day task — selected date only</option></select></label><div class="dateOnlyNotice" id="addScheduleNote">Regular duty begins on <strong id="addDateLabel">selected date</strong> and returns every day with a fresh report.</div><div class="inlineActions"><button type="button" class="main" id="submitNewTask">Save New Task</button><button type="button" id="cancelNewTask">Cancel</button></div><small id="newTaskMessage" class="muted"></small></div><div id="tasks" class="tasks"><p class="muted">Select a leader.</p></div><div id="historyPanel" class="history"><div class="heading"><h3>Saved reports by date</h3><button id="historyRefresh">Load History</button></div><div class="archiveControls"><label>Year<select id="archiveYear"></select></label><label>Month<select id="archiveMonth"></select></label><button id="archiveToday">Today</button><button id="deleteReportDay" class="danger">Delete Selected Day</button></div><p class="muted">Saved automatically by Year → Month → Date. Select any date to view its report and attached proof.</p><div id="archiveSummary" class="archiveSummary"></div><div id="historyDays" class="calendarDays"></div><p class="muted">Green = submitted, yellow = partial, red = no daily report, faded = future. Deletion is permanent and reserved for the National Retail Head.</p></div><p id="message" role="status"></p></section></div>
 <section id="manage" class="panel manage hide"><div class="heading"><h2>Customize selected leader's checklist</h2><button id="addTask" class="main">+ Add output task</button></div><p class="muted">Add, edit or remove duties for the selected leader only. Other leaders' forms do not change. Earlier submissions stay in their records.</p><div id="taskEditor"></div><button id="closeManage">Done editing</button></section></section>
 <section id="leaderView" class="hide"><div class="panel leaderBanner"><small>MY PERSONAL DAILY DASHBOARD</small><h2 id="myName"></h2><p class="muted" id="myMeta"></p><div class="toolbar"><label>Work date<input id="myDay" type="date"></label><button id="myToday">Today / New Daily Checklist</button><button id="myRefresh">↻ Refresh</button></div><div class="leaderSteps"><span>① Isulat ang ginawa mo</span><span>② Piliin ang photo proof</span><span>③ Tap SUBMIT &amp; SAVE</span></div><p class="hint">📱 <b>Madali lang:</b> Ilagay ang remarks at pictures ng actual work. Tap ang green <b>SUBMIT &amp; SAVE TASK</b>. Makikita mo ang Uploading at Verified status. Automatic ding makikita ng Head ang naisave.</p><div id="leaderProgress" aria-live="polite"></div><button type="button" id="approvedOpenAgain" class="approvedReportAgain hide">✓ View 100% Completed Daily Report</button><p class="syncBadge" id="leaderSync">● Live sync</p></div><div id="myTasks" class="tasks"></div>
 <section class="leaderExport" aria-labelledby="leaderExportTitle">
@@ -409,7 +409,7 @@ body.viewerMode .removeEvidence{display:none!important}
   </div>
  </div>
 </section>
-<p id="myMessage" role="status"></p></section>
+<div id="absenceLeaderPanel" style="margin:12px 0;padding:12px;border:1px solid #d5d5d5;border-radius:10px"></div><p id="myMessage" role="status"></p></section>
 <div id="pendingPopup" class="pendingBackdrop hide" role="dialog" aria-modal="true" aria-labelledby="pendingTitle">
  <div class="pendingDialog">
   <small style="font-weight:800;color:#9b5d22">PREVIOUS-DAY DUTY REVIEW</small>
@@ -427,7 +427,7 @@ body.viewerMode .removeEvidence{display:none!important}
     <p class="pendingChoiceHelp">Go back to yesterday. Upload the missing photo proof and select <b>SUBMIT &amp; SAVE TASK</b> for every pending duty. You can proceed to today's tasks after all required evidence is saved.</p>
    </div>
    <div class="pendingChoiceBlock warningChoice">
-    <button type="button" id="pendingAcknowledge">⚠ Acknowledge Unfinished Duties &amp; Submit Reason</button>
+    <button type="button" id="pendingAbsent" style="margin:8px 0">Mark Me as Absent Yesterday — for Head review</button><button type="button" id="pendingAcknowledge">⚠ Acknowledge Unfinished Duties &amp; Submit Reason</button>
     <p class="pendingChoiceHelp">Your explanation will be saved, unfinished tasks will be marked <b>Incomplete</b> for Head review, and the record may affect attendance validation after HR checks your actual work and attendance. <b>This does not automatically mark you absent.</b> You may proceed to today's checklist after acknowledgement.</p>
    </div>
   </div>
@@ -611,6 +611,25 @@ function requiredTaskPopup(missing,card){
 const status=x=>({pending:'Not reviewed',complete:'Complete',incomplete:'Incomplete','no-output':'No output',na:'N/A',working:'In progress',submitted:'Submitted'})[x]||x;
 const leaderTasks=(id)=>data.tasks.filter(t=>t.leader_id===id);
 const taskDay=(task,day)=>task?.work_date?day:task?.frequency==='monthly'?day.slice(0,7)+'-01':day;
+const absenceFor=(id,day,source=data)=>(source.absences||[]).find(a=>a.leader_id===id&&a.work_date===day);
+const acknowledgedFor=(id,day,source=data)=>(source.acknowledgements||[]).some(a=>a.leader_id===id&&a.work_date===day);
+const meaningful=(e,files)=>!!(e.id&&(String(e.leader_note||'').trim()||['working','submitted'].includes(e.leader_status)||files.some(f=>f.entry_id===e.id)));
+const absenceLabel=a=>a.status==='confirmed'?'Absent — confirmed':a.status==='rejected'?'Absence rejected':'Absence — pending Head review';
+async function requestAbsence(day,reason){
+ if(!day||day>today())throw Error('Choose today or a past date.');
+ if(!reason||reason.trim().length<5)throw Error('Enter an absence reason of at least 5 characters.');
+ if(!confirm('Declare absence for '+day+'? This is subject to Head review and does not delete any reports.'))return false;
+ await api('absence_request',{day,reason:reason.trim()});return true;
+}
+$('pendingAbsent').onclick=async()=>{const btn=$('pendingAbsent');btn.disabled=true;try{if(await requestAbsence(pendingDay,$('pendingReason').value)){lastPendingReview=today();pendingTasksToFinish=[];showPendingResult('acknowledged','Absence request saved for '+pendingDay+'. Subject to Head confirmation. You may proceed to today.')}}catch(e){$('pendingError').textContent=e.message}finally{btn.disabled=false}};
+function renderAbsenceLeader(id,day){
+ const el=$('absenceLeaderPanel'),a=absenceFor(id,day);el.innerHTML=a?'<strong>'+enc(absenceLabel(a))+'</strong><p>'+enc(a.reason)+'</p><small>'+enc(a.review_note||'Subject to Head confirmation')+'</small>':day>today()?'':'<button type="button" id="markAbsent">Mark Me as Absent — '+enc(day)+'</button><small style="display:block">Subject to Head confirmation. Existing reports will remain saved.</small>';
+ if($('markAbsent'))$('markAbsent').onclick=async()=>{const reason=prompt('Why were you absent on '+day+'?');if(reason===null)return;try{if(await requestAbsence(day,reason)){await load();say('Absence request saved for Head review.')}}catch(e){say(e.message)}};
+}
+function renderAbsenceHead(id,day){
+ const el=$('absenceHeadPanel'),a=absenceFor(id,day);el.innerHTML=a?'<div style="padding:12px;border:1px solid #d2ae63;margin:8px 0;border-radius:8px"><strong>'+enc(absenceLabel(a))+'</strong><p>'+enc(a.reason)+'</p><small>'+enc(a.review_note||'')+'</small>'+(!isViewer&&a.status==='pending'?'<div><button id="confirmAbsent" type="button">Confirm absence</button> <button id="rejectAbsent" type="button">Reject absence</button></div>':'')+'</div>':'';
+ for(const [key,status] of [['confirmAbsent','confirmed'],['rejectAbsent','rejected']])if($(key))$(key).onclick=async()=>{const note=prompt('Enter Head review remarks:');if(!note?.trim())return;try{await api('absence_review',{leader_id:id,day,status,note});await load();say('Absence '+status)}catch(e){say(e.message)}};
+}
 const verifiedSubmission=(e,files=data.files)=>!!(e?.id&&e.leader_status==='submitted'&&String(e.leader_note||'').trim()&&files.some(f=>f.entry_id===e.id));
 const effectiveLeaderStatus=e=>e?.leader_status==='submitted'&&!verifiedSubmission(e)?'working':(e?.leader_status||'pending');
 const taskSubmission=(leaderId,day)=>{
@@ -637,9 +656,9 @@ function quietLiveRefresh(){
    [counts.active,counts.saved,counts.received,counts.submitted,counts.files].forEach((val,i)=>{if(stats[i])stats[i].textContent=String(val)});
    $('people').querySelectorAll('[data-person]').forEach(el=>{
     const leader=data.leaders.find(l=>l.id===el.dataset.person);if(!leader)return;
-    const c=leaderDailyCounts(leader,day),flag=c.submitted===c.total&&c.total?'done':c.saved?'saved':'none';
+    const c=leaderDailyCounts(leader,day),flag=c.absence&&c.absence.status!=='rejected'?'some':c.submitted===c.total&&c.total?'done':c.saved||c.ack?'some':'none';
     const chip=el.querySelector('.leaderStatus'),saved=el.querySelector('.leaderSaved');
-    if(chip){chip.className='leaderStatus '+flag;chip.textContent=leader.active===false?'ARCHIVED':c.submitted===c.total&&c.total?'All tasks submitted':c.received?'Proof: '+c.received+'/'+c.total+' tasks':c.saved?'Saved '+c.saved+'/'+c.total+' tasks':'No saved tasks'}
+    if(chip){chip.className='leaderStatus '+flag;chip.textContent=leader.active===false?'ARCHIVED':c.absence&&c.absence.status!=='rejected'?absenceLabel(c.absence):c.submitted===c.total&&c.total?'All tasks submitted':c.ack?'Acknowledged incomplete':c.received?'Proof: '+c.received+'/'+c.total+' tasks':c.saved?'Saved '+c.saved+'/'+c.total+' tasks':'No saved tasks'}
     if(saved){saved.textContent=c.submitted+'/'+c.total+' submitted · '+c.files+' uploaded file(s) · Last saved: '+(c.lastUpdate?new Date(c.lastUpdate).toLocaleTimeString('en-PH',{timeZone:'Asia/Manila',hour:'numeric',minute:'2-digit'}):'—')}
    });
    const leader=data.leaders.find(l=>l.id===selected);
@@ -726,11 +745,11 @@ function leaderDailyCounts(l,day){
  const tasks=leaderTasks(l.id),applicable=tasks.map(t=>({task:t,date:taskDay(t,day)}));
  const entries=applicable.map(x=>entry(l.id,x.task.id,x.date));
  const taskCounts=taskSubmission(l.id,day),submitted=taskCounts.submitted;
- const saved=entries.filter(e=>!!e.id).length;
+ const saved=entries.filter(e=>meaningful(e,data.files)).length; const ack=acknowledgedFor(l.id,day); const absence=absenceFor(l.id,day);
  const files=entries.reduce((n,e)=>n+(e.id?data.files.filter(f=>f.entry_id===e.id).length:0),0);
  const photos=entries.reduce((n,e)=>n+(e.id?data.files.filter(f=>f.entry_id===e.id&&f.mime?.startsWith('image/')).length:0),0);
  const lastUpdate=entries.filter(e=>e.updated_at).sort((a,b)=>String(b.updated_at).localeCompare(String(a.updated_at)))[0]?.updated_at;
- return {total:tasks.length,submitted,received:taskCounts.received,saved,files,photos,lastUpdate};
+ return {total:tasks.length,submitted,received:taskCounts.received,saved,files,photos,lastUpdate,ack,absence};
 }
 function renderHead(){
  renderReportPicker();
@@ -747,8 +766,8 @@ function renderHead(){
  let visible=data.leaders.filter(l=>($('showArchivedLeaders').checked||l.active!==false)&&(!$('region').value||l.area===$('region').value));
  $('people').innerHTML=visible.map(l=>{
   const c=leaderDailyCounts(l,day);
-  const flag=c.submitted&&c.submitted===c.total?'done':c.saved||c.files?'saved':'none';
-  const label=l.active===false?'ARCHIVED':c.submitted===c.total&&c.total?'All tasks submitted':c.received?'Proof: '+c.received+'/'+c.total+' tasks':c.saved?'Saved '+c.saved+'/'+c.total+' tasks':'No saved tasks';
+  const flag=c.absence&&c.absence.status!=='rejected'?'some':c.submitted&&c.submitted===c.total?'done':c.saved||c.files||c.ack?'some':'none';
+  const label=l.active===false?'ARCHIVED':c.absence&&c.absence.status!=='rejected'?absenceLabel(c.absence):c.submitted===c.total&&c.total?'All tasks submitted':c.ack?'Acknowledged incomplete':c.received?'Proof: '+c.received+'/'+c.total+' tasks':c.saved?'Saved '+c.saved+'/'+c.total+' tasks':'No saved tasks';
   const recent=c.lastUpdate?new Date(c.lastUpdate).toLocaleTimeString('en-PH',{timeZone:'Asia/Manila',hour:'numeric',minute:'2-digit'}):'—';
   return '<button class="person '+(l.id===selected?'selected':'')+'" data-person="'+enc(l.id)+'"><strong>'+enc(l.name)+'</strong><small>'+enc(l.position)+' · '+enc(l.area)+'</small><span class="leaderStatus '+flag+'">'+enc(label)+'</span><span class="leaderSaved">'+c.submitted+'/'+c.total+' submitted · '+c.files+' uploaded file(s)<br>Last saved: '+enc(recent)+'</span></button>';
  }).join('')||'<p class="muted">No leaders match the selected region.</p>';
@@ -761,7 +780,7 @@ function renderHead(){
 }
 function renderSelected(){let leader=data.leaders.find(l=>l.id===selected);$('leaderName').textContent=leader?.name||'Select leader';$('leaderMeta').textContent=leader?[leader.position,leader.area,$('day').value].filter(Boolean).join(' • '):'';$('copyLink').disabled=!leader||leader.active===false;$('openAddTask').disabled=!leader;$('archiveLeader').disabled=!leader;$('archiveLeader').textContent=leader?.active===false?'Restore selected leader':'Archive selected leader';
 $('historyPanel').classList.toggle('hide',!leader);if(!leader){$('tasks').innerHTML='<p class="muted">Add or select a leader.</p>';$('stats').innerHTML='';return;}
-let counts=leaderDailyCounts(leader,$('day').value);$('headSelectedSummary').innerHTML='<strong>Photo proof received:</strong> '+counts.received+'/'+counts.total+' tasks · <strong>Formally submitted:</strong> '+counts.submitted+'/'+counts.total+' · '+counts.files+' file(s). '+(counts.saved&&!counts.files?'<strong>No photo evidence recorded for this date.</strong>':'')+'<br><span class="muted">A saved draft or in-progress task is visible even when not yet submitted. Check the selected date above if an expected report is missing.</span>';
+renderAbsenceHead(selected,$('day').value);let counts=leaderDailyCounts(leader,$('day').value);$('headSelectedSummary').innerHTML='<strong>Photo proof received:</strong> '+counts.received+'/'+counts.total+' tasks · <strong>Formally submitted:</strong> '+counts.submitted+'/'+counts.total+' · '+counts.files+' file(s). '+(counts.saved&&!counts.files?'<strong>No photo evidence recorded for this date.</strong>':'')+'<br><span class="muted">A saved draft or in-progress task is visible even when not yet submitted. Check the selected date above if an expected report is missing.</span>';
 let vals=leaderTasks(selected).map(t=>entry(selected,t.id,taskDay(t,$('day').value))),reviewed=vals.filter(x=>x.head_status&&!['pending','na'].includes(x.head_status)),point=reviewed.reduce((n,x)=>n+(x.head_status==='complete'?1:x.head_status==='incomplete'?.5:0),0),score=reviewed.length?Math.round(point/reviewed.length*100)+'%':'—';
 $('stats').innerHTML=[['Score',score],['Reviewed',reviewed.length+'/'+leaderTasks(selected).length],['Proof received',counts.received+'/'+counts.total],['Submitted',counts.submitted+'/'+counts.total]].map(([x,y])=>'<span><b>'+y+'</b>'+x+'</span>').join('');
 $('tasks').innerHTML=leaderTasks(selected).map(t=>{let v=entry(selected,t.id,taskDay(t,$('day').value));return taskCard(t,v,true)}).join('');wireTasks(true);}
@@ -1223,7 +1242,8 @@ async function renderHistory(){
    const submitted=recs.filter(e=>verifiedSubmission(e,historicalProof)).length,expected=Number(response.expected_task_counts?.[selected+'|'+d]??recs.length);
    let label,klass;
    if(d>todayStr){label='Upcoming';klass='future';upcoming++}
-   else if(!recs.length){label='No saved report';klass='missing';missingDays++}
+   else if(absenceFor(selected,d,response)&&absenceFor(selected,d,response).status!=='rejected'){label=absenceLabel(absenceFor(selected,d,response));klass='partial';partialDays++}
+   else if(!recs.some(e=>meaningful(e,historicalProof))&&!acknowledgedFor(selected,d,response)){label='No saved report';klass='missing';missingDays++}
    else if(expected>0&&submitted===expected){label='Submitted ('+submitted+')';klass='ok';submittedDays++}
    else{label=submitted+'/'+expected+' submitted';klass='partial';partialDays++}
    return '<button type="button" class="'+klass+(d===$('day').value?' current':'')+'" data-history="'+d+'" title="'+enc(d+' · '+label)+'">'+(i+1)+'<small>'+enc(label)+'</small></button>';
@@ -1244,7 +1264,7 @@ $('deleteReportDay').onclick=async()=>{
  try{const result=await api('report_delete_day',{leader_id:selected,day});await load(true);await renderHistory();say('Deleted '+result.deleted+' saved task records for '+leader.name+' on '+day+'.')}catch(e){say('Deletion failed: '+e.message)}
 };
 function renderLeader(){let l=data.leaders[0];if(!l){$('myName').textContent='Access unavailable';return;}$('myName').textContent=l.name;$('myMeta').textContent=l.position+' • '+l.area+' • '+$('myDay').value;const tasks=leaderTasks(l.id),totals=taskSubmission(l.id,$('myDay').value),done=totals.submitted;
- updateLeaderExportState(totals);$('leaderProgress').innerHTML='<b>'+done+' of '+tasks.length+' formally submitted</b> · <strong>'+totals.received+'/'+tasks.length+' with saved proof</strong> · '+(done===tasks.length?'✓ Completed for selected date':'Photos may already be saved even when the task needs final submission.');$('myTasks').innerHTML=tasks.map((t,i)=>{const v=entry(l.id,t.id,taskDay(t,$('myDay').value));return taskCard(t,v,false).replace('<article class="task"','<article class="task"').replace('<div class="taskHeading"><h3>','<div class="taskHeading"><h3>'+(i+1)+'. ').replace('</h3></div><div class="taskContent">','</h3></div><div class="taskState '+enc(v.leader_status||'pending')+'">'+enc(verifiedSubmission(v)?'✓ Submitted':v.leader_status==='submitted'?'⚠ Missing proof/remarks':v.leader_status==='working'?'In progress':'Not yet submitted')+'</div><div class="taskContent">')}).join('')||'<p>No active tasks.</p>';wireTasks(false);approvalState();checkPendingFinished();showDailyA4Reminder()}
+ renderAbsenceLeader(l.id,$('myDay').value);updateLeaderExportState(totals);$('leaderProgress').innerHTML='<b>'+done+' of '+tasks.length+' formally submitted</b> · <strong>'+totals.received+'/'+tasks.length+' with saved proof</strong> · '+(done===tasks.length?'✓ Completed for selected date':'Photos may already be saved even when the task needs final submission.');$('myTasks').innerHTML=tasks.map((t,i)=>{const v=entry(l.id,t.id,taskDay(t,$('myDay').value));return taskCard(t,v,false).replace('<article class="task"','<article class="task"').replace('<div class="taskHeading"><h3>','<div class="taskHeading"><h3>'+(i+1)+'. ').replace('</h3></div><div class="taskContent">','</h3></div><div class="taskState '+enc(v.leader_status||'pending')+'">'+enc(verifiedSubmission(v)?'✓ Submitted':v.leader_status==='submitted'?'⚠ Missing proof/remarks':v.leader_status==='working'?'In progress':'Not yet submitted')+'</div><div class="taskContent">')}).join('')||'<p>No active tasks.</p>';wireTasks(false);approvalState();checkPendingFinished();showDailyA4Reminder()}
 $('headToday').onclick=()=>{
  if(hasUnsavedChanges()&&!confirm('You have unsaved changes. Switch to today and all regions?'))return;
  $('day').value=today();$('region').value='';$('showArchivedLeaders').checked=false;selected='';load();
@@ -1608,8 +1628,9 @@ $('rpFrom').value=today().slice(0,7)+'-01';$('rpTo').value=today();
 $('rpAll').onclick=()=>{rpSelected=new Set(data.leaders.filter(l=>l.active!==false).map(l=>l.id));renderReportPicker()};
 $('rpNone').onclick=()=>{rpSelected=new Set();renderReportPicker()};
 function rpDates(a,b){let out=[],d=new Date(a+'T12:00:00'),last=new Date(b+'T12:00:00');for(let i=0;d<=last&&i<366;i++,d.setDate(d.getDate()+1))out.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'));return out}
-function rpStatusFor(entries,proofFiles,expected){
- if(!entries.length)return 'No Report';
+function rpStatusFor(entries,proofFiles,expected,absence,ack){
+ if(absence&&absence.status!=='rejected')return absenceLabel(absence);
+ if(!entries.some(e=>meaningful(e,proofFiles))&&!ack)return 'No Report';
  const submitted=entries.filter(e=>verifiedSubmission(e,proofFiles)).length;
  if(!submitted)return 'Draft / Incomplete';
  return expected>0&&submitted===expected?'Submitted':'Partial';
@@ -1628,7 +1649,7 @@ function rpCalendar(rows){
    for(let d=1;d<=count;d++){
     const record=days.get(d),isFuture=record&&record.date>today();
     const klass=!record?'out':isFuture?'future':record.status==='Submitted'?'done':record.status==='No Report'?'missing':'partial';
-    const word=!record?'':isFuture?'Upcoming':record.status==='Submitted'?'Done':record.status==='No Report'?'Missing':'Partial';
+    const word=!record?'':isFuture?'Upcoming':record.status==='Submitted'?'Done':record.status==='No Report'?'Missing':record.status.startsWith('Absent')||record.status.startsWith('Absence')?record.status:'Partial';
     cells.push('<div class="rpCalCell '+klass+'" title="'+enc(month+'-'+String(d).padStart(2,'0')+' · '+(record?.status||'Outside selected dates'))+'"><b>'+d+'</b><small>'+word+'</small></div>')
    }
    return '<div class="rpMonthTitle">'+enc(new Date(year,mm-1,1).toLocaleDateString('en-PH',{month:'long',year:'numeric'}))+'</div><div class="rpWeekdays">'+['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d=>'<span>'+d+'</span>').join('')+'</div><div class="rpCalendarDays">'+cells.join('')+'</div>'
@@ -1679,7 +1700,7 @@ $('rpRun').onclick=async()=>{
  $('rpPrint').disabled=true;$('rpCSV').disabled=true;
  try{
  const response=await api('report',{from,to}),records=(response.entries||[]),proofFiles=(response.evidence_entry_ids||[]).map(entry_id=>({entry_id}));
- rpRows=leaders.flatMap(l=>days.map(date=>{const entries=records.filter(e=>e.leader_id===l.id&&e.work_date===date);return {leader:l,date,entries,status:rpStatusFor(entries,proofFiles,Number(response.expected_task_counts?.[l.id+'|'+date]||0)),expected:Number(response.expected_task_counts?.[l.id+'|'+date]||0),submitted:entries.filter(e=>verifiedSubmission(e,proofFiles)).length,reviewed:entries.filter(e=>e.head_status&&!['pending','na'].includes(e.head_status)).length,score:rpPercent(entries)}}));
+ rpRows=leaders.flatMap(l=>days.map(date=>{const entries=records.filter(e=>e.leader_id===l.id&&e.work_date===date);return {leader:l,date,entries,status:rpStatusFor(entries,proofFiles,Number(response.expected_task_counts?.[l.id+'|'+date]||0),absenceFor(l.id,date,response),acknowledgedFor(l.id,date,response)),expected:Number(response.expected_task_counts?.[l.id+'|'+date]||0),submitted:entries.filter(e=>verifiedSubmission(e,proofFiles)).length,reviewed:entries.filter(e=>e.head_status&&!['pending','na'].includes(e.head_status)).length,score:rpPercent(entries)}}));
  const noReport=rpRows.filter(r=>r.status==='No Report').length;
  const overview='<h2>VARDA GROUP · CEO LEADER OUTPUT REPORT</h2><p>'+enc(from)+' to '+enc(to)+' · '+leaders.length+' leaders · '+days.length+' days</p><p><b>'+rpRows.filter(r=>r.status==='Submitted').length+'</b> fully submitted leader-days &nbsp; <b>'+noReport+'</b> days without saved submissions</p>';
  const detail=$('rpFormat').value==='detail',master=$('rpFormat').value==='master';
