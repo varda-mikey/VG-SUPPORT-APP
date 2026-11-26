@@ -574,6 +574,12 @@ async function checkPendingYesterday(force=false){
  pendingReviewBusy=true;
  try{
   const d=await api('pending_yesterday');pendingDay=d.day;
+  // NTE takes priority over the legacy unfinished-duty acknowledgement.
+  const response=await fetch('https://lwjeroszacnqibggxair.supabase.co/functions/v1/leader-compliance-gateway',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'list',leader:leaderToken,headToken:''})});
+  const compliance=await response.json();
+  if(!response.ok||compliance.error)throw Error(compliance.error||'Unable to verify NTE status');
+  const covered=(compliance.cases||[]).some(c=>['nte','non_nte'].includes(c.letter_type)&&['issued','returned','responded','cleared'].includes(c.status)&&(c.work_date===d.day||(compliance.case_dates||[]).some(x=>x.case_id===c.id&&x.work_date===d.day)));
+  if(covered){$('pendingPopup').classList.add('hide');$('pendingResultPopup').classList.add('hide');pendingTasksToFinish=[];lastPendingReview='';return;}
   const missing=(d.pending||[]).filter(x=>!x.acknowledged);
   $('pendingPopup').classList.toggle('hide',!missing.length);
   $('pendingList').innerHTML=missing.map((t,i)=>'<div data-pending-task="'+enc(t.id)+'"><b>'+(i+1)+'. '+enc(t.title)+'</b> <small>('+enc(t.category)+')</small></div>').join('');
