@@ -470,6 +470,9 @@ body.viewerMode .removeEvidence{display:none!important}
  <div class="viewerBody"><img id="viewerImage" class="viewerMedia hide" alt="Evidence preview"><video id="viewerVideo" class="viewerMedia hide" controls playsinline preload="metadata"></video><div id="viewerCaption" class="viewerCaption" aria-live="polite"></div></div>
  <div class="viewerControls"><button type="button" id="viewerPrev" aria-label="Previous evidence">❮</button><button type="button" id="viewerNext" aria-label="Next evidence">❯</button></div>
 </div><section id="report" class="report"></section><footer class="screenOnly">Shared over Supabase • Private file storage • Leader link functions as a password: share only with the assigned person. Uploads: photos are resized automatically; video compression depends on browser support and large videos may need trimming. The checking board refreshes every 12 seconds.</footer></main>
+<style>
+.calendarDays .stampAbsent{background:#f7c8c4;border-color:#d87a72}.calendarDays .stampRestDay{background:#d7ecff;border-color:#79aeda}.calendarDays .stampAwol{background:#8d2429;border-color:#67161a;color:#fff}.calendarDays .stampOnLeave{background:#eadcff;border-color:#a986d7}.calendarDays button[data-stampable]{touch-action:manipulation}.attendanceMenu{position:fixed;z-index:100003;min-width:220px;background:#fff;border:1px solid #ddd;border-radius:13px;padding:8px;box-shadow:0 16px 45px #0004}.attendanceMenu strong{display:block;padding:7px 9px}.attendanceMenu button{display:block;width:100%;text-align:left;margin:3px 0}.attendanceMenu .remove{color:#9b2525}.attendanceMenuBackdrop{position:fixed;inset:0;z-index:100002;background:#0002}
+</style>
 <script>
 (()=>{'use strict';
 const END='https://lwjeroszacnqibggxair.supabase.co/functions/v1/leader-checklist-gateway',ROOT='https://varda-mikey.github.io/VG-SUPPORT-APP/leader-daily-checklist.html';
@@ -618,9 +621,13 @@ const status=x=>({pending:'Not reviewed',complete:'Complete',incomplete:'Incompl
 const leaderTasks=(id)=>data.tasks.filter(t=>t.leader_id===id);
 const taskDay=(task,day)=>task?.work_date?day:task?.frequency==='monthly'?day.slice(0,7)+'-01':day;
 const absenceFor=(id,day,source=data)=>(source.absences||[]).find(a=>a.leader_id===id&&a.work_date===day);
+const attendanceFor=(id,day,source=data)=>(source.attendance_stamps||[]).find(a=>a.leader_id===id&&a.work_date===day&&a.status!=='removed');
 const acknowledgedFor=(id,day,source=data)=>(source.acknowledgements||[]).some(a=>a.leader_id===id&&a.work_date===day);
 const meaningful=(e,files)=>!!(e.id&&(String(e.leader_note||'').trim()||['working','submitted'].includes(e.leader_status)||files.some(f=>f.entry_id===e.id)));
 const absenceLabel=a=>a.status==='confirmed'?'Absent — confirmed':a.status==='rejected'?'Absence rejected':'Absence — pending Head review';
+const attendanceLabels={absent:'Absent',rest_day:'Rest Day',awol:'AWOL',on_leave:'On Leave'};
+const attendanceClasses={absent:'stampAbsent',rest_day:'stampRestDay',awol:'stampAwol',on_leave:'stampOnLeave'};
+const attendanceLabel=a=>attendanceLabels[a?.status]||'';
 async function requestAbsence(day,reason){
  if(!day||day>today())throw Error('Choose today or a past date.');
  if(!reason||reason.trim().length<5)throw Error('Enter an absence reason of at least 5 characters.');
@@ -1231,6 +1238,35 @@ function archiveOptions(){
  $('archiveMonth').innerHTML=monthNames.map((m,i)=>'<option value="'+String(i+1).padStart(2,'0')+'">'+m+'</option>').join('');
  $('archiveYear').value=historyYear;$('archiveMonth').value=historyMonth;
 }
+function closeAttendanceMenu(){document.querySelector('.attendanceMenu')?.remove();document.querySelector('.attendanceMenuBackdrop')?.remove()}
+function openAttendanceMenu(day,x,y){
+ if(mode!=='head'||isViewer||!selected)return;
+ closeAttendanceMenu();
+ const current=attendanceFor(selected,day),back=document.createElement('div'),menu=document.createElement('div');
+ back.className='attendanceMenuBackdrop';menu.className='attendanceMenu';
+ menu.innerHTML='<strong>'+enc(day)+(current?' · '+enc(attendanceLabel(current)):'')+'</strong>'+[
+  ['absent','🔴 Absent'],['rest_day','🔵 Rest Day'],['awol','🟥 AWOL'],['on_leave','🟣 On Leave'],['removed','✕ Remove stamp']
+ ].map(([status,label])=>'<button type="button" data-attendance="'+status+'" class="'+(status==='removed'?'remove':'')+'">'+label+'</button>').join('');
+ document.body.append(back,menu);const width=230,height=285;menu.style.left=Math.max(8,Math.min(innerWidth-width,x))+'px';menu.style.top=Math.max(8,Math.min(innerHeight-height,y))+'px';
+ back.onclick=closeAttendanceMenu;
+ menu.querySelectorAll('[data-attendance]').forEach(button=>button.onclick=async()=>{
+  const status=button.dataset.attendance;if(status==='removed'&&!current){closeAttendanceMenu();return}
+  const note=status==='removed'?'Stamp removed by Head':prompt('Optional note for '+attendanceLabels[status]+' on '+day+':',current?.note||'');if(note===null)return;
+  menu.querySelectorAll('button').forEach(b=>b.disabled=true);
+  try{await api('attendance_stamp',{leader_id:selected,day,status,note:note.trim()});closeAttendanceMenu();await load(true);await renderHistory();say((status==='removed'?'Attendance stamp removed':'Stamped '+attendanceLabels[status])+' for '+day+'. Reports and evidence were preserved.')}catch(e){say('Attendance stamp not saved: '+e.message);closeAttendanceMenu()}
+ });
+}
+function wireAttendanceStamping(){
+ if(mode!=='head'||isViewer)return;
+ document.querySelectorAll('#historyDays [data-history]').forEach(button=>{
+  button.dataset.stampable='1';button.oncontextmenu=e=>{e.preventDefault();openAttendanceMenu(button.dataset.history,e.clientX,e.clientY)};
+  let timer=0,longPressed=false;
+  const cancel=()=>{if(timer)clearTimeout(timer);timer=0};
+  button.addEventListener('pointerdown',e=>{if(e.pointerType!=='touch')return;longPressed=false;timer=setTimeout(()=>{longPressed=true;openAttendanceMenu(button.dataset.history,e.clientX||innerWidth/2,e.clientY||innerHeight/2)},650)});
+  button.addEventListener('pointerup',cancel);button.addEventListener('pointercancel',cancel);button.addEventListener('pointermove',cancel);
+  button.addEventListener('click',e=>{if(longPressed){e.preventDefault();e.stopImmediatePropagation();longPressed=false}},true);
+ });
+}
 async function renderHistory(){
  if(mode!=='head'||!selected)return;
  if(historyLeader!==selected){historyLeader=selected;archiveSetDate($('day').value)}
@@ -1249,6 +1285,7 @@ async function renderHistory(){
    const submitted=recs.filter(e=>verifiedSubmission(e,historicalProof)).length,expected=Number(response.expected_task_counts?.[selected+'|'+d]??recs.length);
    let label,klass;
    if(d>todayStr){label='Upcoming';klass='future';upcoming++}
+   else if(attendanceFor(selected,d,response)){const stamp=attendanceFor(selected,d,response);label=attendanceLabel(stamp);klass=attendanceClasses[stamp.status];if(['rest_day','on_leave'].includes(stamp.status)){}else partialDays++}
    else if(absenceFor(selected,d,response)&&absenceFor(selected,d,response).status!=='rejected'){label=absenceLabel(absenceFor(selected,d,response));klass='partial';partialDays++}
    else if(!recs.some(e=>meaningful(e,historicalProof))&&!acknowledgedFor(selected,d,response)){label='No saved report';klass='missing';missingDays++}
    else if(expected>0&&submitted===expected){label='Submitted ('+submitted+')';klass='ok';submittedDays++}
@@ -1257,6 +1294,7 @@ async function renderHistory(){
   }).join('');
   $('archiveSummary').innerHTML='<strong>'+enc(monthNames[Number(historyMonth)-1]+' '+historyYear)+'</strong> · '+submittedDays+' days fully submitted in saved records · '+partialDays+' partial · '+missingDays+' days without saved records'+(upcoming?' · '+upcoming+' upcoming':'')+'<p class="muted">Historical submissions without verified remarks and saved evidence are marked incomplete. No saved report does not establish absence; verify days off and duty schedules separately.</p>';
   document.querySelectorAll('[data-history]').forEach(b=>b.onclick=()=>{if(hasUnsavedChanges()&&!confirm('Discard unuploaded files and switch dates?'))return;$('day').value=b.dataset.history;load()});
+  wireAttendanceStamping();
  }catch(e){$('historyDays').textContent=e.message}
 }
 $('historyRefresh').onclick=renderHistory;
@@ -1272,6 +1310,17 @@ $('deleteReportDay').onclick=async()=>{
 };
 let myCalendarRequest=0;
 async function renderMyCalendar(){const l=data.leaders[0],m=$('myCalendarMonth'),box=$('myCalendarDays');if(!l||!m||!box)return;if(!m.value)m.value=today().slice(0,7);const period=m.value,seq=++myCalendarRequest,days=new Date(Number(period.slice(0,4)),Number(period.slice(5)),0).getDate(),from=period+'-01',to=period+'-'+String(days).padStart(2,'0');try{const r=await api('report',{from,to});if(seq!==myCalendarRequest)return;const proof=(r.evidence_entry_ids||[]).map(entry_id=>({entry_id}));box.innerHTML=Array.from({length:days},(_,i)=>{const d=period+'-'+String(i+1).padStart(2,'0'),recs=(r.entries||[]).filter(e=>e.leader_id===l.id&&e.work_date===d),n=recs.filter(e=>verifiedSubmission(e,proof)).length,expected=Number(r.expected_task_counts?.[l.id+'|'+d]??recs.length),a=absenceFor(l.id,d,r);let label,klass;if(d>today()){label='Upcoming';klass='future'}else if(a&&a.status!=='rejected'){label=absenceLabel(a);klass='future'}else if(expected>0&&n>=expected){label='Complete '+n+'/'+expected;klass='ok'}else if(n>0){label=n+'/'+expected+' submitted';klass='partial'}else{label='No report';klass='missing'}return '<button type="button" class="'+klass+(d===$('myDay').value?' current':'')+'" data-history="'+d+'">'+(i+1)+'<small>'+enc(label)+'</small></button>'}).join('');box.querySelectorAll('[data-history]').forEach(b=>b.onclick=()=>{if(hasUnsavedChanges()&&!confirm('Discard unsaved changes and switch dates?'))return;$('myDay').value=b.dataset.history;load()});}catch(e){if(seq===myCalendarRequest)box.textContent=e.message}}
+async function renderMyCalendarWithAttendance(){
+ const l=data.leaders[0],m=$('myCalendarMonth'),box=$('myCalendarDays');if(!l||!m||!box)return;if(!m.value)m.value=today().slice(0,7);
+ const period=m.value,seq=++myCalendarRequest,days=new Date(Number(period.slice(0,4)),Number(period.slice(5)),0).getDate(),from=period+'-01',to=period+'-'+String(days).padStart(2,'0');
+ try{const r=await api('report',{from,to});if(seq!==myCalendarRequest)return;const proof=(r.evidence_entry_ids||[]).map(entry_id=>({entry_id}));
+ box.innerHTML=Array.from({length:days},(_,i)=>{const d=period+'-'+String(i+1).padStart(2,'0'),recs=(r.entries||[]).filter(e=>e.leader_id===l.id&&e.work_date===d),n=recs.filter(e=>verifiedSubmission(e,proof)).length,expected=Number(r.expected_task_counts?.[l.id+'|'+d]??recs.length),stamp=attendanceFor(l.id,d,r),a=absenceFor(l.id,d,r);let label,klass;
+ if(d>today()){label=stamp?attendanceLabel(stamp):'Upcoming';klass=stamp?attendanceClasses[stamp.status]:'future'}else if(stamp){label=attendanceLabel(stamp);klass=attendanceClasses[stamp.status]}else if(a&&a.status!=='rejected'){label=absenceLabel(a);klass='future'}else if(expected>0&&n>=expected){label='Complete '+n+'/'+expected;klass='ok'}else if(n>0){label=n+'/'+expected+' submitted';klass='partial'}else{label='No report';klass='missing'}
+ return '<button type="button" class="'+klass+(d===$('myDay').value?' current':'')+'" data-history="'+d+'">'+(i+1)+'<small>'+enc(label)+'</small></button>'}).join('');
+ box.querySelectorAll('[data-history]').forEach(b=>b.onclick=()=>{if(hasUnsavedChanges()&&!confirm('Discard unsaved changes and switch dates?'))return;$('myDay').value=b.dataset.history;load()});
+ }catch(e){if(seq===myCalendarRequest)box.textContent=e.message}
+}
+renderMyCalendar=renderMyCalendarWithAttendance;
 $('myCalendarMonth').onchange=renderMyCalendar;
 function renderLeader(){let l=data.leaders[0];if(!l){$('myName').textContent='Access unavailable';return;}$('myName').textContent=l.name;$('myMeta').textContent=l.position+' • '+l.area+' • '+$('myDay').value;const tasks=leaderTasks(l.id),totals=taskSubmission(l.id,$('myDay').value),done=totals.submitted;
  renderMyCalendar();renderAbsenceLeader(l.id,$('myDay').value);updateLeaderExportState(totals);$('leaderProgress').innerHTML='<b>'+done+' of '+tasks.length+' formally submitted</b> · <strong>'+totals.received+'/'+tasks.length+' with saved proof</strong> · '+(done===tasks.length?'✓ Completed for selected date':'Photos may already be saved even when the task needs final submission.');$('myTasks').innerHTML=tasks.map((t,i)=>{const v=entry(l.id,t.id,taskDay(t,$('myDay').value));return taskCard(t,v,false).replace('<article class="task"','<article class="task"').replace('<div class="taskHeading"><h3>','<div class="taskHeading"><h3>'+(i+1)+'. ').replace('</h3></div><div class="taskContent">','</h3></div><div class="taskState '+enc(v.leader_status||'pending')+'">'+enc(verifiedSubmission(v)?'✓ Submitted':v.leader_status==='submitted'?'⚠ Missing proof/remarks':v.leader_status==='working'?'In progress':'Not yet submitted')+'</div><div class="taskContent">')}).join('')||'<p>No active tasks.</p>';wireTasks(false);approvalState();checkPendingFinished();showDailyA4Reminder()}
@@ -1638,7 +1687,8 @@ $('rpFrom').value=today().slice(0,7)+'-01';$('rpTo').value=today();
 $('rpAll').onclick=()=>{rpSelected=new Set(data.leaders.filter(l=>l.active!==false).map(l=>l.id));renderReportPicker()};
 $('rpNone').onclick=()=>{rpSelected=new Set();renderReportPicker()};
 function rpDates(a,b){let out=[],d=new Date(a+'T12:00:00'),last=new Date(b+'T12:00:00');for(let i=0;d<=last&&i<366;i++,d.setDate(d.getDate()+1))out.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'));return out}
-function rpStatusFor(entries,proofFiles,expected,absence,ack){
+function rpStatusFor(entries,proofFiles,expected,absence,ack,attendance){
+ if(attendance)return attendanceLabel(attendance);
  if(absence&&absence.status!=='rejected')return absenceLabel(absence);
  if(!entries.some(e=>meaningful(e,proofFiles))&&!ack)return 'No Report';
  const submitted=entries.filter(e=>verifiedSubmission(e,proofFiles)).length;
@@ -1710,7 +1760,7 @@ $('rpRun').onclick=async()=>{
  $('rpPrint').disabled=true;$('rpCSV').disabled=true;
  try{
  const response=await api('report',{from,to}),records=(response.entries||[]),proofFiles=(response.evidence_entry_ids||[]).map(entry_id=>({entry_id}));
- rpRows=leaders.flatMap(l=>days.map(date=>{const entries=records.filter(e=>e.leader_id===l.id&&e.work_date===date);return {leader:l,date,entries,status:rpStatusFor(entries,proofFiles,Number(response.expected_task_counts?.[l.id+'|'+date]||0),absenceFor(l.id,date,response),acknowledgedFor(l.id,date,response)),expected:Number(response.expected_task_counts?.[l.id+'|'+date]||0),submitted:entries.filter(e=>verifiedSubmission(e,proofFiles)).length,reviewed:entries.filter(e=>e.head_status&&!['pending','na'].includes(e.head_status)).length,score:rpPercent(entries)}}));
+ rpRows=leaders.flatMap(l=>days.map(date=>{const entries=records.filter(e=>e.leader_id===l.id&&e.work_date===date);return {leader:l,date,entries,status:rpStatusFor(entries,proofFiles,Number(response.expected_task_counts?.[l.id+'|'+date]||0),absenceFor(l.id,date,response),acknowledgedFor(l.id,date,response),attendanceFor(l.id,date,response)),expected:Number(response.expected_task_counts?.[l.id+'|'+date]||0),submitted:entries.filter(e=>verifiedSubmission(e,proofFiles)).length,reviewed:entries.filter(e=>e.head_status&&!['pending','na'].includes(e.head_status)).length,score:rpPercent(entries)}}));
  const noReport=rpRows.filter(r=>r.status==='No Report').length;
  const overview='<h2>VARDA GROUP · CEO LEADER OUTPUT REPORT</h2><p>'+enc(from)+' to '+enc(to)+' · '+leaders.length+' leaders · '+days.length+' days</p><p><b>'+rpRows.filter(r=>r.status==='Submitted').length+'</b> fully submitted leader-days &nbsp; <b>'+noReport+'</b> days without saved submissions</p>';
  const detail=$('rpFormat').value==='detail',master=$('rpFormat').value==='master';
@@ -1736,4 +1786,5 @@ setInterval(()=>{if(mode==='leader'&&leaderToken&&$('myDay').value!==today()&&!h
 }},12000);
 })();
 </script><script src="leader-compliance-v1.js?v=26"></script></body></html>
+
 
