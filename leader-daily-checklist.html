@@ -410,37 +410,7 @@ body.viewerMode .removeEvidence{display:none!important}
  </div>
 </section>
 <div id="absenceLeaderPanel" style="margin:12px 0;padding:12px;border:1px solid #d5d5d5;border-radius:10px"></div><p id="myMessage" role="status"></p></section>
-<div id="pendingPopup" class="pendingBackdrop hide" role="dialog" aria-modal="true" aria-labelledby="pendingTitle">
- <div class="pendingDialog">
-  <small style="font-weight:800;color:#9b5d22">PREVIOUS-DAY DUTY REVIEW</small>
-  <h2 id="pendingTitle">You have pending duties from yesterday</h2>
-  <p id="pendingIntro">Please review the tasks you did not submit or that have no saved photo proof.</p>
-  <div id="pendingList" class="pendingList"></div>
-  <p class="pendingNotice"><b>Attendance reminder:</b> Unfinished or undocumented duties will be visible to the National Retail Head for HR attendance validation. An incomplete checklist alone is not automatic proof of absence; Head/HR must review your circumstances and other attendance records.</p>
-  <label for="pendingReason"><b>State your reason here (remarks)</b></label>
-  <textarea id="pendingReason" placeholder="Explain why the required work or proof was not submitted."></textarea>
-  <p id="pendingError" role="status" style="color:#ab3c2b"></p>
-  <p class="pendingChoiceHelp"><b>Choose carefully:</b> Your choice and remarks will be recorded. Completing a report means submitting real work evidence, not just acknowledging it. The Head/HR will review delayed or incomplete outputs before making any attendance decision.</p>
-  <div class="pendingActions">
-   <div class="pendingChoiceBlock">
-    <button type="button" id="pendingFinish" class="main">✓ I'll Finish It — Open Yesterday's Tasks</button>
-    <p class="pendingChoiceHelp">Go back to yesterday. Upload the missing photo proof and select <b>SUBMIT &amp; SAVE TASK</b> for every pending duty. You can proceed to today's tasks after all required evidence is saved.</p>
-   </div>
-   <div class="pendingChoiceBlock warningChoice">
-    <button type="button" id="pendingAbsent" style="margin:8px 0">Mark Me as Absent Yesterday — for Head review</button><button type="button" id="pendingAcknowledge">⚠ Acknowledge Unfinished Duties &amp; Submit Reason</button>
-    <p class="pendingChoiceHelp">Your explanation will be saved, unfinished tasks will be marked <b>Incomplete</b> for Head review, and the record may affect attendance validation after HR checks your actual work and attendance. <b>This does not automatically mark you absent.</b> You may proceed to today's checklist after acknowledgement.</p>
-   </div>
-  </div>
- </div>
-</div><div id="pendingResultPopup" class="pendingBackdrop hide" role="dialog" aria-modal="true" aria-labelledby="pendingResultTitle">
- <div class="pendingDialog pendingResultDialog">
-  <div id="pendingResultIcon" class="pendingResultStatus">✓</div>
-  <h2 id="pendingResultTitle">Acknowledgement saved</h2>
-  <p id="pendingResultText">Your remarks were recorded for National Retail Head review.</p>
-  <p class="pendingNotice">Head/HR will validate incomplete duties against attendance records. Submission or acknowledgement does not automatically approve the work or determine attendance.</p>
-  <button type="button" id="pendingProceedToday" class="main">Proceed to Today's Checklist →</button>
- </div>
-</div><div id="dailyA4Popup" class="approvedBackdrop hide" role="presentation">
+<div id="dailyA4Popup" class="approvedBackdrop hide" role="presentation">
  <div class="approvedDialog" role="dialog" aria-modal="true" aria-labelledby="dailyA4Title">
   <div class="approvedStatus">✓ ALL DAILY TASKS SUBMITTED</div>
   <h2 id="dailyA4Title">Thank you for your work today!</h2>
@@ -448,8 +418,8 @@ body.viewerMode .removeEvidence{display:none!important}
   <p><b>Download your A4 daily report and send it together with your time-out record.</b></p>
   <p id="dailyA4Info" class="muted"></p>
   <div class="approvedActions"><button type="button" id="dailyA4Download" class="main">⬇ Download My A4 Report</button></div>
-  <p id="dailyA4Message" role="status" aria-live="polite" class="muted">Save your report before closing this reminder.</p>
-  <button type="button" id="dailyA4Done" class="approvedClose" disabled>✓ I saved my report · Continue</button>
+  <p id="dailyA4Message" role="status" aria-live="polite" class="muted">Download a copy whenever you need it.</p>
+  <button type="button" id="dailyA4Done" class="approvedClose">Continue</button>
   <p class="muted">Your Head can already review your submission. Downloading the report does not mean approval.</p>
  </div>
 </div>
@@ -543,67 +513,6 @@ async function refreshStorage(){
  }catch(e){main.textContent='Storage status unavailable';meta.textContent=e.message||'Please refresh storage';rows.innerHTML=''}
 }
 $('refreshStorage').onclick=refreshStorage;
-let pendingDay='',pendingReviewBusy=false,lastPendingReview='',pendingTasksToFinish=[],pendingResultType='';
-function showPendingResult(type,detail){
- pendingResultType=type;
- $('pendingResultIcon').textContent=type==='completed'?'✓':'!';
- $('pendingResultIcon').style.color=type==='completed'?'#168052':'#b16d27';
- $('pendingResultTitle').textContent=type==='completed'?'Yesterday\'s Pending Duties Submitted!':'Acknowledgement Saved';
- $('pendingResultText').textContent=detail;
- $('pendingPopup').classList.add('hide');
- $('pendingResultPopup').classList.remove('hide');
-}
-$('pendingProceedToday').onclick=async()=>{
- $('pendingResultPopup').classList.add('hide');
- if(hasUnsavedChanges()){say('Please save or submit any unsaved task information before moving to today.');return}
- $('myDay').value=today();
- pendingTasksToFinish=[];
- await load();
-};
-function checkPendingFinished(){
- if(mode!=='leader'||!pendingTasksToFinish.length||$('myDay').value!==pendingDay||!data.leaders[0]||!$('pendingResultPopup').classList.contains('hide'))return;
- const lid=data.leaders[0].id;
- const allDone=pendingTasksToFinish.every(id=>{const e=entry(lid,id,pendingDay);return verifiedSubmission(e)});
- if(allDone){
-  pendingTasksToFinish=[];
-  lastPendingReview=today();
-  showPendingResult('completed','All previously missing duties have now been submitted with saved evidence for Head review. You may continue to today\'s checklist.');
- }
-}
-
-async function checkPendingYesterday(force=false){
- if(mode!=='leader'||!leaderToken||pendingReviewBusy||$('myDay').value!==today())return;
- const stamp=today();if(!force&&lastPendingReview===stamp)return;
- pendingReviewBusy=true;
- try{
-  const d=await api('pending_yesterday');pendingDay=d.day;
-  // NTE takes priority over the legacy unfinished-duty acknowledgement.
-  const response=await fetch('https://lwjeroszacnqibggxair.supabase.co/functions/v1/leader-compliance-gateway',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'list',leader:leaderToken,headToken:''})});
-  const compliance=await response.json();
-  if(!response.ok||compliance.error)throw Error(compliance.error||'Unable to verify NTE status');
-  const covered=(compliance.cases||[]).some(c=>['nte','non_nte'].includes(c.letter_type)&&(['issued','returned'].includes(c.status)||(['responded','cleared'].includes(c.status)&&(c.work_date===d.day||(compliance.case_dates||[]).some(x=>x.case_id===c.id&&x.work_date===d.day)||String(c.leader_signed_at||'').slice(0,10)===stamp))));
-  if(covered){$('pendingPopup').classList.add('hide');$('pendingResultPopup').classList.add('hide');pendingTasksToFinish=[];lastPendingReview='';return;}
-  const missing=(d.pending||[]).filter(x=>!x.acknowledged);
-  $('pendingPopup').classList.toggle('hide',!missing.length);
-  $('pendingList').innerHTML=missing.map((t,i)=>'<div data-pending-task="'+enc(t.id)+'"><b>'+(i+1)+'. '+enc(t.title)+'</b> <small>('+enc(t.category)+')</small></div>').join('');
-  $('pendingIntro').textContent='Work date: '+d.day+' · '+missing.length+' duty/task(s) have missing submission or saved photo proof.';
-  if(missing.length){lastPendingReview='';$('pendingError').textContent='';}else{lastPendingReview=stamp;$('pendingReason').value='';}
- }catch(e){$('pendingError').textContent='Unable to verify yesterday\'s duty: '+e.message}finally{pendingReviewBusy=false}
-}
-$('pendingFinish').onclick=async()=>{
- if(!pendingDay)return;
- pendingTasksToFinish=[...$('pendingList').querySelectorAll('[data-pending-task]')].map(x=>x.dataset.pendingTask);
- $('pendingPopup').classList.add('hide');$('myDay').value=pendingDay;lastPendingReview='';
- await load();
- say('Complete yesterday\'s missing task(s): upload photo proof and tap SUBMIT & SAVE for each. Return to Today when finished.');
-};
-$('pendingAcknowledge').onclick=async()=>{
- const reason=$('pendingReason').value.trim();
- if(reason.length<5){$('pendingError').textContent='Please explain the unfinished task(s) in at least five characters.';return}
- const btn=$('pendingAcknowledge');btn.disabled=true;$('pendingError').textContent='Saving acknowledgement to Head…';
- try{const d=await api('pending_ack',{reason});lastPendingReview=today();pendingTasksToFinish=[];showPendingResult('acknowledged',d.acknowledged+' unfinished duty record(s) were marked Incomplete and your written reason was saved for National Retail Head review. You can now proceed to today.');}
- catch(e){$('pendingError').textContent='Not saved: '+e.message}finally{btn.disabled=false}
-};
 function requiredTaskPopup(missing,card){
  let shade=document.getElementById('requiredTaskShade');
  if(!shade){
@@ -634,7 +543,6 @@ async function requestAbsence(day,reason){
  if(!confirm('Declare absence for '+day+'? This is subject to Head review and does not delete any reports.'))return false;
  await api('absence_request',{day,reason:reason.trim()});return true;
 }
-$('pendingAbsent').onclick=async()=>{const btn=$('pendingAbsent');btn.disabled=true;try{if(await requestAbsence(pendingDay,$('pendingReason').value)){lastPendingReview=today();pendingTasksToFinish=[];showPendingResult('acknowledged','Absence request saved for '+pendingDay+'. Subject to Head confirmation. You may proceed to today.')}}catch(e){$('pendingError').textContent=e.message}finally{btn.disabled=false}};
 function renderAbsenceLeader(id,day){
  const el=$('absenceLeaderPanel'),a=absenceFor(id,day);el.innerHTML=a?'<strong>'+enc(absenceLabel(a))+'</strong><p>'+enc(a.reason)+'</p><small>'+enc(a.review_note||'Subject to Head confirmation')+'</small>':day>today()?'':'<button type="button" id="markAbsent">Mark Me as Absent — '+enc(day)+'</button><small style="display:block">Subject to Head confirmation. Existing reports will remain saved.</small>';
  if($('markAbsent'))$('markAbsent').onclick=async()=>{const reason=prompt('Why were you absent on '+day+'?');if(reason===null)return;try{if(await requestAbsence(day,reason)){await load();say('Absence request saved for Head review.')}}catch(e){say(e.message)}};
@@ -1287,7 +1195,7 @@ async function renderHistory(){
    if(d>todayStr){label='Upcoming';klass='future';upcoming++}
    else if(attendanceFor(selected,d,response)){const stamp=attendanceFor(selected,d,response);label=attendanceLabel(stamp);klass=attendanceClasses[stamp.status];if(['rest_day','on_leave'].includes(stamp.status)){}else partialDays++}
    else if(absenceFor(selected,d,response)&&absenceFor(selected,d,response).status!=='rejected'){label=absenceLabel(absenceFor(selected,d,response));klass='partial';partialDays++}
-   else if(!recs.some(e=>meaningful(e,historicalProof))&&!acknowledgedFor(selected,d,response)){label=d===todayStr?'Awaiting report':'No Report';klass=d===todayStr?'future':'missing';if(d<todayStr)missingDays++}
+   else if(!submitted&&(d<todayStr||!recs.some(e=>meaningful(e,historicalProof)))){label=d===todayStr?'Awaiting report':'No Report';klass=d===todayStr?'future':'missing';if(d<todayStr)missingDays++}
    else if(expected>0&&submitted===expected){label='Submitted ('+submitted+')';klass='ok';submittedDays++}
    else{label=submitted+'/'+expected+' submitted';klass='partial';partialDays++}
    return '<button type="button" class="'+klass+(d===$('day').value?' current':'')+'" data-history="'+d+'" title="'+enc(d+' · '+label)+'">'+(i+1)+'<small>'+enc(label)+'</small></button>';
@@ -1323,7 +1231,7 @@ async function renderMyCalendarWithAttendance(){
 renderMyCalendar=renderMyCalendarWithAttendance;
 $('myCalendarMonth').onchange=renderMyCalendar;
 function renderLeader(){let l=data.leaders[0];if(!l){$('myName').textContent='Access unavailable';return;}$('myName').textContent=l.name;$('myMeta').textContent=l.position+' • '+l.area+' • '+$('myDay').value;const tasks=leaderTasks(l.id),totals=taskSubmission(l.id,$('myDay').value),done=totals.submitted;
- renderMyCalendar();renderAbsenceLeader(l.id,$('myDay').value);updateLeaderExportState(totals);$('leaderProgress').innerHTML='<b>'+done+' of '+tasks.length+' formally submitted</b> · <strong>'+totals.received+'/'+tasks.length+' with saved proof</strong> · '+(done===tasks.length?'✓ Completed for selected date':'Photos may already be saved even when the task needs final submission.');$('myTasks').innerHTML=tasks.map((t,i)=>{const v=entry(l.id,t.id,taskDay(t,$('myDay').value));return taskCard(t,v,false).replace('<article class="task"','<article class="task"').replace('<div class="taskHeading"><h3>','<div class="taskHeading"><h3>'+(i+1)+'. ').replace('</h3></div><div class="taskContent">','</h3></div><div class="taskState '+enc(v.leader_status||'pending')+'">'+enc(verifiedSubmission(v)?'✓ Submitted':v.leader_status==='submitted'?'⚠ Missing proof/remarks':v.leader_status==='working'?'In progress':'Not yet submitted')+'</div><div class="taskContent">')}).join('')||'<p>No active tasks.</p>';wireTasks(false);approvalState();checkPendingFinished();showDailyA4Reminder()}
+ renderMyCalendar();renderAbsenceLeader(l.id,$('myDay').value);updateLeaderExportState(totals);$('leaderProgress').innerHTML='<b>'+done+' of '+tasks.length+' formally submitted</b> · <strong>'+totals.received+'/'+tasks.length+' with saved proof</strong> · '+(done===tasks.length?'✓ Completed for selected date':'Photos may already be saved even when the task needs final submission.');$('myTasks').innerHTML=tasks.map((t,i)=>{const v=entry(l.id,t.id,taskDay(t,$('myDay').value));return taskCard(t,v,false).replace('<article class="task"','<article class="task"').replace('<div class="taskHeading"><h3>','<div class="taskHeading"><h3>'+(i+1)+'. ').replace('</h3></div><div class="taskContent">','</h3></div><div class="taskState '+enc(v.leader_status||'pending')+'">'+enc(verifiedSubmission(v)?'✓ Submitted':v.leader_status==='submitted'?'⚠ Missing proof/remarks':v.leader_status==='working'?'In progress':'Not yet submitted')+'</div><div class="taskContent">')}).join('')||'<p>No active tasks.</p>';wireTasks(false);const closed=$('myDay').value!==today();if(closed){const root=$('myTasks');root.querySelectorAll('.progress,.note,.fileInput,.save,.upload,.removeEvidence').forEach(control=>{control.disabled=true});root.querySelectorAll('.taskFooter,.uploadStatus,.removeEvidence').forEach(el=>el.classList.add('hide'));root.insertAdjacentHTML('afterbegin','<p class="hint">This date is read-only. Saved reports and evidence are available below.</p>')}approvalState();if(!closed)showDailyA4Reminder()}
 $('headToday').onclick=()=>{
  if(hasUnsavedChanges()&&!confirm('You have unsaved changes. Switch to today and all regions?'))return;
  $('day').value=today();$('region').value='';$('showArchivedLeaders').checked=false;selected='';load();
@@ -1532,10 +1440,9 @@ function showDailyA4Reminder(){
  const count=taskSubmission(l.id,day);
  if(count.total<1||count.submitted!==count.total||count.received!==count.total)return;
  if(sessionStorage.getItem(dailyA4Key(l,day)))return;
- if(!$('pendingPopup').classList.contains('hide')||!$('pendingResultPopup').classList.contains('hide'))return;
  $('dailyA4Info').textContent=l.name+' · '+day+' · '+count.total+'/'+count.total+' tasks with saved proof.';
  $('dailyA4Message').textContent='Download the A4 JPEG, save it on your device, then send it with your time-out.';
- $('dailyA4Done').disabled=true;
+ $('dailyA4Done').disabled=false;
  $('dailyA4Popup').classList.remove('hide');
 }
 function updateLeaderExportState(counts){
@@ -1690,7 +1597,7 @@ function rpDates(a,b){let out=[],d=new Date(a+'T12:00:00'),last=new Date(b+'T12:
 function rpStatusFor(entries,proofFiles,expected,absence,ack,attendance){
  if(attendance)return attendanceLabel(attendance);
  if(absence&&absence.status!=='rejected')return absenceLabel(absence);
- if(!entries.some(e=>meaningful(e,proofFiles))&&!ack)return 'No Report';
+ if(!entries.some(e=>verifiedSubmission(e,proofFiles)))return 'No Report';
  const submitted=entries.filter(e=>verifiedSubmission(e,proofFiles)).length;
  if(!submitted)return 'Draft / Incomplete';
  return expected>0&&submitted===expected?'Submitted':'Partial';
@@ -1760,7 +1667,7 @@ $('rpRun').onclick=async()=>{
  $('rpPrint').disabled=true;$('rpCSV').disabled=true;
  try{
  const response=await api('report',{from,to}),records=(response.entries||[]),proofFiles=(response.evidence_entry_ids||[]).map(entry_id=>({entry_id}));
- rpRows=leaders.flatMap(l=>days.map(date=>{const entries=records.filter(e=>e.leader_id===l.id&&e.work_date===date);return {leader:l,date,entries,status:date>=today()&&!entries.some(e=>meaningful(e,proofFiles))&&!attendanceFor(l.id,date,response)&&!absenceFor(l.id,date,response)?'Awaiting report':rpStatusFor(entries,proofFiles,Number(response.expected_task_counts?.[l.id+'|'+date]||0),absenceFor(l.id,date,response),acknowledgedFor(l.id,date,response),attendanceFor(l.id,date,response)),expected:Number(response.expected_task_counts?.[l.id+'|'+date]||0),submitted:entries.filter(e=>verifiedSubmission(e,proofFiles)).length,reviewed:entries.filter(e=>e.head_status&&!['pending','na'].includes(e.head_status)).length,score:rpPercent(entries)}}));
+ rpRows=leaders.flatMap(l=>days.map(date=>{const entries=records.filter(e=>e.leader_id===l.id&&e.work_date===date);return {leader:l,date,entries,status:date>=today()&&!entries.some(e=>verifiedSubmission(e,proofFiles))&&!attendanceFor(l.id,date,response)&&!absenceFor(l.id,date,response)?'Awaiting report':rpStatusFor(entries,proofFiles,Number(response.expected_task_counts?.[l.id+'|'+date]||0),absenceFor(l.id,date,response),acknowledgedFor(l.id,date,response),attendanceFor(l.id,date,response)),expected:Number(response.expected_task_counts?.[l.id+'|'+date]||0),submitted:entries.filter(e=>verifiedSubmission(e,proofFiles)).length,reviewed:entries.filter(e=>e.head_status&&!['pending','na'].includes(e.head_status)).length,score:rpPercent(entries)}}));
  const noReport=rpRows.filter(r=>r.status==='No Report').length;
  const overview='<h2>VARDA GROUP · CEO LEADER OUTPUT REPORT</h2><p>'+enc(from)+' to '+enc(to)+' · '+leaders.length+' leaders · '+days.length+' days</p><p><b>'+rpRows.filter(r=>r.status==='Submitted').length+'</b> fully submitted leader-days &nbsp; <b>'+noReport+'</b> days without saved submissions</p>';
  const detail=$('rpFormat').value==='detail',master=$('rpFormat').value==='master';
@@ -1785,5 +1692,5 @@ setInterval(()=>{if(mode==='leader'&&leaderToken&&$('myDay').value!==today()&&!h
  quietLiveRefresh();
 }},12000);
 })();
-</script><script src="leader-compliance-v1.js?v=27"></script></body></html>
+</script><script src="leader-compliance-v1.js?v=28"></script></body></html>
 

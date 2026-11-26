@@ -4,6 +4,10 @@ const db=createClient(URL,KEY,{auth:{persistSession:false}});
 const cors={'Access-Control-Allow-Origin':'https://varda-mikey.github.io','Access-Control-Allow-Headers':'content-type, authorization','Access-Control-Allow-Methods':'POST,OPTIONS','Vary':'Origin'};
 const reply=(x:unknown,status=200)=>new Response(JSON.stringify(x),{status,headers:{...cors,'Content-Type':'application/json','Cache-Control':'no-store'}});
 const error=(x:any)=>{throw Error(x?.message||'Unable to save')};
+const manilaDate=()=>new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Manila'}).format(new Date());
+function checkLeaderReportDate(head:boolean,day:string){
+ if(!head&&day!==manilaDate())throw Error('This report is read-only. Leaders can submit only for today.');
+}
 const valid=(s:unknown,n=200)=>typeof s==='string'&&s.length>0&&s.length<=n;
 const digest=async s=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s))),x=>x.toString(16).padStart(2,'0')).join('');
 async function identity(req:Request,body:any){
@@ -109,6 +113,7 @@ Deno.serve(async req=>{
   const leaderId=head?String(form.get('leader_id')||''):user.id;
   const workDate=String(form.get('day')||''),taskId=String(form.get('task_id')||'');
   if(!leaderId||!/^\d{4}-\d{2}-\d{2}$/.test(workDate))throw Error('Invalid leader or work date');
+  checkLeaderReportDate(head,workDate);
   const rawFile=form.get('file');if(!(rawFile instanceof File))throw Error('Please choose a file');
   const file=rawFile as File;
   const allowed=['image/jpeg','image/png','image/webp','video/mp4','video/webm','video/quicktime'];
@@ -201,29 +206,7 @@ Deno.serve(async req=>{
    const {data:acks,error:ae}=await db.from('vg_checklist_pending_ack').select('task_id,reason').eq('leader_id',leaderId).eq('work_date',yesterday);if(ae)error(ae);
    const acknowledged=new Set((acks||[]).map((x:any)=>x.task_id));
    const pending=relevant.filter((t:any)=>{const e=entryMap.get(t.id);return e?.leader_status!=='submitted'||!proofIds.has(e.id)}).map((t:any)=>({id:t.id,title:editMap.get(t.id)?.title||t.title,category:t.category,acknowledged:acknowledged.has(t.id)}));
-   if(action==='pending_ack'){
-    const reason=String(b.reason||'').trim();
-    if(reason.length<5||reason.length>3000)return reply({error:'Please state a reason (5–3000 characters)'},400);
-    const outstanding=pending.filter((t:any)=>!t.acknowledged);
-    if(!outstanding.length)return reply({ok:true,acknowledged:0});
-    const values=outstanding.map((t:any)=>({leader_id:leaderId,task_id:t.id,work_date:yesterday,reason,status:'acknowledged_incomplete',acknowledged_at:new Date().toISOString()}));
-    const done=await db.from('vg_checklist_pending_ack').upsert(values,{onConflict:'leader_id,task_id,work_date'});if(done.error)error(done.error);
-    for(const t of outstanding){
-     const existing=entryMap.get(t.id);
-     if(existing){
-      const previous=await db.from('vg_checklist_entries').select('head_status').eq('id',existing.id).single();
-      if(previous.error)error(previous.error);
-      if(!previous.data?.head_status||previous.data.head_status==='pending'){
-       const update=await db.from('vg_checklist_entries').update({head_status:'incomplete',head_note:'Leader acknowledged unfinished duty; see acknowledgement reason.',updated_at:new Date().toISOString()}).eq('id',existing.id);
-       if(update.error)error(update.error);
-      }
-     }else{
-      const created=await db.from('vg_checklist_entries').insert({leader_id:leaderId,task_id:t.id,work_date:yesterday,leader_status:'pending',head_status:'incomplete',head_note:'Leader acknowledged unfinished duty; see acknowledgement reason.'});
-      if(created.error)error(created.error);
-     }
-    }
-    return reply({ok:true,acknowledged:values.length,work_date:yesterday});
-   }
+   if(action==='pending_ack')return reply({error:'Past reports are read-only.'},403);
    return reply({day:yesterday,pending,unacknowledged:pending.filter((t:any)=>!t.acknowledged).length});
   }
   if(action==='download_summary'){
@@ -333,6 +316,7 @@ Deno.serve(async req=>{
   if(action==='entry_save'){
    const date=String(b.day||'');
    if(!/^\d{4}-\d{2}-\d{2}$/.test(date))throw Error('Choose a valid date');
+   checkLeaderReportDate(head,date);
    const id=head?b.leader_id:leaderId;
    if(!id)throw Error('Choose a leader');
    const {data:task}=await db.from('vg_checklist_tasks').select('id').eq('id',b.task_id).eq('leader_id',id).eq('active',true).maybeSingle();if(!task)throw Error('Task is no longer active');
@@ -353,6 +337,7 @@ Deno.serve(async req=>{
   if(action==='upload_prepare'){
    const id=head?b.leader_id:leaderId;const date=String(b.day||'');
    if(!id||!/^\d{4}-\d{2}-\d{2}$/.test(date))throw Error('Missing leader or date');
+   checkLeaderReportDate(head,date);
    const mime=String(b.mime||'').toLowerCase(),size=Number(b.bytes||0);
    const allowed=['image/jpeg','image/png','image/webp','video/mp4','video/webm','video/quicktime'];
    if(!allowed.includes(mime)||!Number.isFinite(size)||size<=0||size>52428800)throw Error('Supported photos/videos only, up to 50 MB.');
@@ -369,8 +354,9 @@ Deno.serve(async req=>{
   if(action==='upload_finish'){
    const id=head?b.leader_id:leaderId;
    const path=String(b.path||''),entryId=String(b.entry_id||'');
-   const {data:entry}=await db.from('vg_checklist_entries').select('id,leader_id').eq('id',entryId).maybeSingle();
+   const {data:entry}=await db.from('vg_checklist_entries').select('id,leader_id,work_date').eq('id',entryId).maybeSingle();
    if(!entry||entry.leader_id!==id||!path.startsWith(id+'/')||!path.includes('/'+entryId+'/'))throw Error('Invalid attachment destination');
+   checkLeaderReportDate(head,entry.work_date);
    const mime=String(b.mime||''),bytes=Number(b.bytes)||0;
    const {data:found,error:fe}=await db.storage.from('vg-leader-evidence').info(path);
    if(fe||!found)throw Error('Upload not found. Please upload again.');
@@ -384,9 +370,10 @@ Deno.serve(async req=>{
    const {data:file,error:fe}=await db.from('vg_checklist_files').select('id,entry_id,storage_path,original_name,added_by').eq('id',fileId).maybeSingle();
    if(fe)error(fe);
    if(!file)return reply({error:'Photo was already removed. Refresh to view the updated list.'},404);
-   const {data:entry,error:ee}=await db.from('vg_checklist_entries').select('id,leader_id').eq('id',file.entry_id).maybeSingle();
+   const {data:entry,error:ee}=await db.from('vg_checklist_entries').select('id,leader_id,work_date').eq('id',file.entry_id).maybeSingle();
    if(ee)error(ee);
    if(!entry || (!head && entry.leader_id!==leaderId))return reply({error:'This photo belongs to a different leader'},403);
+   checkLeaderReportDate(head,entry.work_date);
    if(!head && file.added_by!=='leader')return reply({error:'Only the Head may remove evidence added by management'},403);
    const id=head?String(b.leader_id||''):leaderId;
    if(head && id!==entry.leader_id)return reply({error:'Select the matching leader before deleting this photo'},403);
