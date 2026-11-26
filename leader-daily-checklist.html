@@ -750,7 +750,7 @@ async function load(quiet=false){
   quietLiveRefresh();
   return;
  }
- loading=true;try{let old=selected,drafts=headDrafts();data=await api('load',{day:mode==='head'?$('day').value:$('myDay').value});if(mode==='head'){selected=data.leaders.some(l=>l.id===old)?old:(data.leaders.find(l=>l.active!==false)?.id||data.leaders[0]?.id||'');renderHead();if(!quiet)refreshHeadPendingReasons();restoreHeadDrafts(drafts);previousHeadDate=$('day').value}else{renderLeader();if($('myDay').value===today())checkPendingYesterday()}syncState(true);if(!quiet){say('Updated '+new Date().toLocaleTimeString('en-PH'));if(mode==='head')renderHistory()}}catch(e){syncState(false);if(!quiet)say(e.message);if(mode==='head'&&/sign in/i.test(e.message))logout()}finally{loading=false}}
+ loading=true;try{let old=selected,drafts=headDrafts();data=await api('load',{day:mode==='head'?$('day').value:$('myDay').value});if(mode==='head'){selected=data.leaders.some(l=>l.id===old)?old:(data.leaders.find(l=>l.active!==false)?.id||data.leaders[0]?.id||'');renderHead();if(!quiet)refreshHeadPendingReasons();restoreHeadDrafts(drafts);previousHeadDate=$('day').value}else{renderLeader();}syncState(true);if(!quiet){say('Updated '+new Date().toLocaleTimeString('en-PH'));if(mode==='head')renderHistory()}}catch(e){syncState(false);if(!quiet)say(e.message);if(mode==='head'&&/sign in/i.test(e.message))logout()}finally{loading=false}}
 function openHead(){refreshStorage();setTimeout(refreshHeadPendingReasons,2000);$('headLogin').classList.add('hide');$('headView').classList.remove('hide');$('signout').classList.remove('hide');$('sessionTitle').textContent='Head Review Board';load();}
 function logout(){headToken='';sessionStorage.removeItem('vg-head-checklist-token');$('headView').classList.add('hide');$('headLogin').classList.remove('hide');$('signout').classList.add('hide')}
 $('signout').onclick=logout;
@@ -1287,7 +1287,7 @@ async function renderHistory(){
    if(d>todayStr){label='Upcoming';klass='future';upcoming++}
    else if(attendanceFor(selected,d,response)){const stamp=attendanceFor(selected,d,response);label=attendanceLabel(stamp);klass=attendanceClasses[stamp.status];if(['rest_day','on_leave'].includes(stamp.status)){}else partialDays++}
    else if(absenceFor(selected,d,response)&&absenceFor(selected,d,response).status!=='rejected'){label=absenceLabel(absenceFor(selected,d,response));klass='partial';partialDays++}
-   else if(!recs.some(e=>meaningful(e,historicalProof))&&!acknowledgedFor(selected,d,response)){label='No saved report';klass='missing';missingDays++}
+   else if(!recs.some(e=>meaningful(e,historicalProof))&&!acknowledgedFor(selected,d,response)){label=d===todayStr?'Awaiting report':'No Report';klass=d===todayStr?'future':'missing';if(d<todayStr)missingDays++}
    else if(expected>0&&submitted===expected){label='Submitted ('+submitted+')';klass='ok';submittedDays++}
    else{label=submitted+'/'+expected+' submitted';klass='partial';partialDays++}
    return '<button type="button" class="'+klass+(d===$('day').value?' current':'')+'" data-history="'+d+'" title="'+enc(d+' · '+label)+'">'+(i+1)+'<small>'+enc(label)+'</small></button>';
@@ -1315,7 +1315,7 @@ async function renderMyCalendarWithAttendance(){
  const period=m.value,seq=++myCalendarRequest,days=new Date(Number(period.slice(0,4)),Number(period.slice(5)),0).getDate(),from=period+'-01',to=period+'-'+String(days).padStart(2,'0');
  try{const r=await api('report',{from,to});if(seq!==myCalendarRequest)return;const proof=(r.evidence_entry_ids||[]).map(entry_id=>({entry_id}));
  box.innerHTML=Array.from({length:days},(_,i)=>{const d=period+'-'+String(i+1).padStart(2,'0'),recs=(r.entries||[]).filter(e=>e.leader_id===l.id&&e.work_date===d),n=recs.filter(e=>verifiedSubmission(e,proof)).length,expected=Number(r.expected_task_counts?.[l.id+'|'+d]??recs.length),stamp=attendanceFor(l.id,d,r),a=absenceFor(l.id,d,r);let label,klass;
- if(d>today()){label=stamp?attendanceLabel(stamp):'Upcoming';klass=stamp?attendanceClasses[stamp.status]:'future'}else if(stamp){label=attendanceLabel(stamp);klass=attendanceClasses[stamp.status]}else if(a&&a.status!=='rejected'){label=absenceLabel(a);klass='future'}else if(expected>0&&n>=expected){label='Complete '+n+'/'+expected;klass='ok'}else if(n>0){label=n+'/'+expected+' submitted';klass='partial'}else{label='No report';klass='missing'}
+ if(d>today()){label=stamp?attendanceLabel(stamp):'Upcoming';klass=stamp?attendanceClasses[stamp.status]:'future'}else if(stamp){label=attendanceLabel(stamp);klass=attendanceClasses[stamp.status]}else if(a&&a.status!=='rejected'){label=absenceLabel(a);klass='future'}else if(expected>0&&n>=expected){label='Complete '+n+'/'+expected;klass='ok'}else if(n>0){label=n+'/'+expected+' submitted';klass='partial'}else{label=d===today()?'Awaiting report':'No Report';klass=d===today()?'future':'missing'}
  return '<button type="button" class="'+klass+(d===$('myDay').value?' current':'')+'" data-history="'+d+'">'+(i+1)+'<small>'+enc(label)+'</small></button>'}).join('');
  box.querySelectorAll('[data-history]').forEach(b=>b.onclick=()=>{if(hasUnsavedChanges()&&!confirm('Discard unsaved changes and switch dates?'))return;$('myDay').value=b.dataset.history;load()});
  }catch(e){if(seq===myCalendarRequest)box.textContent=e.message}
@@ -1760,7 +1760,7 @@ $('rpRun').onclick=async()=>{
  $('rpPrint').disabled=true;$('rpCSV').disabled=true;
  try{
  const response=await api('report',{from,to}),records=(response.entries||[]),proofFiles=(response.evidence_entry_ids||[]).map(entry_id=>({entry_id}));
- rpRows=leaders.flatMap(l=>days.map(date=>{const entries=records.filter(e=>e.leader_id===l.id&&e.work_date===date);return {leader:l,date,entries,status:rpStatusFor(entries,proofFiles,Number(response.expected_task_counts?.[l.id+'|'+date]||0),absenceFor(l.id,date,response),acknowledgedFor(l.id,date,response),attendanceFor(l.id,date,response)),expected:Number(response.expected_task_counts?.[l.id+'|'+date]||0),submitted:entries.filter(e=>verifiedSubmission(e,proofFiles)).length,reviewed:entries.filter(e=>e.head_status&&!['pending','na'].includes(e.head_status)).length,score:rpPercent(entries)}}));
+ rpRows=leaders.flatMap(l=>days.map(date=>{const entries=records.filter(e=>e.leader_id===l.id&&e.work_date===date);return {leader:l,date,entries,status:date>=today()&&!entries.some(e=>meaningful(e,proofFiles))&&!attendanceFor(l.id,date,response)&&!absenceFor(l.id,date,response)?'Awaiting report':rpStatusFor(entries,proofFiles,Number(response.expected_task_counts?.[l.id+'|'+date]||0),absenceFor(l.id,date,response),acknowledgedFor(l.id,date,response),attendanceFor(l.id,date,response)),expected:Number(response.expected_task_counts?.[l.id+'|'+date]||0),submitted:entries.filter(e=>verifiedSubmission(e,proofFiles)).length,reviewed:entries.filter(e=>e.head_status&&!['pending','na'].includes(e.head_status)).length,score:rpPercent(entries)}}));
  const noReport=rpRows.filter(r=>r.status==='No Report').length;
  const overview='<h2>VARDA GROUP · CEO LEADER OUTPUT REPORT</h2><p>'+enc(from)+' to '+enc(to)+' · '+leaders.length+' leaders · '+days.length+' days</p><p><b>'+rpRows.filter(r=>r.status==='Submitted').length+'</b> fully submitted leader-days &nbsp; <b>'+noReport+'</b> days without saved submissions</p>';
  const detail=$('rpFormat').value==='detail',master=$('rpFormat').value==='master';
@@ -1785,6 +1785,5 @@ setInterval(()=>{if(mode==='leader'&&leaderToken&&$('myDay').value!==today()&&!h
  quietLiveRefresh();
 }},12000);
 })();
-</script><script src="leader-compliance-v1.js?v=26"></script></body></html>
-
+</script><script src="leader-compliance-v1.js?v=27"></script></body></html>
 

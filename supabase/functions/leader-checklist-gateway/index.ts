@@ -330,11 +330,6 @@ Deno.serve(async req=>{
    }
    return reply({ok:true,work_date:day,removed_from_future:true});
   }
-  if(!head&&!viewer&&leaderId&&['entry_save','upload_prepare','upload_finish'].includes(action)){
-   const {data:blocked,error:be}=await db.from('vg_checklist_cases').select('id').eq('leader_id',leaderId).eq('letter_type','nte').in('status',['issued','returned','responded']).limit(1);
-   if(be)return reply({error:'Unable to verify NTE clearance. Please retry.'},503);
-   if(blocked?.length)return reply({error:'NTE clearance required. Submit your reply and wait for Head validation.'},403);
-  }
   if(action==='entry_save'){
    const date=String(b.day||'');
    if(!/^\d{4}-\d{2}-\d{2}$/.test(date))throw Error('Choose a valid date');
@@ -459,5 +454,4 @@ Deno.serve(async req=>{
   return reply({error:'Unknown action'},400);
  }catch(e){return reply({error:(e as Error).message||'Server error'},400)}
 });
-
 
