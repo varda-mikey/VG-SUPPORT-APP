@@ -5,8 +5,13 @@ const cors={'Access-Control-Allow-Origin':'https://varda-mikey.github.io','Acces
 const reply=(x:unknown,status=200)=>new Response(JSON.stringify(x),{status,headers:{...cors,'Content-Type':'application/json','Cache-Control':'no-store'}});
 const error=(x:any)=>{throw Error(x?.message||'Unable to save')};
 const manilaDate=()=>new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Manila'}).format(new Date());
-function checkLeaderReportDate(head:boolean,day:string){
- if(!head&&day!==manilaDate())throw Error('This report is read-only. Leaders can submit only for today.');
+async function checkLeaderReportDate(head:boolean,day:string,leaderId:string){
+ if(head)return;
+ if(day!==manilaDate())throw Error('This report is read-only. Leaders can submit only for today.');
+ const result=await db.from('vg_checklist_cases').select('id').eq('leader_id',leaderId)
+  .eq('letter_type','nte').in('status',['issued','returned','responded']).limit(1);
+ if(result.error)throw Error('Could not check NTE status. Please retry.');
+ if(result.data?.length)throw Error('Daily reporting is paused until the Head clears your NTE.');
 }
 const valid=(s:unknown,n=200)=>typeof s==='string'&&s.length>0&&s.length<=n;
 const digest=async s=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s))),x=>x.toString(16).padStart(2,'0')).join('');
@@ -113,7 +118,7 @@ Deno.serve(async req=>{
   const leaderId=head?String(form.get('leader_id')||''):user.id;
   const workDate=String(form.get('day')||''),taskId=String(form.get('task_id')||'');
   if(!leaderId||!/^\d{4}-\d{2}-\d{2}$/.test(workDate))throw Error('Invalid leader or work date');
-  checkLeaderReportDate(head,workDate);
+  await checkLeaderReportDate(head,workDate,leaderId);
   const rawFile=form.get('file');if(!(rawFile instanceof File))throw Error('Please choose a file');
   const file=rawFile as File;
   const allowed=['image/jpeg','image/png','image/webp','video/mp4','video/webm','video/quicktime'];
@@ -316,7 +321,7 @@ Deno.serve(async req=>{
   if(action==='entry_save'){
    const date=String(b.day||'');
    if(!/^\d{4}-\d{2}-\d{2}$/.test(date))throw Error('Choose a valid date');
-   checkLeaderReportDate(head,date);
+   await checkLeaderReportDate(head,date,leaderId);
    const id=head?b.leader_id:leaderId;
    if(!id)throw Error('Choose a leader');
    const {data:task}=await db.from('vg_checklist_tasks').select('id').eq('id',b.task_id).eq('leader_id',id).eq('active',true).maybeSingle();if(!task)throw Error('Task is no longer active');
@@ -337,7 +342,7 @@ Deno.serve(async req=>{
   if(action==='upload_prepare'){
    const id=head?b.leader_id:leaderId;const date=String(b.day||'');
    if(!id||!/^\d{4}-\d{2}-\d{2}$/.test(date))throw Error('Missing leader or date');
-   checkLeaderReportDate(head,date);
+   await checkLeaderReportDate(head,date,leaderId);
    const mime=String(b.mime||'').toLowerCase(),size=Number(b.bytes||0);
    const allowed=['image/jpeg','image/png','image/webp','video/mp4','video/webm','video/quicktime'];
    if(!allowed.includes(mime)||!Number.isFinite(size)||size<=0||size>52428800)throw Error('Supported photos/videos only, up to 50 MB.');
@@ -356,7 +361,7 @@ Deno.serve(async req=>{
    const path=String(b.path||''),entryId=String(b.entry_id||'');
    const {data:entry}=await db.from('vg_checklist_entries').select('id,leader_id,work_date').eq('id',entryId).maybeSingle();
    if(!entry||entry.leader_id!==id||!path.startsWith(id+'/')||!path.includes('/'+entryId+'/'))throw Error('Invalid attachment destination');
-   checkLeaderReportDate(head,entry.work_date);
+   await checkLeaderReportDate(head,entry.work_date,leaderId);
    const mime=String(b.mime||''),bytes=Number(b.bytes)||0;
    const {data:found,error:fe}=await db.storage.from('vg-leader-evidence').info(path);
    if(fe||!found)throw Error('Upload not found. Please upload again.');
@@ -373,7 +378,7 @@ Deno.serve(async req=>{
    const {data:entry,error:ee}=await db.from('vg_checklist_entries').select('id,leader_id,work_date').eq('id',file.entry_id).maybeSingle();
    if(ee)error(ee);
    if(!entry || (!head && entry.leader_id!==leaderId))return reply({error:'This photo belongs to a different leader'},403);
-   checkLeaderReportDate(head,entry.work_date);
+   await checkLeaderReportDate(head,entry.work_date,leaderId);
    if(!head && file.added_by!=='leader')return reply({error:'Only the Head may remove evidence added by management'},403);
    const id=head?String(b.leader_id||''):leaderId;
    if(head && id!==entry.leader_id)return reply({error:'Select the matching leader before deleting this photo'},403);
