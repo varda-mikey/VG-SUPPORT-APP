@@ -427,12 +427,30 @@ Deno.serve(async req=>{
    const {data:edits,error:ee}=await db.from('vg_checklist_task_day_edits').select('task_id,work_date,hidden').gte('work_date',from).lte('work_date',to).limit(10000);
    if(ee)error(ee);
    const hidden=new Set((edits||[]).filter((x:any)=>x.hidden).map((x:any)=>x.task_id+'|'+x.work_date));
+   // A Special Mission stops being required after its first verified submission.
+   const completedOn=new Map<string,string>();
+   const missionIds=(definitions||[]).filter(t=>t.frequency==='special').map(t=>t.id);
+   for(let i=0;i<missionIds.length;i+=100){
+    for(let offset=0;;offset+=500){
+     const result=await db.from('vg_checklist_entries')
+      .select('task_id,work_date,vg_checklist_files!inner(id)')
+      .in('task_id',missionIds.slice(i,i+100)).eq('leader_status','submitted').lt('work_date',to)
+      .eq('vg_checklist_files.added_by','leader').like('vg_checklist_files.mime','image/%')
+      .order('id').range(offset,offset+499);
+     if(result.error)error(result.error);
+     for(const entry of result.data||[]){
+      const previous=completedOn.get(entry.task_id);
+      if(!previous||entry.work_date<previous)completedOn.set(entry.task_id,entry.work_date);
+     }
+     if((result.data||[]).length<500)break;
+    }
+   }
    const expected_task_counts:Record<string,number>={};
    const cursor=new Date(from+'T12:00:00Z'),last=new Date(to+'T12:00:00Z');
    for(let i=0;cursor<=last&&i<366;i++,cursor.setUTCDate(cursor.getUTCDate()+1)){
     const d=cursor.toISOString().slice(0,10);
     for(const t of definitions||[]){
-     if(applies(t,d)&&!hidden.has(t.id+'|'+d)){
+     if(applies(t,d)&&!hidden.has(t.id+'|'+d)&&!(t.frequency==='special'&&(completedOn.get(t.id)||d)<d)){
       const k=t.leader_id+'|'+d;expected_task_counts[k]=(expected_task_counts[k]||0)+1;
      }
     }
